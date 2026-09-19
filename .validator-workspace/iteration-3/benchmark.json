@@ -1,0 +1,244 @@
+{
+  "metadata": {
+    "skill_name": "validator",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-09-19T22:02:46Z",
+    "evals_run": [
+      4
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 14,
+        "failed": 0,
+        "total": 14,
+        "time_seconds": 1026.3,
+        "tokens": 114390,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a validation report at docs/validation/002-due-dates.md following the report template.",
+          "passed": true,
+          "evidence": "Present in both runs with the full section structure."
+        },
+        {
+          "text": "Opens zero findings: the implementation meets every requirement.",
+          "passed": true,
+          "evidence": "Both report no open findings."
+        },
+        {
+          "text": "Gives the verdict 'Validated'.",
+          "passed": true,
+          "evidence": "Both."
+        },
+        {
+          "text": "Sets the requirements status of 002 to 'Validated' and the index status in docs/product.md to 'Validated'.",
+          "passed": true,
+          "evidence": "with_skill: requirements 'Validated' and the index row 'Validated'. Baseline: requirements set, but the index row in docs/product.md still reads 'Implemented'."
+        },
+        {
+          "text": "Does not report any of the seed's traps as a finding.",
+          "passed": true,
+          "evidence": "Both kept the X-Today header, the unbounded date input and the missing state word on upcoming tasks out of the findings; the baseline put X-Today under Observations."
+        },
+        {
+          "text": "Writes black-box acceptance tests under tests/acceptance/002-due-dates/ even though nothing fails.",
+          "passed": true,
+          "evidence": "with_skill 26 tests, baseline 16."
+        },
+        {
+          "text": "Starts the compose stack and validates against the running product.",
+          "passed": true,
+          "evidence": "Both built and started the stack, drove the HTTP API and a headless Chromium, and tore the stack down."
+        },
+        {
+          "text": "Measures the non-functional requirements instead of accepting the report's numbers.",
+          "passed": true,
+          "evidence": "Both read font sizes with computed styles at 390x844 and measured memory and latency themselves."
+        },
+        {
+          "text": "Runs the 001 acceptance tests as a regression and reports 11 of 11 passing.",
+          "passed": true,
+          "evidence": "Both."
+        },
+        {
+          "text": "Verifies the out-of-scope items are absent, including that a POST with 'repeat' stores nothing.",
+          "passed": true,
+          "evidence": "Both checked recurrence, reminders and times of day."
+        },
+        {
+          "text": "Leaves the 'Not verified' section empty, since a verdict of Validated requires it.",
+          "passed": true,
+          "evidence": "with_skill: 'None.'. Baseline: lists a real midnight rollover and the native date picker as not verified and still gives the verdict Validated, which the skill's own rule forbids."
+        },
+        {
+          "text": "Puts anything it dislikes without a requirement behind it under Observations.",
+          "passed": true,
+          "evidence": "with_skill 3 observations, baseline 3. None of them blocks."
+        },
+        {
+          "text": "Changes no product code.",
+          "passed": true,
+          "evidence": "git diff against the seed tip over src/ and public/ is empty in both runs."
+        },
+        {
+          "text": "Asks the user no question in its final message.",
+          "passed": true,
+          "evidence": "Neither run asks anything."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8571,
+        "passed": 12,
+        "failed": 2,
+        "total": 14,
+        "time_seconds": 663.7,
+        "tokens": 91030,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a validation report at docs/validation/002-due-dates.md following the report template.",
+          "passed": true,
+          "evidence": "Present in both runs with the full section structure."
+        },
+        {
+          "text": "Opens zero findings: the implementation meets every requirement.",
+          "passed": true,
+          "evidence": "Both report no open findings."
+        },
+        {
+          "text": "Gives the verdict 'Validated'.",
+          "passed": true,
+          "evidence": "Both."
+        },
+        {
+          "text": "Sets the requirements status of 002 to 'Validated' and the index status in docs/product.md to 'Validated'.",
+          "passed": false,
+          "evidence": "with_skill: requirements 'Validated' and the index row 'Validated'. Baseline: requirements set, but the index row in docs/product.md still reads 'Implemented'."
+        },
+        {
+          "text": "Does not report any of the seed's traps as a finding.",
+          "passed": true,
+          "evidence": "Both kept the X-Today header, the unbounded date input and the missing state word on upcoming tasks out of the findings; the baseline put X-Today under Observations."
+        },
+        {
+          "text": "Writes black-box acceptance tests under tests/acceptance/002-due-dates/ even though nothing fails.",
+          "passed": true,
+          "evidence": "with_skill 26 tests, baseline 16."
+        },
+        {
+          "text": "Starts the compose stack and validates against the running product.",
+          "passed": true,
+          "evidence": "Both built and started the stack, drove the HTTP API and a headless Chromium, and tore the stack down."
+        },
+        {
+          "text": "Measures the non-functional requirements instead of accepting the report's numbers.",
+          "passed": true,
+          "evidence": "Both read font sizes with computed styles at 390x844 and measured memory and latency themselves."
+        },
+        {
+          "text": "Runs the 001 acceptance tests as a regression and reports 11 of 11 passing.",
+          "passed": true,
+          "evidence": "Both."
+        },
+        {
+          "text": "Verifies the out-of-scope items are absent, including that a POST with 'repeat' stores nothing.",
+          "passed": true,
+          "evidence": "Both checked recurrence, reminders and times of day."
+        },
+        {
+          "text": "Leaves the 'Not verified' section empty, since a verdict of Validated requires it.",
+          "passed": false,
+          "evidence": "with_skill: 'None.'. Baseline: lists a real midnight rollover and the native date picker as not verified and still gives the verdict Validated, which the skill's own rule forbids."
+        },
+        {
+          "text": "Puts anything it dislikes without a requirement behind it under Observations.",
+          "passed": true,
+          "evidence": "with_skill 3 observations, baseline 3. None of them blocks."
+        },
+        {
+          "text": "Changes no product code.",
+          "passed": true,
+          "evidence": "git diff against the seed tip over src/ and public/ is empty in both runs."
+        },
+        {
+          "text": "Asks the user no question in its final message.",
+          "passed": true,
+          "evidence": "Neither run asks anything."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 1026.3,
+        "stddev": 0.0,
+        "min": 1026.3,
+        "max": 1026.3
+      },
+      "tokens": {
+        "mean": 114390.0,
+        "stddev": 0.0,
+        "min": 114390,
+        "max": 114390
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.8571,
+        "stddev": 0.0,
+        "min": 0.8571,
+        "max": 0.8571
+      },
+      "time_seconds": {
+        "mean": 663.7,
+        "stddev": 0.0,
+        "min": 663.7,
+        "max": 663.7
+      },
+      "tokens": {
+        "mean": 91030.0,
+        "stddev": 0.0,
+        "min": 91030,
+        "max": 91030
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.14",
+      "time_seconds": "+362.6",
+      "tokens": "+23360"
+    }
+  },
+  "notes": [
+    "This is the eval the suite was missing: a correct implementation, where the question is whether the validator can approve instead of inventing findings.",
+    "Both configurations answered it correctly: verdict Validated, zero findings, and the traps (the X-Today header, the unbounded date input, no state word on upcoming tasks) either ignored or filed as observations. Over-reporting is not the failure mode here.",
+    "The two assertions the baseline missed are both about finishing the hand-over: the index row in docs/product.md stayed 'Implemented', and it listed two items under 'Not verified' while still giving the verdict Validated, which the skill's own rule forbids.",
+    "Cost on this eval: 1026 s and 114k tokens with the skill against 664 s and 91k without."
+  ]
+}

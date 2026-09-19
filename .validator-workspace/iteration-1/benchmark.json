@@ -1,0 +1,583 @@
+{
+  "metadata": {
+    "skill_name": "validator",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-09-19T17:49:39Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "time_seconds": 529.6,
+        "tokens": 122480,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a validation report at docs/validation/002-due-dates.md following the report template.",
+          "passed": true,
+          "evidence": "Report present with Summary, Open findings, Coverage, Regression, Not verified, Observations, Closed findings."
+        },
+        {
+          "text": "Reports the business-rule boundary defect: a task due today is marked overdue (S6.2 / R4).",
+          "passed": true,
+          "evidence": "F1 in both runs, with the <= comparison in src/dates.js named."
+        },
+        {
+          "text": "Reports the UI defect: title and marking are 14 px on a phone instead of the required 20 px (QE5).",
+          "passed": true,
+          "evidence": "with_skill F4 measured with getComputedStyle at 390x844; baseline F4 measured at 375x812."
+        },
+        {
+          "text": "Reports that recurring tasks were built although 002 lists them as out of scope.",
+          "passed": true,
+          "evidence": "F3 in both runs: repeat field, 'Repeat weekly' checkbox, stored value."
+        },
+        {
+          "text": "Reports the 001 regression: done tasks no longer sorted below open ones (001 S3.2).",
+          "passed": true,
+          "evidence": "F2 in both runs; the 001 acceptance suite fails 1 of 11."
+        },
+        {
+          "text": "Finds all four planted defects.",
+          "passed": true,
+          "evidence": "4 of 4 in both runs."
+        },
+        {
+          "text": "Raises no more than one finding outside the planted set.",
+          "passed": true,
+          "evidence": "One extra in each run: QE7, the add form wrapping on a phone, which is a direct consequence of the out-of-scope checkbox and is legitimate."
+        },
+        {
+          "text": "Derives the checks from the requirements instead of mirroring the implementation report's claims.",
+          "passed": true,
+          "evidence": "Both runs explicitly contradict the report's 'all passed' self-validation."
+        },
+        {
+          "text": "Adds black-box acceptance tests under tests/acceptance/002-due-dates/.",
+          "passed": true,
+          "evidence": "Present in both runs."
+        },
+        {
+          "text": "Actually starts the compose stack and reports evidence from the running product.",
+          "passed": true,
+          "evidence": "Both ran the stack, measured memory and latency, and tore it down."
+        },
+        {
+          "text": "Runs the 001 acceptance tests as a regression and reports the result.",
+          "passed": true,
+          "evidence": "with_skill 10/11; baseline 001 10 passed 1 failed, 002 13 passed 5 failed."
+        },
+        {
+          "text": "Every finding has numbered steps to reproduce, an Expected, an Actual and a severity.",
+          "passed": true,
+          "evidence": "with_skill: 5 findings, each with numbered steps, Severity, Expected, Actual. Baseline: prose findings with code excerpts and failing test names, but no numbered steps and no Severity/Expected/Actual fields (0 matches)."
+        },
+        {
+          "text": "Changes no product code.",
+          "passed": true,
+          "evidence": "git diff against the seed tip over src/, public/, Dockerfile, compose and package.json is empty in both runs."
+        },
+        {
+          "text": "Sets the requirements status to 'Changes requested \u2013 back to implementation' and gives that verdict.",
+          "passed": true,
+          "evidence": "with_skill: status set, verdict 'Changes requested'. Baseline: status left at 'Implemented \u2013 ready for validation', verdict written as 'Rejected \u2013 findings to fix', which is not one of the defined verdicts."
+        },
+        {
+          "text": "Asks the user no question in its final message.",
+          "passed": true,
+          "evidence": "Neither run asks anything."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 13,
+        "failed": 0,
+        "total": 13,
+        "time_seconds": 915.9,
+        "tokens": 123573,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a validation report at docs/validation/002-find-a-task.md following the report template.",
+          "passed": true,
+          "evidence": "Present in both runs."
+        },
+        {
+          "text": "Reports that the search is prefix-only and case-sensitive, quoting S5.2, S5.3 or R4.",
+          "passed": true,
+          "evidence": "F1 in both runs, with the stakeholder's own 'milk' example reproduced."
+        },
+        {
+          "text": "Classifies that finding as a design problem and does not blame the implementer.",
+          "passed": true,
+          "evidence": "Both name docs/architecture/002-find-a-task.md as the cause and route it to the architect."
+        },
+        {
+          "text": "Writes a gap file at docs/architecture/.gaps/002-find-a-task.md in the implementer's gap format.",
+          "passed": true,
+          "evidence": "with_skill: G1 with Status, Design, Requirement, Problem, Blocks, Suggestion. Baseline: no .gaps file exists."
+        },
+        {
+          "text": "Runs a real load test with 10 concurrent users against the stack with about 500 tasks.",
+          "passed": true,
+          "evidence": "with_skill: 500 tasks, 10 concurrent searchers. Baseline: 500 tasks, 10 concurrent searchers, 2000 searches."
+        },
+        {
+          "text": "Reports a measured p95 latency and compares it with the 500 ms threshold of QE5.",
+          "passed": true,
+          "evidence": "with_skill p95 3.92 ms; baseline p95 5.2 ms. Both against 500 ms."
+        },
+        {
+          "text": "Reports a measured memory figure and compares it with the 256 MB limit of QE6.",
+          "passed": true,
+          "evidence": "with_skill 28 MiB / 256 MiB; baseline peak 26.5 MiB / 256 MiB."
+        },
+        {
+          "text": "Commits the load-test script into the repo so it joins the regression suite.",
+          "passed": true,
+          "evidence": "with_skill: tests/acceptance/002-find-a-task/perf/search.js. Baseline: no perf artefact in the repo, the measurement is only described in the report."
+        },
+        {
+          "text": "Runs the 001 acceptance tests as a regression and reports the result.",
+          "passed": true,
+          "evidence": "11 of 11 pass in both runs."
+        },
+        {
+          "text": "Gives a verdict that routes the design problem correctly (blocked on architecture, or changes requested with the gap written).",
+          "passed": true,
+          "evidence": "with_skill: 'Changes requested (F1 needs the architect first, gap G1)' plus the gap file. Baseline: 'Rejected \u2013 findings to fix' and no gap file, so the architect gets nothing to act on."
+        },
+        {
+          "text": "Adds black-box acceptance tests under tests/acceptance/002-find-a-task/.",
+          "passed": true,
+          "evidence": "search.test.js in both runs."
+        },
+        {
+          "text": "Changes no product code.",
+          "passed": true,
+          "evidence": "git diff against the seed tip is empty in both runs."
+        },
+        {
+          "text": "Asks the user no question in its final message.",
+          "passed": true,
+          "evidence": "Neither run asks anything."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.9231,
+        "passed": 12,
+        "failed": 1,
+        "total": 13,
+        "time_seconds": 555.5,
+        "tokens": 120289,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Updates the existing docs/validation/002-due-dates.md and keeps round 1 readable.",
+          "passed": true,
+          "evidence": "Both updated the same file and moved F1-F3 into the Closed findings table with how each was closed."
+        },
+        {
+          "text": "Adds a round 2 and raises the round number.",
+          "passed": true,
+          "evidence": "Both set 'Round: 2'."
+        },
+        {
+          "text": "Closes F1 after re-running its own reproduction steps.",
+          "passed": true,
+          "evidence": "Both re-ran the X-Today steps and got dueState 'due-today'."
+        },
+        {
+          "text": "Withdraws F2 rather than reopening it, with reference to S6.3.",
+          "passed": true,
+          "evidence": "Both accept the implementer's quote and withdraw it as the validator's own preference."
+        },
+        {
+          "text": "Closes F3.",
+          "passed": true,
+          "evidence": "Both verified the order fix with the round-1 steps."
+        },
+        {
+          "text": "Opens a new finding with a fresh ID for the breakage the F3 fix introduced.",
+          "passed": true,
+          "evidence": "Both opened F4."
+        },
+        {
+          "text": "Identifies the breakage as done tasks no longer sorted below open ones (001 S3.2).",
+          "passed": true,
+          "evidence": "Both name the rewritten comparator in src/store.js and 001 S3.2."
+        },
+        {
+          "text": "Runs the complete validation again, not only the three findings.",
+          "passed": true,
+          "evidence": "Both produced a full coverage table plus regression."
+        },
+        {
+          "text": "Runs both acceptance suites and reports the numbers.",
+          "passed": true,
+          "evidence": "with_skill: 001 10/11, 002 15/16. Baseline: 23 passed and 2 failed across both suites, naming the two."
+        },
+        {
+          "text": "Gives the verdict 'Changes requested'.",
+          "passed": true,
+          "evidence": "Both."
+        },
+        {
+          "text": "Changes no product code.",
+          "passed": true,
+          "evidence": "git diff against the seed tip is empty in both runs."
+        },
+        {
+          "text": "Asks the user no question in its final message.",
+          "passed": true,
+          "evidence": "Neither run asks anything."
+        },
+        {
+          "text": "Does not record a non-functional requirement as passed when it actually fails.",
+          "passed": false,
+          "evidence": "Reported QE7 as 'one line of inputs, one button' and QE1 as fine. Measured afterwards in a browser at 375x812 on this exact build: the add form is two rows and 94 px high, the page scrolls sideways (scrollWidth 387 vs 375), the tick-off checkbox is squashed to 13x24 px on dated rows and the Delete button ends at 385-387 px, outside the viewport. Added after iteration 1 once the build was measured independently."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8667,
+        "passed": 13,
+        "failed": 2,
+        "total": 15,
+        "time_seconds": 279.5,
+        "tokens": 86250,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a validation report at docs/validation/002-due-dates.md following the report template.",
+          "passed": true,
+          "evidence": "Report present with Summary, Open findings, Coverage, Regression, Not verified, Observations, Closed findings."
+        },
+        {
+          "text": "Reports the business-rule boundary defect: a task due today is marked overdue (S6.2 / R4).",
+          "passed": true,
+          "evidence": "F1 in both runs, with the <= comparison in src/dates.js named."
+        },
+        {
+          "text": "Reports the UI defect: title and marking are 14 px on a phone instead of the required 20 px (QE5).",
+          "passed": true,
+          "evidence": "with_skill F4 measured with getComputedStyle at 390x844; baseline F4 measured at 375x812."
+        },
+        {
+          "text": "Reports that recurring tasks were built although 002 lists them as out of scope.",
+          "passed": true,
+          "evidence": "F3 in both runs: repeat field, 'Repeat weekly' checkbox, stored value."
+        },
+        {
+          "text": "Reports the 001 regression: done tasks no longer sorted below open ones (001 S3.2).",
+          "passed": true,
+          "evidence": "F2 in both runs; the 001 acceptance suite fails 1 of 11."
+        },
+        {
+          "text": "Finds all four planted defects.",
+          "passed": true,
+          "evidence": "4 of 4 in both runs."
+        },
+        {
+          "text": "Raises no more than one finding outside the planted set.",
+          "passed": true,
+          "evidence": "One extra in each run: QE7, the add form wrapping on a phone, which is a direct consequence of the out-of-scope checkbox and is legitimate."
+        },
+        {
+          "text": "Derives the checks from the requirements instead of mirroring the implementation report's claims.",
+          "passed": true,
+          "evidence": "Both runs explicitly contradict the report's 'all passed' self-validation."
+        },
+        {
+          "text": "Adds black-box acceptance tests under tests/acceptance/002-due-dates/.",
+          "passed": true,
+          "evidence": "Present in both runs."
+        },
+        {
+          "text": "Actually starts the compose stack and reports evidence from the running product.",
+          "passed": true,
+          "evidence": "Both ran the stack, measured memory and latency, and tore it down."
+        },
+        {
+          "text": "Runs the 001 acceptance tests as a regression and reports the result.",
+          "passed": true,
+          "evidence": "with_skill 10/11; baseline 001 10 passed 1 failed, 002 13 passed 5 failed."
+        },
+        {
+          "text": "Every finding has numbered steps to reproduce, an Expected, an Actual and a severity.",
+          "passed": false,
+          "evidence": "with_skill: 5 findings, each with numbered steps, Severity, Expected, Actual. Baseline: prose findings with code excerpts and failing test names, but no numbered steps and no Severity/Expected/Actual fields (0 matches)."
+        },
+        {
+          "text": "Changes no product code.",
+          "passed": true,
+          "evidence": "git diff against the seed tip over src/, public/, Dockerfile, compose and package.json is empty in both runs."
+        },
+        {
+          "text": "Sets the requirements status to 'Changes requested \u2013 back to implementation' and gives that verdict.",
+          "passed": false,
+          "evidence": "with_skill: status set, verdict 'Changes requested'. Baseline: status left at 'Implemented \u2013 ready for validation', verdict written as 'Rejected \u2013 findings to fix', which is not one of the defined verdicts."
+        },
+        {
+          "text": "Asks the user no question in its final message.",
+          "passed": true,
+          "evidence": "Neither run asks anything."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7692,
+        "passed": 10,
+        "failed": 3,
+        "total": 13,
+        "time_seconds": 440.4,
+        "tokens": 98597,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Writes a validation report at docs/validation/002-find-a-task.md following the report template.",
+          "passed": true,
+          "evidence": "Present in both runs."
+        },
+        {
+          "text": "Reports that the search is prefix-only and case-sensitive, quoting S5.2, S5.3 or R4.",
+          "passed": true,
+          "evidence": "F1 in both runs, with the stakeholder's own 'milk' example reproduced."
+        },
+        {
+          "text": "Classifies that finding as a design problem and does not blame the implementer.",
+          "passed": true,
+          "evidence": "Both name docs/architecture/002-find-a-task.md as the cause and route it to the architect."
+        },
+        {
+          "text": "Writes a gap file at docs/architecture/.gaps/002-find-a-task.md in the implementer's gap format.",
+          "passed": false,
+          "evidence": "with_skill: G1 with Status, Design, Requirement, Problem, Blocks, Suggestion. Baseline: no .gaps file exists."
+        },
+        {
+          "text": "Runs a real load test with 10 concurrent users against the stack with about 500 tasks.",
+          "passed": true,
+          "evidence": "with_skill: 500 tasks, 10 concurrent searchers. Baseline: 500 tasks, 10 concurrent searchers, 2000 searches."
+        },
+        {
+          "text": "Reports a measured p95 latency and compares it with the 500 ms threshold of QE5.",
+          "passed": true,
+          "evidence": "with_skill p95 3.92 ms; baseline p95 5.2 ms. Both against 500 ms."
+        },
+        {
+          "text": "Reports a measured memory figure and compares it with the 256 MB limit of QE6.",
+          "passed": true,
+          "evidence": "with_skill 28 MiB / 256 MiB; baseline peak 26.5 MiB / 256 MiB."
+        },
+        {
+          "text": "Commits the load-test script into the repo so it joins the regression suite.",
+          "passed": false,
+          "evidence": "with_skill: tests/acceptance/002-find-a-task/perf/search.js. Baseline: no perf artefact in the repo, the measurement is only described in the report."
+        },
+        {
+          "text": "Runs the 001 acceptance tests as a regression and reports the result.",
+          "passed": true,
+          "evidence": "11 of 11 pass in both runs."
+        },
+        {
+          "text": "Gives a verdict that routes the design problem correctly (blocked on architecture, or changes requested with the gap written).",
+          "passed": false,
+          "evidence": "with_skill: 'Changes requested (F1 needs the architect first, gap G1)' plus the gap file. Baseline: 'Rejected \u2013 findings to fix' and no gap file, so the architect gets nothing to act on."
+        },
+        {
+          "text": "Adds black-box acceptance tests under tests/acceptance/002-find-a-task/.",
+          "passed": true,
+          "evidence": "search.test.js in both runs."
+        },
+        {
+          "text": "Changes no product code.",
+          "passed": true,
+          "evidence": "git diff against the seed tip is empty in both runs."
+        },
+        {
+          "text": "Asks the user no question in its final message.",
+          "passed": true,
+          "evidence": "Neither run asks anything."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 13,
+        "failed": 0,
+        "total": 13,
+        "time_seconds": 376.0,
+        "tokens": 107966,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Updates the existing docs/validation/002-due-dates.md and keeps round 1 readable.",
+          "passed": true,
+          "evidence": "Both updated the same file and moved F1-F3 into the Closed findings table with how each was closed."
+        },
+        {
+          "text": "Adds a round 2 and raises the round number.",
+          "passed": true,
+          "evidence": "Both set 'Round: 2'."
+        },
+        {
+          "text": "Closes F1 after re-running its own reproduction steps.",
+          "passed": true,
+          "evidence": "Both re-ran the X-Today steps and got dueState 'due-today'."
+        },
+        {
+          "text": "Withdraws F2 rather than reopening it, with reference to S6.3.",
+          "passed": true,
+          "evidence": "Both accept the implementer's quote and withdraw it as the validator's own preference."
+        },
+        {
+          "text": "Closes F3.",
+          "passed": true,
+          "evidence": "Both verified the order fix with the round-1 steps."
+        },
+        {
+          "text": "Opens a new finding with a fresh ID for the breakage the F3 fix introduced.",
+          "passed": true,
+          "evidence": "Both opened F4."
+        },
+        {
+          "text": "Identifies the breakage as done tasks no longer sorted below open ones (001 S3.2).",
+          "passed": true,
+          "evidence": "Both name the rewritten comparator in src/store.js and 001 S3.2."
+        },
+        {
+          "text": "Runs the complete validation again, not only the three findings.",
+          "passed": true,
+          "evidence": "Both produced a full coverage table plus regression."
+        },
+        {
+          "text": "Runs both acceptance suites and reports the numbers.",
+          "passed": true,
+          "evidence": "with_skill: 001 10/11, 002 15/16. Baseline: 23 passed and 2 failed across both suites, naming the two."
+        },
+        {
+          "text": "Gives the verdict 'Changes requested'.",
+          "passed": true,
+          "evidence": "Both."
+        },
+        {
+          "text": "Changes no product code.",
+          "passed": true,
+          "evidence": "git diff against the seed tip is empty in both runs."
+        },
+        {
+          "text": "Asks the user no question in its final message.",
+          "passed": true,
+          "evidence": "Neither run asks anything."
+        },
+        {
+          "text": "Does not record a non-functional requirement as passed when it actually fails.",
+          "passed": true,
+          "evidence": "Reported exactly these as F5 (add form two lines, measured at 401 px and 375 px) and F6 (row overflows, Delete clipped). Both confirmed by an independent browser measurement. Added after iteration 1 once the build was measured independently."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9744,
+        "stddev": 0.0444,
+        "min": 0.9231,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 667.0,
+        "stddev": 215.9424,
+        "min": 529.6,
+        "max": 915.9
+      },
+      "tokens": {
+        "mean": 122114.0,
+        "stddev": 1672.3131,
+        "min": 120289,
+        "max": 123573
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.8786,
+        "stddev": 0.1159,
+        "min": 0.7692,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 365.3,
+        "stddev": 80.9819,
+        "min": 279.5,
+        "max": 440.4
+      },
+      "tokens": {
+        "mean": 97604.3333,
+        "stddev": 10891.9789,
+        "min": 86250,
+        "max": 107966
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.10",
+      "time_seconds": "+301.7",
+      "tokens": "+24510"
+    }
+  },
+  "notes": []
+}

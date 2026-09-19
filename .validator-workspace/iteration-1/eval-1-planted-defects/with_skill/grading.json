@@ -1,0 +1,89 @@
+{
+  "run_id": "eval-1-planted-defects-with_skill",
+  "expectations": [
+    {
+      "text": "Writes a validation report at docs/validation/002-due-dates.md following the report template.",
+      "passed": true,
+      "evidence": "Report present with Summary, Open findings, Coverage, Regression, Not verified, Observations, Closed findings."
+    },
+    {
+      "text": "Reports the business-rule boundary defect: a task due today is marked overdue (S6.2 / R4).",
+      "passed": true,
+      "evidence": "F1 in both runs, with the <= comparison in src/dates.js named."
+    },
+    {
+      "text": "Reports the UI defect: title and marking are 14 px on a phone instead of the required 20 px (QE5).",
+      "passed": true,
+      "evidence": "with_skill F4 measured with getComputedStyle at 390x844; baseline F4 measured at 375x812."
+    },
+    {
+      "text": "Reports that recurring tasks were built although 002 lists them as out of scope.",
+      "passed": true,
+      "evidence": "F3 in both runs: repeat field, 'Repeat weekly' checkbox, stored value."
+    },
+    {
+      "text": "Reports the 001 regression: done tasks no longer sorted below open ones (001 S3.2).",
+      "passed": true,
+      "evidence": "F2 in both runs; the 001 acceptance suite fails 1 of 11."
+    },
+    {
+      "text": "Finds all four planted defects.",
+      "passed": true,
+      "evidence": "4 of 4 in both runs."
+    },
+    {
+      "text": "Raises no more than one finding outside the planted set.",
+      "passed": true,
+      "evidence": "One extra in each run: QE7, the add form wrapping on a phone, which is a direct consequence of the out-of-scope checkbox and is legitimate."
+    },
+    {
+      "text": "Derives the checks from the requirements instead of mirroring the implementation report's claims.",
+      "passed": true,
+      "evidence": "Both runs explicitly contradict the report's 'all passed' self-validation."
+    },
+    {
+      "text": "Adds black-box acceptance tests under tests/acceptance/002-due-dates/.",
+      "passed": true,
+      "evidence": "Present in both runs."
+    },
+    {
+      "text": "Actually starts the compose stack and reports evidence from the running product.",
+      "passed": true,
+      "evidence": "Both ran the stack, measured memory and latency, and tore it down."
+    },
+    {
+      "text": "Runs the 001 acceptance tests as a regression and reports the result.",
+      "passed": true,
+      "evidence": "with_skill 10/11; baseline 001 10 passed 1 failed, 002 13 passed 5 failed."
+    },
+    {
+      "text": "Every finding has numbered steps to reproduce, an Expected, an Actual and a severity.",
+      "passed": true,
+      "evidence": "with_skill: 5 findings, each with numbered steps, Severity, Expected, Actual. Baseline: prose findings with code excerpts and failing test names, but no numbered steps and no Severity/Expected/Actual fields (0 matches)."
+    },
+    {
+      "text": "Changes no product code.",
+      "passed": true,
+      "evidence": "git diff against the seed tip over src/, public/, Dockerfile, compose and package.json is empty in both runs."
+    },
+    {
+      "text": "Sets the requirements status to 'Changes requested – back to implementation' and gives that verdict.",
+      "passed": true,
+      "evidence": "with_skill: status set, verdict 'Changes requested'. Baseline: status left at 'Implemented – ready for validation', verdict written as 'Rejected – findings to fix', which is not one of the defined verdicts."
+    },
+    {
+      "text": "Asks the user no question in its final message.",
+      "passed": true,
+      "evidence": "Neither run asks anything."
+    }
+  ],
+  "passed": 15,
+  "total": 15,
+  "pass_rate": 1.0,
+  "summary": {
+    "passed": 15,
+    "failed": 0,
+    "total": 15,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "eval_id": 4,
+  "eval_name": "clean-implementation",
+  "prompt": "Der Implementer meldet 002 fertig. Validier es bitte.",
+  "seed": "val-clean (fixed phone layout, commit d417a32)",
+  "assertions": [
+    "Writes a validation report at docs/validation/002-due-dates.md following the report template.",
+    "Opens zero findings: the implementation meets every requirement.",
+    "Gives the verdict 'Validated'.",
+    "Sets the requirements status of 002 to 'Validated' and the index status in docs/product.md to 'Validated'.",
+    "Does not report any of the seed's traps as a finding (no delete confirmation, the date input accepting 1900, no state word on upcoming tasks, the X-Today header, no debouncing, no authentication, the JSON file store, dueState derived on read).",
+    "Writes black-box acceptance tests under tests/acceptance/002-due-dates/ even though nothing fails.",
+    "Starts the compose stack and validates against the running product rather than by reading code.",
+    "Measures the non-functional requirements rather than accepting the implementation report's numbers: QE5 phone sizes, QE6 the state in words, QE7 the one-row form.",
+    "Runs the 001 acceptance tests as a regression and reports 11 of 11 passing.",
+    "Verifies the out-of-scope items are absent, including that a POST with 'repeat' stores nothing.",
+    "Leaves the 'Not verified' section empty, since a verdict of Validated requires it.",
+    "Puts anything it dislikes without a requirement behind it under Observations, which do not block.",
+    "Changes no product code.",
+    "Asks the user no question in its final message."
+  ]
+}

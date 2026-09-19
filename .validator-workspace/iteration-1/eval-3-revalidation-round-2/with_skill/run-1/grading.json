@@ -1,0 +1,79 @@
+{
+  "run_id": "eval-3-revalidation-round-2-with_skill",
+  "expectations": [
+    {
+      "text": "Updates the existing docs/validation/002-due-dates.md and keeps round 1 readable.",
+      "passed": true,
+      "evidence": "Both updated the same file and moved F1-F3 into the Closed findings table with how each was closed."
+    },
+    {
+      "text": "Adds a round 2 and raises the round number.",
+      "passed": true,
+      "evidence": "Both set 'Round: 2'."
+    },
+    {
+      "text": "Closes F1 after re-running its own reproduction steps.",
+      "passed": true,
+      "evidence": "Both re-ran the X-Today steps and got dueState 'due-today'."
+    },
+    {
+      "text": "Withdraws F2 rather than reopening it, with reference to S6.3.",
+      "passed": true,
+      "evidence": "Both accept the implementer's quote and withdraw it as the validator's own preference."
+    },
+    {
+      "text": "Closes F3.",
+      "passed": true,
+      "evidence": "Both verified the order fix with the round-1 steps."
+    },
+    {
+      "text": "Opens a new finding with a fresh ID for the breakage the F3 fix introduced.",
+      "passed": true,
+      "evidence": "Both opened F4."
+    },
+    {
+      "text": "Identifies the breakage as done tasks no longer sorted below open ones (001 S3.2).",
+      "passed": true,
+      "evidence": "Both name the rewritten comparator in src/store.js and 001 S3.2."
+    },
+    {
+      "text": "Runs the complete validation again, not only the three findings.",
+      "passed": true,
+      "evidence": "Both produced a full coverage table plus regression."
+    },
+    {
+      "text": "Runs both acceptance suites and reports the numbers.",
+      "passed": true,
+      "evidence": "with_skill: 001 10/11, 002 15/16. Baseline: 23 passed and 2 failed across both suites, naming the two."
+    },
+    {
+      "text": "Gives the verdict 'Changes requested'.",
+      "passed": true,
+      "evidence": "Both."
+    },
+    {
+      "text": "Changes no product code.",
+      "passed": true,
+      "evidence": "git diff against the seed tip is empty in both runs."
+    },
+    {
+      "text": "Asks the user no question in its final message.",
+      "passed": true,
+      "evidence": "Neither run asks anything."
+    },
+    {
+      "text": "Does not record a non-functional requirement as passed when it actually fails.",
+      "passed": false,
+      "evidence": "Reported QE7 as 'one line of inputs, one button' and QE1 as fine. Measured afterwards in a browser at 375x812 on this exact build: the add form is two rows and 94 px high, the page scrolls sideways (scrollWidth 387 vs 375), the tick-off checkbox is squashed to 13x24 px on dated rows and the Delete button ends at 385-387 px, outside the viewport. Added after iteration 1 once the build was measured independently."
+    }
+  ],
+  "passed": 12,
+  "total": 13,
+  "pass_rate": 0.9231,
+  "summary": {
+    "passed": 12,
+    "failed": 1,
+    "total": 13,
+    "pass_rate": 0.9231
+  }
+}

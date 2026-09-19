@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "factory",
+  "description": "Marketplace for the software factory pipeline.",
+  "owner": {
+    "name": "vicokuras"
+  },
+  "plugins": [
+    {
+      "name": "factory",
+      "description": "Software factory pipeline: groom, architect, implementer and validator as skills plus the autonomous agents that run them.",
+      "source": "./plugins/factory",
+      "category": "workflow"
+    }
+  ]
+}

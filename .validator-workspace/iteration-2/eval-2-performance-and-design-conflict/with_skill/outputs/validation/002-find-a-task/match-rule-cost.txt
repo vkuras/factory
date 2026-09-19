@@ -1,0 +1,2 @@
+startsWith, case-sensitive (as designed): 0.0040 ms per full scan of 500 titles
+toLowerCase().includes, case-insensitive (as required): 0.0147 ms per full scan of 500 titles

@@ -1,0 +1,32 @@
+tb-e2b-ws-app-1 27.04MiB / 256MiB 10.56% 1.66%
+tb-e2b-ws-app-1 26.05MiB / 256MiB 10.18% 0.01%
+tb-e2b-ws-app-1 26.62MiB / 256MiB 10.40% 1.60%
+tb-e2b-ws-app-1 27.03MiB / 256MiB 10.56% 0.32%
+tb-e2b-ws-app-1 26.18MiB / 256MiB 10.23% 0.67%
+tb-e2b-ws-app-1 26.9MiB / 256MiB 10.51% 1.49%
+tb-e2b-ws-app-1 26.59MiB / 256MiB 10.39% 1.83%
+tb-e2b-ws-app-1 27.32MiB / 256MiB 10.67% 1.08%
+tb-e2b-ws-app-1 26.36MiB / 256MiB 10.30% 0.02%
+tb-e2b-ws-app-1 27.25MiB / 256MiB 10.65% 1.46%
+tb-e2b-ws-app-1 26.93MiB / 256MiB 10.52% 0.09%
+tb-e2b-ws-app-1 28.1MiB / 256MiB 10.98% 0.79%
+tb-e2b-ws-app-1 27.15MiB / 256MiB 10.60% 0.37%
+tb-e2b-ws-app-1 27.17MiB / 256MiB 10.61% 0.71%
+tb-e2b-ws-app-1 27.42MiB / 256MiB 10.71% 0.42%
+tb-e2b-ws-app-1 26.79MiB / 256MiB 10.46% 0.67%
+tb-e2b-ws-app-1 27.53MiB / 256MiB 10.75% 0.79%
+tb-e2b-ws-app-1 26.34MiB / 256MiB 10.29% 0.01%
+tb-e2b-ws-app-1 26.82MiB / 256MiB 10.48% 2.33%
+tb-e2b-ws-app-1 26.86MiB / 256MiB 10.49% 0.02%
+tb-e2b-ws-app-1 26.89MiB / 256MiB 10.50% 0.41%
+tb-e2b-ws-app-1 26.61MiB / 256MiB 10.39% 2.29%
+tb-e2b-ws-app-1 26.88MiB / 256MiB 10.50% 0.83%
+tb-e2b-ws-app-1 26.32MiB / 256MiB 10.28% 0.03%
+tb-e2b-ws-app-1 26.66MiB / 256MiB 10.41% 3.16%
+tb-e2b-ws-app-1 27.12MiB / 256MiB 10.59% 8.36%
+tb-e2b-ws-app-1 26.45MiB / 256MiB 10.33% 0.01%
+tb-e2b-ws-app-1 26.93MiB / 256MiB 10.52% 1.59%
+tb-e2b-ws-app-1 26.43MiB / 256MiB 10.32% 0.00%
+tb-e2b-ws-app-1 26.43MiB / 256MiB 10.33% 0.00%
+
+[exited with code 0]

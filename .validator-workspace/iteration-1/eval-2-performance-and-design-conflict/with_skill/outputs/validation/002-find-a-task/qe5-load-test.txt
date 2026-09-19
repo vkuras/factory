@@ -1,0 +1,36 @@
+QE5 – 500 tasks, ten people searching at the same time, p95 < 500 ms
+====================================================================
+Script : tests/acceptance/002-find-a-task/perf/search.js
+Command: docker run --rm --network tb-e2-ws_default -e BASE_URL=http://app:8080 \
+           -v "$PWD/tests/acceptance/002-find-a-task/perf:/perf" grafana/k6 run /perf/search.js
+Data   : 500 tasks in the list (seeded over the API), 5 of them done
+Stack  : docker compose, one app container, mem_limit 256m
+
+Scenario per virtual user: open the list, type a four-letter query (one request
+per keystroke, as the UI sends it), sometimes switch "open only" on, read the
+result. 10 VUs, 3 minutes, think times included.
+
+THRESHOLDS
+  search_duration  p(95)<500  -> PASS  p(95) = 3.92 ms
+  search_errors    rate==0    -> PASS  rate = 0.00 % (0 of 2332)
+
+TOTAL
+  checks            : 2750 / 2750 succeeded
+  search_duration   : avg 1.99 ms, med 1.83 ms, p90 3.37 ms, p95 3.92 ms, max 13.34 ms
+  http_req_duration : avg 2.35 ms, p95 5.22 ms, max 13.51 ms   (includes the
+                      unfiltered list request, the largest response: all 500 tasks)
+  http_req_failed   : 0.00 % (0 of 2882)
+  http_reqs         : 2882 (15.77/s), 550 iterations
+
+Note for the coming rounds: this measurement was taken on the match rule that is
+built today (prefix, case-sensitive), which returns far fewer rows than the
+required rule (F1). The unfiltered list request in the same run returns all 500
+tasks, which is the largest response the corrected rule could ever produce, and
+it stayed at p95 5.22 ms, so the threshold has headroom. QE5 must still be
+re-measured after F1 is fixed.
+
+Amplification probe (see F2)
+----------------------------
+Same scenario with 10 requests per keystroke instead of 1 (10 VUs, 1 min):
+  search_duration p(95) = 9.96 ms, errors 0.00 % (0 of 7200), 122.5 req/s
+So the duplicated requests of F2 do not by themselves break QE5 at this scale.

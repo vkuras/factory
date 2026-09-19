@@ -1,0 +1,7 @@
+**002 – Due dates and overdue tasks: Validated.** 0 findings (0 blocking, 0 minor), nothing unverified.
+
+Every acceptance criterion (S5.1–S5.5, S6.1–S6.5), business rule (R4, R5, R6), quality expectation (QE5 20 px, QE6 word plus colour, QE7 one-row form) and all three out-of-scope items were checked black-box against a freshly built stack — HTTP API plus the real UI in headless Chromium at 390x844 (Playwright's cached chrome-headless-shell driven over CDP; `npx playwright install` has no registry here). R4's Berlin boundary was verified both with the pinned `X-Today` header and against the live server clock under foreign process time zones. R6 was verified with real pre-002 records written into the data volume.
+
+Regression green: 20 unit tests, 11 acceptance tests of 001, 26 new acceptance tests of 002; memory 34.5 MiB of 256 MiB with no OOM kill, GET p95 0.9 ms with 200+ tasks, p95 4.3 ms under 10 concurrent users, data survived `down` + `up`.
+
+Report: `docs/validation/002-due-dates.md`, evidence in `docs/validation/002-due-dates/`, tests in `tests/acceptance/002-due-dates/`. Requirements status set to `Validated` and the index in `docs/product.md` updated; committed as `28d3200` on `feature/002-due-dates`. Three non-blocking observations are in the report (a done task still shows its red "Overdue" marking, the native date input renders its placeholder in the browser locale, and the implementation report's commit range does not match this repository's history).

@@ -1,0 +1,84 @@
+{
+  "run_id": "eval-4-clean-implementation-with_skill",
+  "expectations": [
+    {
+      "text": "Writes a validation report at docs/validation/002-due-dates.md following the report template.",
+      "passed": true,
+      "evidence": "Present in both runs with the full section structure."
+    },
+    {
+      "text": "Opens zero findings: the implementation meets every requirement.",
+      "passed": true,
+      "evidence": "Both report no open findings."
+    },
+    {
+      "text": "Gives the verdict 'Validated'.",
+      "passed": true,
+      "evidence": "Both."
+    },
+    {
+      "text": "Sets the requirements status of 002 to 'Validated' and the index status in docs/product.md to 'Validated'.",
+      "passed": true,
+      "evidence": "with_skill: requirements 'Validated' and the index row 'Validated'. Baseline: requirements set, but the index row in docs/product.md still reads 'Implemented'."
+    },
+    {
+      "text": "Does not report any of the seed's traps as a finding.",
+      "passed": true,
+      "evidence": "Both kept the X-Today header, the unbounded date input and the missing state word on upcoming tasks out of the findings; the baseline put X-Today under Observations."
+    },
+    {
+      "text": "Writes black-box acceptance tests under tests/acceptance/002-due-dates/ even though nothing fails.",
+      "passed": true,
+      "evidence": "with_skill 26 tests, baseline 16."
+    },
+    {
+      "text": "Starts the compose stack and validates against the running product.",
+      "passed": true,
+      "evidence": "Both built and started the stack, drove the HTTP API and a headless Chromium, and tore the stack down."
+    },
+    {
+      "text": "Measures the non-functional requirements instead of accepting the report's numbers.",
+      "passed": true,
+      "evidence": "Both read font sizes with computed styles at 390x844 and measured memory and latency themselves."
+    },
+    {
+      "text": "Runs the 001 acceptance tests as a regression and reports 11 of 11 passing.",
+      "passed": true,
+      "evidence": "Both."
+    },
+    {
+      "text": "Verifies the out-of-scope items are absent, including that a POST with 'repeat' stores nothing.",
+      "passed": true,
+      "evidence": "Both checked recurrence, reminders and times of day."
+    },
+    {
+      "text": "Leaves the 'Not verified' section empty, since a verdict of Validated requires it.",
+      "passed": true,
+      "evidence": "with_skill: 'None.'. Baseline: lists a real midnight rollover and the native date picker as not verified and still gives the verdict Validated, which the skill's own rule forbids."
+    },
+    {
+      "text": "Puts anything it dislikes without a requirement behind it under Observations.",
+      "passed": true,
+      "evidence": "with_skill 3 observations, baseline 3. None of them blocks."
+    },
+    {
+      "text": "Changes no product code.",
+      "passed": true,
+      "evidence": "git diff against the seed tip over src/ and public/ is empty in both runs."
+    },
+    {
+      "text": "Asks the user no question in its final message.",
+      "passed": true,
+      "evidence": "Neither run asks anything."
+    }
+  ],
+  "passed": 14,
+  "total": 14,
+  "pass_rate": 1.0,
+  "summary": {
+    "passed": 14,
+    "failed": 0,
+    "total": 14,
+    "pass_rate": 1.0
+  }
+}

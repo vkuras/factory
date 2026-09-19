@@ -1,0 +1,37 @@
+F2 – every "add", "done" or "delete" adds another search listener
+=================================================================
+Measured in the browser at http://localhost:8120 (phone viewport), by counting
+the requests the page itself sends.
+
+Instrumentation (browser console, no product code changed):
+  const of = window.fetch; let calls = [];
+  window.fetch = (...a) => { calls.push(String(a[0])); return of(...a); };
+  // three "mark as done" clicks, as a user would do them
+  for (let i = 0; i < 3; i++) { const cb = document.querySelector('#tasks li input[type=checkbox]');
+    cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); await sleep(500); }
+  calls = [];
+  search.value = 'm';  search.dispatchEvent(new Event('input')); await sleep(800);
+
+Result:
+  GET /api/tasks?... after one keystroke, following three "done" clicks : 4
+  GET /api/tasks?... on the next keystroke                              : 4
+Expected: 1 request per keystroke.
+
+The counter keeps growing: the count is (number of add/done/delete actions in
+this tab) + 1 requests for every single keystroke, for as long as the tab is
+open.
+
+Cause (public/app.js): `toggle()`, `destroy()` and the submit handler each
+contain, instead of a plain `await load()`:
+
+  await searchInput.addEventListener('input', () => load());
+  openOnlyInput.addEventListener('change', () => load());
+
+  load();
+
+so each of those actions registers another `input` listener on the search field
+(and another `change` listener on the checkbox) before reloading.
+
+Effect on QE5 (measured, see qe5-load-test.txt): 10 requests per keystroke with
+10 concurrent users still answers at p95 9.96 ms, so the threshold is not
+breached at this scale; the growth is unbounded, which is why this is reported.

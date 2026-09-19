@@ -1,0 +1,34 @@
+F1 – the search matches only a case-sensitive prefix of the title
+================================================================
+Stack: 500 seeded tasks, 50 of which end in "the milk" ("Call the milk #491",
+"Book the milk #498", ...). The stakeholder's own demonstration is "type milk".
+
+$ curl -s 'http://localhost:8120/api/tasks?q=milk'
+{"tasks":[],"query":"milk","openOnly":false}
+
+$ curl -s 'http://localhost:8120/api/tasks?q=call'          # lower case
+{"tasks":[],"query":"call","openOnly":false}
+
+$ curl -s 'http://localhost:8120/api/tasks?q=Call the milk' # exact prefix, exact case
+matches: 5
+
+Browser, 375x812 phone viewport, "milk" typed into the search field:
+  search value : "milk"
+  list items   : 0
+  visible text : No task matches "milk".
+(the same list shows 50 tasks containing "milk" when the field is empty)
+
+Acceptance tests that fail on this:
+  tests/acceptance/002-find-a-task/search.test.js
+    x S5.1 returns only tasks whose title contains the search text
+    x S5.2 ignores upper and lower case ("Buy Milk" is found by "milk")
+    x S5.3 matches text anywhere in the title, not only at its start
+    x S6.2 "open only" combined with a search text returns only matching open tasks
+    x R4 "milk" matches "Buy Milk", "Order milk crate" and "MILK"
+    x R4 an upper-case search text finds a lower-case title
+
+Source of the behaviour (not the fix, the cause):
+  src/search.js  ->  task.title.startsWith(query)
+  docs/architecture/002-find-a-task.md, "Interfaces":
+    "`q` selects the tasks whose **title starts with** the value of `q`,
+     compared **case-sensitively**: `title.startsWith(q)`."

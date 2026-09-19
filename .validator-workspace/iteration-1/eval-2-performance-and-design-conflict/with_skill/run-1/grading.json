@@ -1,0 +1,79 @@
+{
+  "run_id": "eval-2-performance-and-design-conflict-with_skill",
+  "expectations": [
+    {
+      "text": "Writes a validation report at docs/validation/002-find-a-task.md following the report template.",
+      "passed": true,
+      "evidence": "Present in both runs."
+    },
+    {
+      "text": "Reports that the search is prefix-only and case-sensitive, quoting S5.2, S5.3 or R4.",
+      "passed": true,
+      "evidence": "F1 in both runs, with the stakeholder's own 'milk' example reproduced."
+    },
+    {
+      "text": "Classifies that finding as a design problem and does not blame the implementer.",
+      "passed": true,
+      "evidence": "Both name docs/architecture/002-find-a-task.md as the cause and route it to the architect."
+    },
+    {
+      "text": "Writes a gap file at docs/architecture/.gaps/002-find-a-task.md in the implementer's gap format.",
+      "passed": true,
+      "evidence": "with_skill: G1 with Status, Design, Requirement, Problem, Blocks, Suggestion. Baseline: no .gaps file exists."
+    },
+    {
+      "text": "Runs a real load test with 10 concurrent users against the stack with about 500 tasks.",
+      "passed": true,
+      "evidence": "with_skill: 500 tasks, 10 concurrent searchers. Baseline: 500 tasks, 10 concurrent searchers, 2000 searches."
+    },
+    {
+      "text": "Reports a measured p95 latency and compares it with the 500 ms threshold of QE5.",
+      "passed": true,
+      "evidence": "with_skill p95 3.92 ms; baseline p95 5.2 ms. Both against 500 ms."
+    },
+    {
+      "text": "Reports a measured memory figure and compares it with the 256 MB limit of QE6.",
+      "passed": true,
+      "evidence": "with_skill 28 MiB / 256 MiB; baseline peak 26.5 MiB / 256 MiB."
+    },
+    {
+      "text": "Commits the load-test script into the repo so it joins the regression suite.",
+      "passed": true,
+      "evidence": "with_skill: tests/acceptance/002-find-a-task/perf/search.js. Baseline: no perf artefact in the repo, the measurement is only described in the report."
+    },
+    {
+      "text": "Runs the 001 acceptance tests as a regression and reports the result.",
+      "passed": true,
+      "evidence": "11 of 11 pass in both runs."
+    },
+    {
+      "text": "Gives a verdict that routes the design problem correctly (blocked on architecture, or changes requested with the gap written).",
+      "passed": true,
+      "evidence": "with_skill: 'Changes requested (F1 needs the architect first, gap G1)' plus the gap file. Baseline: 'Rejected – findings to fix' and no gap file, so the architect gets nothing to act on."
+    },
+    {
+      "text": "Adds black-box acceptance tests under tests/acceptance/002-find-a-task/.",
+      "passed": true,
+      "evidence": "search.test.js in both runs."
+    },
+    {
+      "text": "Changes no product code.",
+      "passed": true,
+      "evidence": "git diff against the seed tip is empty in both runs."
+    },
+    {
+      "text": "Asks the user no question in its final message.",
+      "passed": true,
+      "evidence": "Neither run asks anything."
+    }
+  ],
+  "passed": 13,
+  "total": 13,
+  "pass_rate": 1.0,
+  "summary": {
+    "passed": 13,
+    "failed": 0,
+    "total": 13,
+    "pass_rate": 1.0
+  }
+}

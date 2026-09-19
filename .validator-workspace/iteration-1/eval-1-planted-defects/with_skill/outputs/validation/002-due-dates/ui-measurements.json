@@ -1,0 +1,152 @@
+{
+  "phone": {
+    "rows": [
+      {
+        "title": "Send the offer to Meyer",
+        "titlePx": 14,
+        "due": "Overdue 2026-09-18",
+        "duePx": 14,
+        "dueClass": "due overdue"
+      },
+      {
+        "title": "Call the supplier back",
+        "titlePx": 14,
+        "due": "Overdue 2026-09-19",
+        "duePx": 14,
+        "dueClass": "due overdue"
+      },
+      {
+        "title": "Book the training room",
+        "titlePx": 14,
+        "due": "Due 2026-09-25",
+        "duePx": 14,
+        "dueClass": "due upcoming"
+      },
+      {
+        "title": "Refill the coffee beans",
+        "titlePx": 14,
+        "due": "",
+        "duePx": 14,
+        "dueClass": "due none"
+      }
+    ],
+    "controls": [
+      {
+        "tag": "input",
+        "type": "text",
+        "id": "title",
+        "text": "",
+        "top": 97,
+        "height": 42
+      },
+      {
+        "tag": "input",
+        "type": "date",
+        "id": "due-date",
+        "text": "",
+        "top": 97,
+        "height": 42
+      },
+      {
+        "tag": "label",
+        "type": null,
+        "id": "",
+        "text": "Repeat weekly",
+        "top": 147,
+        "height": 44
+      },
+      {
+        "tag": "input",
+        "type": "checkbox",
+        "id": "repeat",
+        "text": "",
+        "top": 162,
+        "height": 13
+      },
+      {
+        "tag": "button",
+        "type": "submit",
+        "id": "",
+        "text": "Add task",
+        "top": 147,
+        "height": 44
+      }
+    ],
+    "formRowCount": 2
+  },
+  "desktop": {
+    "rows": [
+      {
+        "title": "Send the offer to Meyer",
+        "titlePx": 18,
+        "due": "Overdue 2026-09-18",
+        "duePx": 14,
+        "dueClass": "due overdue"
+      },
+      {
+        "title": "Call the supplier back",
+        "titlePx": 18,
+        "due": "Overdue 2026-09-19",
+        "duePx": 14,
+        "dueClass": "due overdue"
+      },
+      {
+        "title": "Book the training room",
+        "titlePx": 18,
+        "due": "Due 2026-09-25",
+        "duePx": 14,
+        "dueClass": "due upcoming"
+      },
+      {
+        "title": "Refill the coffee beans",
+        "titlePx": 18,
+        "due": "",
+        "duePx": 14,
+        "dueClass": "due none"
+      }
+    ],
+    "controls": [
+      {
+        "tag": "input",
+        "type": "text",
+        "id": "title",
+        "text": "",
+        "top": 97,
+        "height": 44
+      },
+      {
+        "tag": "input",
+        "type": "date",
+        "id": "due-date",
+        "text": "",
+        "top": 97,
+        "height": 44
+      },
+      {
+        "tag": "label",
+        "type": null,
+        "id": "",
+        "text": "Repeat weekly",
+        "top": 97,
+        "height": 44
+      },
+      {
+        "tag": "input",
+        "type": "checkbox",
+        "id": "repeat",
+        "text": "",
+        "top": 112,
+        "height": 13
+      },
+      {
+        "tag": "button",
+        "type": "submit",
+        "id": "",
+        "text": "Add task",
+        "top": 97,
+        "height": 44
+      }
+    ],
+    "formRowCount": 1
+  }
+}

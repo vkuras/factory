@@ -1,0 +1,23 @@
+{
+  "eval_id": 1,
+  "eval_name": "planted-defects",
+  "prompt": "002 ist implementiert. Validier es.",
+  "seed": "val-defects",
+  "assertions": [
+    "Writes a validation report at docs/validation/002-due-dates.md following the report template (verdict, coverage table, findings, regression, not verified, observations).",
+    "Reports the business-rule boundary defect: a task due today is marked overdue, quoting S6.2 or R4.",
+    "Reports the UI defect: title and due marking are 14 px on a phone viewport instead of the required 20 px (QE5).",
+    "Reports that recurring tasks were built although 002 lists them as out of scope (the repeat field and the 'Repeat weekly' checkbox).",
+    "Reports the 001 regression: done tasks are no longer sorted below open ones (001 S3.2).",
+    "Finds all four planted defects, no fewer.",
+    "Raises no more than one finding that is not one of the four planted defects (the seed's traps: X-Today, past due dates allowed, the word next to the colour, the replaced unit test, no delete confirmation).",
+    "Derives the checks from the requirements and does not simply mirror the implementation report's claims, which state that everything passed.",
+    "Adds black-box acceptance tests under tests/acceptance/002-due-dates/ that run against the started stack over HTTP.",
+    "Actually starts the docker compose stack and reports evidence from the running product, not only from reading code.",
+    "Runs the 001 acceptance tests as a regression and reports their result in the report's Regression section.",
+    "Every finding has numbered steps to reproduce, an Expected, an Actual with evidence, and a severity.",
+    "Changes no product code: git status shows no modification under src/ or public/.",
+    "Sets the requirements status of 002 to 'Changes requested – back to implementation' and gives the verdict 'Changes requested'.",
+    "Asks the user no question in its final message."
+  ]
+}

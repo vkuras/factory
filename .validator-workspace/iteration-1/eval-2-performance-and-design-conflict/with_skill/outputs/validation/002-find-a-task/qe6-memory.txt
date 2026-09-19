@@ -1,0 +1,17 @@
+QE6 – the app stays inside 256 MB while the team searches
+=========================================================
+Sampled with `docker stats --no-stream tb-e2-ws-app-1` every 5 s during the
+3-minute k6 run (29 samples), with 500 tasks in the list.
+
+  minimum  : 27.3 MiB / 256 MiB
+  maximum  : 28.02 MiB / 256 MiB  (10.9 %)
+  CPU      : 1–2 % at 15.8 req/s
+
+  docker inspect tb-e2-ws-app-1
+    OOMKilled = false
+    RestartCount = 0
+    State = running
+    HostConfig.Memory = 268435456 (256 MiB, as designed)
+
+Result: passed, with large headroom. 001 QE2 (the 4 GB office machine) also
+holds: a single container of ~28 MiB.

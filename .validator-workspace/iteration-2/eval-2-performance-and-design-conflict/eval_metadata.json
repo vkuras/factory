@@ -1,0 +1,21 @@
+{
+  "eval_id": 2,
+  "eval_name": "performance-and-design-conflict",
+  "prompt": "Bitte validiere 002, der Implementer meldet ready-for-validation.",
+  "seed": "val-perf-design",
+  "assertions": [
+    "Writes a validation report at docs/validation/002-find-a-task.md following the report template.",
+    "Reports that the search is prefix-only and case-sensitive, quoting S5.2, S5.3 or R4.",
+    "Classifies that finding as a design problem, not as an implementation defect, and does not blame the implementer for it.",
+    "Writes a gap file at docs/architecture/.gaps/002-find-a-task.md in the implementer's gap format (## G<n> heading with Status, Design, Requirement, Problem, Blocks, Suggestion).",
+    "Runs a real load test with the 10 concurrent users QE5 names, against the started stack with about 500 tasks.",
+    "Reports a measured p95 latency as a number and compares it with the 500 ms threshold of QE5.",
+    "Reports a measured memory figure for the container and compares it with the 256 MB limit of QE6.",
+    "Commits the load-test script or scenario into the repo so it becomes part of the regression suite.",
+    "Runs the 001 acceptance tests as a regression and reports the result (all 11 pass).",
+    "Gives the verdict 'Blocked – waiting for architecture', or 'Changes requested' while still classifying the finding as design and writing the gap.",
+    "Adds black-box acceptance tests under tests/acceptance/002-find-a-task/.",
+    "Changes no product code: git status shows no modification under src/ or public/.",
+    "Asks the user no question in its final message."
+  ]
+}

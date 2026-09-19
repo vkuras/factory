@@ -1,0 +1,103 @@
+{
+  "skill_name": "validator",
+  "evals": [
+    {
+      "id": 1,
+      "name": "planted-defects",
+      "prompt": "002 ist implementiert. Validier es.",
+      "expected_output": "Small dockerized task-list product (001 validated, with acceptance tests) where 002 is implemented with planted defects: a business-rule bug at a boundary case, a UI requirement not met (font size below the required minimum on phone viewport), an out-of-scope item that was built anyway, a regression that breaks an 001 acceptance criterion, and an implementation report that claims everything passed. Expect: checks derived from requirements, acceptance tests written in tests/acceptance/002-*, all 4 defects found as findings with reproducible steps and evidence, regression run of 001, report + status 'Changes requested', no product code changed, no questions.",
+      "files": [
+        ".factory-evals/seeds/val-defects"
+      ],
+      "assertions": [
+        "Writes a validation report at docs/validation/002-due-dates.md following the report template (verdict, coverage table, findings, regression, not verified, observations).",
+        "Reports the business-rule boundary defect: a task due today is marked overdue, quoting S6.2 or R4.",
+        "Reports the UI defect: title and due marking are 14 px on a phone viewport instead of the required 20 px (QE5).",
+        "Reports that recurring tasks were built although 002 lists them as out of scope (the repeat field and the 'Repeat weekly' checkbox).",
+        "Reports the 001 regression: done tasks are no longer sorted below open ones (001 S3.2).",
+        "Finds all four planted defects, no fewer.",
+        "Raises no more than one finding that is not one of the four planted defects (the seed's traps: X-Today, past due dates allowed, the word next to the colour, the replaced unit test, no delete confirmation).",
+        "Derives the checks from the requirements and does not simply mirror the implementation report's claims, which state that everything passed.",
+        "Adds black-box acceptance tests under tests/acceptance/002-due-dates/ that run against the started stack over HTTP.",
+        "Actually starts the docker compose stack and reports evidence from the running product, not only from reading code.",
+        "Runs the 001 acceptance tests as a regression and reports their result in the report's Regression section.",
+        "Every finding has numbered steps to reproduce, an Expected, an Actual with evidence, and a severity.",
+        "Changes no product code: git status shows no modification under src/ or public/.",
+        "Sets the requirements status of 002 to 'Changes requested – back to implementation' and gives the verdict 'Changes requested'.",
+        "Asks the user no question in its final message."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "performance-and-design-conflict",
+      "prompt": "Bitte validiere 002, der Implementer meldet ready-for-validation.",
+      "expected_output": "Product with a performance quality expectation (e.g. 10 concurrent users, p95 < 500 ms under a memory budget) and a design that contradicts one requirement (implementer built the design faithfully). Expect: a real load test with the required concurrency and memory measurement, numbers in the report, the design contradiction written as a gap to docs/architecture/.gaps/ and classified as design, not blamed on the implementer, verdict accordingly, no questions.",
+      "files": [
+        ".factory-evals/seeds/val-perf-design"
+      ],
+      "assertions": [
+        "Writes a validation report at docs/validation/002-find-a-task.md following the report template.",
+        "Reports that the search is prefix-only and case-sensitive, quoting S5.2, S5.3 or R4.",
+        "Classifies that finding as a design problem, not as an implementation defect, and does not blame the implementer for it.",
+        "Writes a gap file at docs/architecture/.gaps/002-find-a-task.md in the implementer's gap format (## G<n> heading with Status, Design, Requirement, Problem, Blocks, Suggestion).",
+        "Runs a real load test with the 10 concurrent users QE5 names, against the started stack with about 500 tasks.",
+        "Reports a measured p95 latency as a number and compares it with the 500 ms threshold of QE5.",
+        "Reports a measured memory figure for the container and compares it with the 256 MB limit of QE6.",
+        "Commits the load-test script or scenario into the repo so it becomes part of the regression suite.",
+        "Runs the 001 acceptance tests as a regression and reports the result (all 11 pass).",
+        "Gives the verdict 'Blocked – waiting for architecture', or 'Changes requested' while still classifying the finding as design and writing the gap.",
+        "Adds black-box acceptance tests under tests/acceptance/002-find-a-task/.",
+        "Changes no product code: git status shows no modification under src/ or public/.",
+        "Asks the user no question in its final message."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "revalidation-round-2",
+      "prompt": "Der Implementer hat die Findings zu 002 abgearbeitet. Prüf nochmal.",
+      "expected_output": "Round 2: previous validation report with F1-F3, implementer report answering F1 fixed (really fixed), F2 'not a defect' with a correct quote (validator was wrong), F3 fixed but the fix breaks another AC. Expect: F1 closed after running its steps, F2 withdrawn with reason, F3 closed but a new finding F4 for the new breakage, full validation + regression rerun, round 2 appended with earlier rounds kept, verdict changes-requested.",
+      "files": [
+        ".factory-evals/seeds/val-round2"
+      ],
+      "assertions": [
+        "Updates the existing docs/validation/002-due-dates.md instead of writing a new file, and keeps round 1 readable in it.",
+        "Adds a round 2 section and raises the round number.",
+        "Closes F1 after re-running F1's own reproduction steps against a freshly started stack.",
+        "Withdraws F2 rather than reopening it, and gives the reason with reference to S6.3, accepting the implementer's quote.",
+        "Closes F3.",
+        "Opens a new finding with a fresh ID (F4, not a reused one) for the breakage the F3 fix introduced.",
+        "Identifies that breakage correctly as done tasks no longer being sorted below open ones (001 S3.2).",
+        "Runs the complete validation again, not only the three findings: all checks plus the regression.",
+        "Runs both acceptance suites and reports the numbers (001: 1 of 11 fails, 002: 13 pass).",
+        "Gives the verdict 'Changes requested'.",
+        "Changes no product code: git status shows no modification under src/ or public/.",
+        "Asks the user no question in its final message."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "clean-implementation",
+      "prompt": "Der Implementer meldet 002 fertig. Validier es bitte.",
+      "expected_output": "A correctly implemented feature on top of a validated 001: every acceptance criterion, business rule and quality expectation is met, the implementation report is accurate, and the repo is seeded with things a picky validator would wrongly flag (no delete confirmation, an unbounded date input, no state word on upcoming tasks, the X-Today test header, no debouncing, no auth). Expect: the full validation is still carried out (checks derived from the requirements, acceptance tests written, stack started, non-functional requirements measured, 001 regression run), zero findings, verdict 'Validated', requirements and index status set to Validated, traps at most as observations, no product code changed, no questions.",
+      "files": [
+        ".factory-evals/seeds/val-clean"
+      ],
+      "assertions": [
+        "Writes a validation report at docs/validation/002-due-dates.md following the report template.",
+        "Opens zero findings: the implementation meets every requirement.",
+        "Gives the verdict 'Validated'.",
+        "Sets the requirements status of 002 to 'Validated' and the index status in docs/product.md to 'Validated'.",
+        "Does not report any of the seed's traps as a finding (no delete confirmation, the date input accepting 1900, no state word on upcoming tasks, the X-Today header, no debouncing, no authentication, the JSON file store, dueState derived on read).",
+        "Writes black-box acceptance tests under tests/acceptance/002-due-dates/ even though nothing fails.",
+        "Starts the compose stack and validates against the running product rather than by reading code.",
+        "Measures the non-functional requirements rather than accepting the implementation report's numbers: QE5 phone sizes, QE6 the state in words, QE7 the one-row form.",
+        "Runs the 001 acceptance tests as a regression and reports 11 of 11 passing.",
+        "Verifies the out-of-scope items are absent, including that a POST with 'repeat' stores nothing.",
+        "Leaves the 'Not verified' section empty, since a verdict of Validated requires it.",
+        "Puts anything it dislikes without a requirement behind it under Observations, which do not block.",
+        "Changes no product code.",
+        "Asks the user no question in its final message."
+      ]
+    }
+  ]
+}

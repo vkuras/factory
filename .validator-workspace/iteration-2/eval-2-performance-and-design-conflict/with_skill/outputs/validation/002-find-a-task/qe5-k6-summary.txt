@@ -1,0 +1,9 @@
+http_req_failed
+search_duration
+checks_total.......: 2340    12.96922/s
+checks_succeeded...: 100.00% 2340 out of 2340
+search_duration................: avg=2.09ms min=83.2µs med=2.03ms max=12.52ms p(90)=3.42ms p(95)=3.82ms
+http_req_failed................: 0.00%  0 out of 2340
+http_reqs......................: 2340   12.96922/s
+iterations.....................: 390    2.161537/s
+vus............................: 10     min=10        max=10

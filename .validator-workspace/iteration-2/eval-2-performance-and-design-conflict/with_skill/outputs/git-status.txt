@@ -1,0 +1,9 @@
+=== git status --porcelain ===
+
+=== git diff --stat HEAD ===
+(no unstaged/uncommitted changes)
+
+=== git log --oneline -3 ===
+0ea54c6 test(002): acceptance tests and validation round 1
+f44ad9d fix(002): remove stray listener registrations and the seed script syntax error
+6616b98 feat(002): find a task

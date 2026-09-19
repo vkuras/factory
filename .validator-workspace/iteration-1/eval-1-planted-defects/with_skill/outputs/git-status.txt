@@ -1,0 +1,2 @@
+=== git status --porcelain
+=== git diff --stat HEAD

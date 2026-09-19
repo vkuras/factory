@@ -1,0 +1,20 @@
+{
+  "eval_id": 3,
+  "eval_name": "revalidation-round-2",
+  "prompt": "Der Implementer hat die Findings zu 002 abgearbeitet. Prüf nochmal.",
+  "seed": "val-round2",
+  "assertions": [
+    "Updates the existing docs/validation/002-due-dates.md instead of writing a new file, and keeps round 1 readable in it.",
+    "Adds a round 2 section and raises the round number.",
+    "Closes F1 after re-running F1's own reproduction steps against a freshly started stack.",
+    "Withdraws F2 rather than reopening it, and gives the reason with reference to S6.3, accepting the implementer's quote.",
+    "Closes F3.",
+    "Opens a new finding with a fresh ID (F4, not a reused one) for the breakage the F3 fix introduced.",
+    "Identifies that breakage correctly as done tasks no longer being sorted below open ones (001 S3.2).",
+    "Runs the complete validation again, not only the three findings: all checks plus the regression.",
+    "Runs both acceptance suites and reports the numbers (001: 1 of 11 fails, 002: 13 pass).",
+    "Gives the verdict 'Changes requested'.",
+    "Changes no product code: git status shows no modification under src/ or public/.",
+    "Asks the user no question in its final message."
+  ]
+}

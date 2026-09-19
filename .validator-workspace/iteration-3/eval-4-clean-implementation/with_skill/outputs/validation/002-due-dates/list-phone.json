@@ -1,0 +1,268 @@
+{
+  "url": "http://localhost:8144/",
+  "lang": "en",
+  "bodyText": "Taskboard\nAdd task\nPay the September invoice\nOverdue 2026-09-18\nDelete\nCall the supplier back\nDue today 2026-09-19\nDelete\nSend the quote to Meier\nDue 2026-09-25\nDelete\nOrder new filters\nDelete\nFix the coffee machine\nOverdue 2026-09-10\nDelete",
+  "form": {
+    "controls": [
+      {
+        "tag": "input",
+        "type": "text",
+        "name": "title",
+        "top": 97,
+        "left": 16,
+        "w": 109,
+        "h": 44,
+        "fontSize": 18,
+        "text": "What needs doing?"
+      },
+      {
+        "tag": "input",
+        "type": "date",
+        "name": "dueDate",
+        "top": 97,
+        "left": 133,
+        "w": 131,
+        "h": 44,
+        "fontSize": 13.3333,
+        "text": ""
+      },
+      {
+        "tag": "button",
+        "type": "submit",
+        "name": "",
+        "top": 97,
+        "left": 272,
+        "w": 102,
+        "h": 44,
+        "fontSize": 18,
+        "text": "Add task"
+      }
+    ],
+    "rect": {
+      "top": 97,
+      "h": 44,
+      "w": 358
+    }
+  },
+  "rows": [
+    {
+      "text": "Pay the September invoice | Overdue 2026-09-18 | Delete",
+      "h": 100,
+      "rowFontSize": 18,
+      "parts": [
+        {
+          "tag": "span",
+          "cls": "title",
+          "text": "Pay the September invoice",
+          "fontSize": 20,
+          "color": "rgb(28, 28, 26)",
+          "textDecoration": "none"
+        },
+        {
+          "tag": "span",
+          "cls": "due overdue",
+          "text": "Overdue 2026-09-18",
+          "fontSize": 20,
+          "color": "rgb(161, 42, 42)",
+          "textDecoration": "none"
+        },
+        {
+          "tag": "button",
+          "cls": "",
+          "text": "Delete",
+          "fontSize": 18,
+          "color": "rgb(161, 42, 42)",
+          "textDecoration": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "tag": "input",
+          "text": "on",
+          "w": 24,
+          "h": 24
+        },
+        {
+          "tag": "button",
+          "text": "Delete",
+          "w": 68,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "text": "Call the supplier back | Due today 2026-09-19 | Delete",
+      "h": 100,
+      "rowFontSize": 18,
+      "parts": [
+        {
+          "tag": "span",
+          "cls": "title",
+          "text": "Call the supplier back",
+          "fontSize": 20,
+          "color": "rgb(28, 28, 26)",
+          "textDecoration": "none"
+        },
+        {
+          "tag": "span",
+          "cls": "due due-today",
+          "text": "Due today 2026-09-19",
+          "fontSize": 20,
+          "color": "rgb(107, 107, 102)",
+          "textDecoration": "none"
+        },
+        {
+          "tag": "button",
+          "cls": "",
+          "text": "Delete",
+          "fontSize": 18,
+          "color": "rgb(161, 42, 42)",
+          "textDecoration": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "tag": "input",
+          "text": "on",
+          "w": 24,
+          "h": 24
+        },
+        {
+          "tag": "button",
+          "text": "Delete",
+          "w": 68,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "text": "Send the quote to Meier | Due 2026-09-25 | Delete",
+      "h": 100,
+      "rowFontSize": 18,
+      "parts": [
+        {
+          "tag": "span",
+          "cls": "title",
+          "text": "Send the quote to Meier",
+          "fontSize": 20,
+          "color": "rgb(28, 28, 26)",
+          "textDecoration": "none"
+        },
+        {
+          "tag": "span",
+          "cls": "due upcoming",
+          "text": "Due 2026-09-25",
+          "fontSize": 20,
+          "color": "rgb(107, 107, 102)",
+          "textDecoration": "none"
+        },
+        {
+          "tag": "button",
+          "cls": "",
+          "text": "Delete",
+          "fontSize": 18,
+          "color": "rgb(161, 42, 42)",
+          "textDecoration": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "tag": "input",
+          "text": "on",
+          "w": 24,
+          "h": 24
+        },
+        {
+          "tag": "button",
+          "text": "Delete",
+          "w": 68,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "text": "Order new filters | Delete",
+      "h": 67,
+      "rowFontSize": 18,
+      "parts": [
+        {
+          "tag": "span",
+          "cls": "title",
+          "text": "Order new filters",
+          "fontSize": 20,
+          "color": "rgb(28, 28, 26)",
+          "textDecoration": "none"
+        },
+        {
+          "tag": "button",
+          "cls": "",
+          "text": "Delete",
+          "fontSize": 18,
+          "color": "rgb(161, 42, 42)",
+          "textDecoration": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "tag": "input",
+          "text": "on",
+          "w": 24,
+          "h": 24
+        },
+        {
+          "tag": "button",
+          "text": "Delete",
+          "w": 68,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "text": "Fix the coffee machine | Overdue 2026-09-10 | Delete",
+      "h": 100,
+      "rowFontSize": 18,
+      "parts": [
+        {
+          "tag": "span",
+          "cls": "title",
+          "text": "Fix the coffee machine",
+          "fontSize": 20,
+          "color": "rgb(107, 107, 102)",
+          "textDecoration": "line-through"
+        },
+        {
+          "tag": "span",
+          "cls": "due overdue",
+          "text": "Overdue 2026-09-10",
+          "fontSize": 20,
+          "color": "rgb(161, 42, 42)",
+          "textDecoration": "none"
+        },
+        {
+          "tag": "button",
+          "cls": "",
+          "text": "Delete",
+          "fontSize": 18,
+          "color": "rgb(161, 42, 42)",
+          "textDecoration": "none"
+        }
+      ],
+      "buttons": [
+        {
+          "tag": "input",
+          "text": "on",
+          "w": 24,
+          "h": 24
+        },
+        {
+          "tag": "button",
+          "text": "Delete",
+          "w": 68,
+          "h": 44
+        }
+      ]
+    }
+  ],
+  "scrollWidth": 390,
+  "innerWidth": 390
+}

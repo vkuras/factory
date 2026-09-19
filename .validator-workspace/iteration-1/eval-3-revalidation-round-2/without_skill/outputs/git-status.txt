@@ -1,0 +1,10 @@
+=== git status --porcelain ===
+ M docs/validation/002-due-dates.md
+ M docs/validation/002-due-dates/README.md
+ M tests/acceptance/002-due-dates/due-dates.test.js
+
+=== git diff --stat HEAD ===
+ docs/validation/002-due-dates.md                 | 137 +++++++++++++++--------
+ docs/validation/002-due-dates/README.md          |  41 +++++++
+ tests/acceptance/002-due-dates/due-dates.test.js |  16 +++
+ 3 files changed, 148 insertions(+), 46 deletions(-)

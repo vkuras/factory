@@ -1,0 +1,4 @@
+=== git status --porcelain ===
+
+=== git diff --stat HEAD ===
+(clean: everything is committed as d104aad)

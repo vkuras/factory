@@ -1,0 +1,8 @@
+# git status --porcelain
+
+# git diff --stat HEAD
+
+# git log --oneline -3
+84c864f test(002): acceptance tests and validation round 1
+6616b98 feat(002): find a task
+b2e595a feat(001): task list MVP

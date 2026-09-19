@@ -1,0 +1,8 @@
+=== git status --porcelain ===
+
+=== git diff --stat HEAD ===
+
+=== git log --oneline -3 ===
+28d3200 test(002): acceptance tests for due dates and overdue tasks
+d417a32 fix(ui): keep the add form on one row and the task row inside the phone viewport
+0dddaf4 feat(002): due dates and overdue tasks

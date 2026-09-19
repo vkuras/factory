@@ -1,0 +1,11 @@
+=== git status --porcelain ===
+ M docs/product.md
+ M docs/requirements/002-find-a-task.md
+?? docs/validation/002-find-a-task.md
+?? docs/validation/002-find-a-task/
+?? tests/acceptance/002-find-a-task/
+
+=== git diff --stat HEAD ===
+ docs/product.md                      | 2 +-
+ docs/requirements/002-find-a-task.md | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)

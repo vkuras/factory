@@ -1,0 +1,79 @@
+{
+  "run_id": "eval-2-performance-and-design-conflict-without_skill",
+  "expectations": [
+    {
+      "text": "Writes a validation report at docs/validation/002-find-a-task.md following the report template.",
+      "passed": true,
+      "evidence": "Present in both runs."
+    },
+    {
+      "text": "Reports that the search is prefix-only and case-sensitive, quoting S5.2, S5.3 or R4.",
+      "passed": true,
+      "evidence": "Both reproduced the stakeholder's 'milk' example against 500 seeded tasks."
+    },
+    {
+      "text": "Classifies that finding as a design problem and does not blame the implementer.",
+      "passed": true,
+      "evidence": "Both name the design as the cause and route it to the architect."
+    },
+    {
+      "text": "Writes a gap file at docs/architecture/.gaps/002-find-a-task.md in the implementer's gap format.",
+      "passed": false,
+      "evidence": "with_skill: G1 with Status, Design, Requirement, Problem, Blocks, Suggestion. Baseline: no .gaps file; the routing exists only as prose in the report."
+    },
+    {
+      "text": "Runs a real load test with 10 concurrent users against the stack with about 500 tasks.",
+      "passed": true,
+      "evidence": "with_skill: 10 concurrent searchers over 3 minutes. Baseline: 10 concurrent clients, 2000 searches, and additionally an A/B of the two match rules."
+    },
+    {
+      "text": "Reports a measured p95 latency and compares it with the 500 ms threshold of QE5.",
+      "passed": true,
+      "evidence": "with_skill p95 3.82 ms; baseline p95 5.3 ms in the container."
+    },
+    {
+      "text": "Reports a measured memory figure and compares it with the 256 MB limit of QE6.",
+      "passed": true,
+      "evidence": "with_skill 28.1 MiB; baseline 59.6 MiB. Both under 256 MiB."
+    },
+    {
+      "text": "Commits the load-test script into the repo so it joins the regression suite.",
+      "passed": false,
+      "evidence": "with_skill: tests/acceptance/002-find-a-task/perf/ as part of the suite. Baseline: docs/validation/002-find-a-task/load.mjs, in the repo but outside the regression suite, so no later round runs it."
+    },
+    {
+      "text": "Runs the 001 acceptance tests as a regression and reports the result.",
+      "passed": true,
+      "evidence": "11 of 11 in both runs."
+    },
+    {
+      "text": "Gives a verdict that routes the design problem correctly.",
+      "passed": false,
+      "evidence": "with_skill: 'Blocked – waiting for architecture' plus the gap file. Baseline: 'Rejected', with the requirements status set to 'Rejected in validation – back to architecture', which is not a defined status, and no gap for the architect to act on."
+    },
+    {
+      "text": "Adds black-box acceptance tests under tests/acceptance/002-find-a-task/.",
+      "passed": true,
+      "evidence": "with_skill 17 tests, baseline 13."
+    },
+    {
+      "text": "Changes no product code.",
+      "passed": true,
+      "evidence": "Neither run changed src/ or public/."
+    },
+    {
+      "text": "Asks the user no question in its final message.",
+      "passed": true,
+      "evidence": "Neither run asks anything."
+    }
+  ],
+  "passed": 10,
+  "total": 13,
+  "pass_rate": 0.7692,
+  "summary": {
+    "passed": 10,
+    "failed": 3,
+    "total": 13,
+    "pass_rate": 0.7692
+  }
+}
