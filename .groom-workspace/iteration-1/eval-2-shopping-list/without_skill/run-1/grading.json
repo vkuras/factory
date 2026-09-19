@@ -1,0 +1,90 @@
+{
+ "expectations": [
+  {
+   "text": "H1 same ingredients merged/summed when same unit, different units separate",
+   "passed": true,
+   "evidence": "S4: \"the quantities are summed, e.g. 200 g flour + 300 g flour gives 500 g flour. With a different unit they stay separate entries ... Units are not converted\"."
+  },
+  {
+   "text": "H2 list respects chosen servings",
+   "passed": true,
+   "evidence": "S2: \"using the **servings currently set** on the recipe, so quantities are scaled\"; example: \"A recipe for 4 servings, set to 2 servings, with 400 g Mehl: adding it puts 200 g Mehl on the list.\""
+  },
+  {
+   "text": "H3 one shared household list, check-offs visible to others within seconds",
+   "passed": true,
+   "evidence": "S1: \"One shared list per household ... Changes by one member appear on the other members' devices within seconds, without a manual refresh.\""
+  },
+  {
+   "text": "H4 checked items move to bottom; 'finish shopping' clears checked items",
+   "passed": true,
+   "evidence": "S8: \"Ticked entries move to the bottom of the list\"; S10: \"\\\"Liste leeren\\\". It removes **only the ticked entries**. Unticked entries stay.\""
+  },
+  {
+   "text": "H5 manual items can be added",
+   "passed": true,
+   "evidence": "S6: \"A member can add free items that aren't in a recipe (e.g. \\\"Klopapier\\\"). Quantity and unit are optional.\""
+  },
+  {
+   "text": "H6 grouping by fixed supermarket sections",
+   "passed": true,
+   "evidence": "S11: \"Unticked entries are grouped by section in this fixed walking order: Obst & Gemüse, Brot & Backwaren, ... Sonstiges.\" Caveat: demoted to \"Should (desired, not a blocker; may ship in a later increment)\" after the groomer's leading recommendation \"Priorität: ... (Vorschlag: gewünscht, aber kein Blocker)\"; stakeholder only said \"wär schon nice\" and then \"Kein Blocker\". Not contrary to brief (brief is silent on priority), so passed, but the with_skill run shows the true intent is a firm want."
+  },
+  {
+   "text": "Trap: 'Vorräte abhaken' captured as unticking at-home items when adding, not pantry/stock management",
+   "passed": true,
+   "evidence": "S3: \"can deselect any they already have ... There is no pantry or stock tracking.\"; Non-goals: \"No pantry or stock management\". Stakeholder: \"Nee, kein Vorratsmanagement, nur beim Hinzufügen wegklicken. Also a.\""
+  },
+  {
+   "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+   "passed": true,
+   "evidence": "Stories are product-level (S9: \"Changes sync automatically once the device is back online\"). Firebase and sync approach appear only in \"Constraints and notes for the architect\"."
+  },
+  {
+   "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+   "passed": false,
+   "evidence": "Not verbatim: \"The stakeholder suggested **Firebase** for this, but only as an idea, not a hard requirement.\" No quote of \"Sync am besten über Firebase\". PERSONA DRIFT also involved: groomer asked a technical question (\"Läuft die Rezept-App schon auf Firebase ... Ist Firebase ein Muss?\") which the persona should have deflected; it answered \"Firebase ist nur meine Idee dafür\", and the doc then weakened the wish into \"Choose the sync approach that fits the existing architecture best\". Not expanded into requirements, though."
+  },
+  {
+   "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+   "passed": true,
+   "evidence": "Q5 offered a/b/c/d; stakeholder: \"Nee, kein Vorratsmanagement, nur beim Hinzufügen wegklicken. Also a.\" Reflected in S3 and Non-goals."
+  },
+  {
+   "text": "The groomer never asked the stakeholder to read a document, file or long list",
+   "passed": true,
+   "evidence": "No request to read a file/document. Post-write message asks to check 5 assumptions (\"Bitte kurz prüfen\") - short, not a document."
+  },
+  {
+   "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+   "passed": false,
+   "evidence": "No confirmation before writing. The summary came after the file was written: \"Danke, ist alles aufgeschrieben. Kurz zusammengefasst: ...\" and \"Falls etwas davon nicht passt, sag Bescheid.\""
+  },
+  {
+   "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+   "passed": false,
+   "evidence": "\"Later: \\\"Always at home\\\" list that is automatically skipped when adding recipes.\" - groomer suggested \"b vielleicht später\", stakeholder only answered \"Also a.\" and never accepted b for later. Also unconfirmed-before-writing Assumptions, incl. one never mentioned in chat: \"\\\"Same ingredient\\\" means the same name, ignoring upper/lower case\", and quality rule \"Ticking off must be fast with one hand\" never discussed."
+  },
+  {
+   "text": "Every story has acceptance criteria describing observable behaviour",
+   "passed": false,
+   "evidence": "S1-S12 are one-line scope statements without their own ACs. Only 6 \"Acceptance examples\" exist; none for S6 manual entries, S7 edit/delete, S8 tick-off moving to bottom/untick, S11 section grouping order."
+  },
+  {
+   "text": "The document contains no open product questions left for the architect",
+   "passed": false,
+   "evidence": "S9: \"So do adding, editing and deleting, as far as feasible\" leaves the offline scope undecided; \"Assumptions (confirm or correct during design if they cause trouble)\" hands product decisions (merge identity, conflict rule, same recipe twice) to design; \"Should ... may ship in a later increment\" leaves the release scope of S11/S12 open."
+  },
+  {
+   "text": "Requirements document is written in English under docs/requirements/",
+   "passed": true,
+   "evidence": "File docs/requirements/002-shopping-list.md, written in English."
+  }
+ ],
+ "summary": {
+  "passed": 11,
+  "failed": 5,
+  "total": 16,
+  "pass_rate": 0.69
+ }
+}

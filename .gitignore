@@ -428,9 +428,4 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# skill eval workspace
-.groom-workspace/
-.architect-workspace/
-.implementer-workspace/
-.validator-workspace/
-.factory-evals/
+

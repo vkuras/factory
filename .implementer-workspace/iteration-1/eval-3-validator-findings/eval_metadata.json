@@ -1,0 +1,6 @@
+{
+ "eval_id": 3,
+ "eval_name": "validator-findings",
+ "prompt": "Der Validierer hat Findings zu 002 geliefert: docs/validation/002-overdue-tasks.md. Arbeite die ab.",
+ "assertions": []
+}

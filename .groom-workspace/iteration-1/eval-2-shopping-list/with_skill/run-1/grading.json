@@ -1,0 +1,90 @@
+{
+ "expectations": [
+  {
+   "text": "H1 same ingredients merged/summed when same unit, different units separate",
+   "passed": true,
+   "evidence": "R2: \"a new quantity is merged into an existing entry only if the name and unit are exactly the same ... 300 g Mehl + 200 g Mehl = 500 g Mehl. \\\"2 EL Mehl\\\" and \\\"200 g Mehl\\\" stay two entries ... Units are never converted.\""
+  },
+  {
+   "text": "H2 list respects chosen servings",
+   "passed": true,
+   "evidence": "R3: \"ingredients are added with the quantities for the servings chosen in the recipe\"; S1 AC: \"servings set to 6 (base 4) ... quantities for 6 servings\"."
+  },
+  {
+   "text": "H3 one shared household list, check-offs visible to others within seconds",
+   "passed": true,
+   "evidence": "R1: \"each household has exactly one shopping list. All household members see the same list\"; S4 AC: \"Given another member checks an entry ... then I see the change within a few seconds without reloading (R11).\""
+  },
+  {
+   "text": "H4 checked items move to bottom; 'finish shopping' clears checked items",
+   "passed": true,
+   "evidence": "S4 AC: \"when I tap it, then it is crossed out and moves to the \\\"Done\\\" section\"; S3: \"one \\\"Done\\\" section below all departments\"; S5: \"when I choose \\\"Clear done\\\", then all checked entries are removed ... Open entries are untouched.\""
+  },
+  {
+   "text": "H5 manual items can be added",
+   "passed": true,
+   "evidence": "S2: \"when I add \\\"Klopapier\\\" with no quantity, then an entry \\\"Klopapier\\\" appears, marked as own entry.\""
+  },
+  {
+   "text": "H6 grouping by fixed supermarket sections",
+   "passed": true,
+   "evidence": "R8: \"Departments (fixed, in this order, not configurable): Obst & Gemüse, Fleisch & Wurst, Kühlregal, Backwaren, Nudeln/Mehl/Konserven, Getränke, Drogerie, Tiefkühl, Sonstiges.\" Stakeholder insisted in chat: \"Abteilungen sortieren brauch ich schon ... will ich wirklich haben\". Note: 4 extra departments were groomer suggestions the stakeholder accepted."
+  },
+  {
+   "text": "Trap: 'Vorräte abhaken' captured as unticking at-home items when adding, not pantry/stock management",
+   "passed": true,
+   "evidence": "S1 AC: \"when I deselect \\\"Salz\\\" and \\\"Öl\\\" and confirm, then all other ingredients are added ... and Salz and Öl are not\"; S1 Notes: \"There is no pantry inventory. Leaving things out only happens in this selection step.\"; Out of scope: \"Pantry or inventory management (stakeholder: only deselect when adding).\""
+  },
+  {
+   "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+   "passed": true,
+   "evidence": "Stories/rules/quality stay at product level (R11: \"changes from all members are combined and none is lost\"; Quality: \"Offline use is essential\"). Firebase appears only under \"Stakeholder technical constraints\"; sync/storage mechanisms only under \"Left to architecture\"."
+  },
+  {
+   "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+   "passed": true,
+   "evidence": "\"Stakeholder technical constraints\": \"\\\"Sync am besten über Firebase\\\" (\\\"Sync preferably via Firebase\\\")\" - verbatim; not referenced in any story or rule. Groomer in chat: \"Firebase gebe ich dem Architekten als deine feste Vorgabe mit. Technisch entscheide ich da nichts weiter.\""
+  },
+  {
+   "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+   "passed": true,
+   "evidence": "Groomer Q3 offered a) deselect-when-adding / b) inventory / c) in-store check-off / d) later; stakeholder: \"a) - beim Hinzufügen abwählen was schon da ist. Kein Vorratsmanagement\". Trace L3: \"clarified as deselect-when-adding: S1; inventory: Out of scope\"."
+  },
+  {
+   "text": "The groomer never asked the stakeholder to read a document, file or long list",
+   "passed": true,
+   "evidence": "No request to read a file/document. Final confirmation was chunked into 5 short parts, each answered with \"passt\"."
+  },
+  {
+   "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+   "passed": true,
+   "evidence": "5-part walkthrough (\"Bevor ich etwas aufschreibe, gehe ich mein Verständnis in kurzen Häppchen mit dir durch\"), ending \"Passt das so? Dann schreibe ich es auf.\" -> stakeholder: \"passt, schreib's auf\". Document written afterwards."
+  },
+  {
+   "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+   "passed": true,
+   "evidence": "All capabilities (remove recipe, origins, same recipe twice, department memory, extra departments) were proposed and accepted before writing. Minor caveat: four derived rules were decided without confirmation and only disclosed after writing (Decisions: \"Unchecking merges with an equal open entry ... \\\"Done\\\" is ordered by check time. A delete wins over a concurrent offline change\") - edge-case rules, not new capabilities, and transparently labelled. Offline use is in scope because stakeholder stated it (see drift note in summary), not groomer-invented."
+  },
+  {
+   "text": "Every story has acceptance criteria describing observable behaviour",
+   "passed": true,
+   "evidence": "S1-S9 each have Given/When/Then ACs describing visible outcomes (e.g. S6: \"\\\"500 g Mehl – Lasagne, Pfannkuchen\\\" becomes \\\"200 g Mehl – Pfannkuchen\\\"\")."
+  },
+  {
+   "text": "The document contains no open product questions left for the architect",
+   "passed": true,
+   "evidence": "\"## Open questions\\nNone.\" \"Left to architecture\" lists only technical how-questions each tied to a product need (e.g. \"How the list is synchronized ... Product need: S9 and R11\")."
+  },
+  {
+   "text": "Requirements document is written in English under docs/requirements/",
+   "passed": true,
+   "evidence": "File docs/requirements/002-shopping-list.md, written in English (German only for stakeholder quotes and UI terms)."
+  }
+ ],
+ "summary": {
+  "passed": 16,
+  "failed": 0,
+  "total": 16,
+  "pass_rate": 1.0
+ }
+}

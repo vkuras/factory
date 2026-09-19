@@ -1,0 +1,24 @@
+{
+ "eval_id": 2,
+ "eval_name": "shopping-list",
+ "prompt": "002 Einkaufsliste ist gegroomt. Entwirf das technische Design dafür.",
+ "assertions": [
+  "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+  "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+  "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+  "Out-of-scope items of the target requirements are not designed or built",
+  "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+  "All written files are in English",
+  "Detects the conflict between the stakeholder's 'Sync am besten über Firebase' and the product constraint that FE+BE+DB run on the Pi, and documents it openly (both requirements, resolution, what is lost) instead of silently picking one",
+  "The conflict resolution is flagged for later stakeholder confirmation (e.g. a change request for the groomer) without blocking the design",
+  "Builds on the existing stack (Ktor, PostgreSQL, React PWA, Caddy) without adding a new database or runtime",
+  "Addresses that the Pi is currently reachable only in the home network while the list is used in the supermarket over mobile data, and decides how the phone reaches the backend there",
+  "Live updates between household members use a concrete mechanism (e.g. SSE or WebSocket) including reconnect/resync behaviour",
+  "Offline viewing and ticking: changes are queued locally and replayed; conflicts (e.g. line deleted or shopping finished while offline) have defined outcomes",
+  "Merge rules R1/R2/R2a/R2b are specified precisely (case-insensitive name + same unit, only open recipe lines, quantity-less ingredients, free items never merged)",
+  "Area assignment is specified: household corrections take priority, then a concrete built-in mapping, fallback Sonstiges; corrections stored household-wide",
+  "The memory/capacity budget of the Pi is re-checked after adding the feature (e.g. long-lived connections)",
+  "Design plans a docker-compose stack in which every server-side component (frontend serving, backend, database, workers) is a service, and 'docker compose up -d' starts the whole product",
+  "Every compose service has its image/build, ports, named volumes for persistent data, env/secrets via .env with .env.example, healthcheck, depends_on and restart policy specified"
+ ]
+}

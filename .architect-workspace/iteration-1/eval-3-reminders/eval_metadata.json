@@ -1,0 +1,22 @@
+{
+ "eval_id": 3,
+ "eval_name": "reminders",
+ "prompt": "Mach das Design für die Erinnerungen (002).",
+ "assertions": [
+  "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+  "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+  "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+  "Out-of-scope items of the target requirements are not designed or built",
+  "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+  "All written files are in English",
+  "Stays on the existing stack (NestJS/TypeScript, Prisma, PostgreSQL, React PWA) and introduces no new language or database",
+  "Uses OneSignal for push as the stakeholder stated, including how devices/users are registered (e.g. external user id = Taskli user id)",
+  "The 07:00 trigger is defined in Europe/Berlin although the server runs in UTC, and DST transitions are handled",
+  "Bavarian holidays are computed per year including Easter-based movable holidays and exclude 15 Aug and 8 Aug",
+  "The daily run is idempotent: a restart or duplicate run never sends a second message to a person on the same day (persisted record)",
+  "Behaviour after a missed 07:00 run (server down) is defined and consistent with R2/R8",
+  "Meister notice is sent once per task, persisted, and can re-trigger after a due-date change (R10)",
+  "'Today', 'tomorrow' and working-day overdue counting are computed in Europe/Berlin on date-only due dates",
+  "Tap targets specified: single task opens that task, multiple opens the employee list or the Meister overview"
+ ]
+}

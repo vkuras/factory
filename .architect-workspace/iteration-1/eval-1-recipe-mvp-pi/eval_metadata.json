@@ -1,0 +1,23 @@
+{
+ "eval_id": 1,
+ "eval_name": "recipe-mvp-pi",
+ "prompt": "Die Requirements für die Rezept-App sind fertig gegroomt. Mach jetzt die Architektur.",
+ "assertions": [
+  "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+  "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+  "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+  "Out-of-scope items of the target requirements are not designed or built",
+  "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+  "All written files are in English",
+  "Kotlin is used as stated by the stakeholder (at least for the backend) and the choice for each client/frontend is justified against the Kotlin constraint",
+  "Frontend, backend and database all run as Docker containers on the Raspberry Pi 5 (e.g. one docker compose file); no external hosted service replaces one of them",
+  "The design explicitly requires linux/arm64 images/builds for the Pi",
+  "A memory budget with per-container limits is given, the JVM heap is explicitly capped, and the sum fits in 4 GB with headroom for the OS",
+  "The 10-concurrent-users requirement is verified by a defined load test (tool, scenario, pass threshold)",
+  "Offline reading of previously opened recipes (incl. photo, cooking mode, scaling) has a concrete mechanism (e.g. service worker cache) and failed saves keep the user's input",
+  "HTTPS/secure context is provided for the browser clients (needed for service worker and screen wake lock), including how household devices trust it",
+  "Cooking mode keeps the screen on via a concrete mechanism (e.g. Screen Wake Lock API)",
+  "The import design is based on the real files in /Users/vicokuras/IdeaProjects/rezepte (handles varying heading levels, ingredients written as headings, numbered-heading steps, Short Ribs -> Hauptgerichte, amounts like '1,5 L')",
+  "Scaling rule R5/R6 is specified precisely (formula, only ingredient amounts, one decimal, German decimal comma)"
+ ]
+}

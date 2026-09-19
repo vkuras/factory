@@ -1,0 +1,6 @@
+{
+ "eval_id": 3,
+ "eval_name": "revalidation-round-2",
+ "prompt": "Der Implementer hat die Findings zu 002 abgearbeitet. Prüf nochmal.",
+ "assertions": []
+}

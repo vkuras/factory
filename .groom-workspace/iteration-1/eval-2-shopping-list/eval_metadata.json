@@ -1,0 +1,23 @@
+{
+ "eval_id": 2,
+ "eval_name": "shopping-list",
+ "prompt": "Ich brauch ne Einkaufsliste. Ich will aus Rezepten die Zutaten auf ne Liste packen. Vielleicht kann man auch Vorr\u00e4te abhaken, wei\u00df nicht. Sync am besten \u00fcber Firebase.",
+ "assertions": [
+  "H1 same ingredients merged/summed when same unit, different units separate",
+  "H2 list respects chosen servings",
+  "H3 one shared household list, check-offs visible to others within seconds",
+  "H4 checked items move to bottom; 'finish shopping' clears checked items",
+  "H5 manual items can be added",
+  "H6 grouping by fixed supermarket sections",
+  "Trap: 'Vorr\u00e4te abhaken' captured as unticking at-home items when adding, not pantry/stock management",
+  "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+  "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+  "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+  "The groomer never asked the stakeholder to read a document, file or long list",
+  "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+  "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+  "Every story has acceptance criteria describing observable behaviour",
+  "The document contains no open product questions left for the architect",
+  "Requirements document is written in English under docs/requirements/"
+ ]
+}

@@ -1,0 +1,86 @@
+{
+  "expectations": [
+    {
+      "text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+      "passed": true,
+      "evidence": "final_message.md is two declarative paragraphs; no question mark, no options, no review request. Ends with statement: 'Der Change Request dazu liegt in docs/requirements/.change-requests/002-shopping-list.md.'"
+    },
+    {
+      "text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+      "passed": true,
+      "evidence": "002-shopping-list.md 'Traceability' table maps every AC S1.1–S1.5, S2.1–S2.6, S3.1–S3.3, S4.1–S4.6, S5.1–S5.4, S6.1–S6.4 and R1, R2, R2a, R2b, R3, R4, R5, R6 to design elements + tests, e.g. 'R2b no-quantity ingredients | R-MERGE null-quantity branch', 'R6 equal rights | No owner checks on shopping endpoints'. Checked each: all concretely backed in body (R-MERGE, R-TICK, R-ORDER, R-AREA, UI section)."
+    },
+    {
+      "text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+      "passed": true,
+      "evidence": "No TBD/TODO; grep for either/consider/if needed/optional finds none in design choices. Ambiguities resolved as numbered Assumptions A1–A12 (e.g. 'A4 – R2b ... \"1 TL Salz\" absorbs a later \"Salz\"'). Conditionals have defined outcomes ('If the 001 recipe-view code uses a different formula, the 001 code is the truth: change this backend formula'; Tailscale plan fallback defined)."
+    },
+    {
+      "text": "Out-of-scope items of the target requirements are not designed or built",
+      "passed": true,
+      "evidence": "Traceability rows 'Out of scope: ... Not built' for pantry, recipe origin ('origin not stored'), area editing (fixed CHECK), multiple lists, line editing (no edit endpoint), offline adding (A1: disabled). No such features in Interfaces/UI."
+    },
+    {
+      "text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+      "passed": true,
+      "evidence": "Data model tables shopping_line/area_correction with Field|Type|Null|Default (e.g. 'quantity | numeric(10,3) | yes'); Interfaces table with method+path, request and response, e.g. 'PUT /api/shopping-list/lines/{id}/ticked | { \"ticked\": boolean, \"seenRevision\": int, \"seenQuantity\": number|null } | 200 ListResponse', plus Line JSON shape and error codes."
+    },
+    {
+      "text": "All written files are in English",
+      "passed": true,
+      "evidence": "Design, ADRs 0005–0008, CR and overview.md edits are English; German only in binding UI strings and stakeholder quotes (e.g. 'Sync am besten über Firebase')."
+    },
+    {
+      "text": "Detects the conflict between the stakeholder's 'Sync am besten über Firebase' and the product constraint that FE+BE+DB run on the Pi, and documents it openly (both requirements, resolution, what is lost) instead of silently picking one",
+      "passed": true,
+      "evidence": "Design 'Requirement conflicts / C1': quotes both 002 'Sync am besten über Firebase' and 001 Pi constraint, 'Why they can't both hold', 'Resolution: ... SSE and an offline outbox', 'What is lost: Firebase's managed offline persistence and reachability from anywhere without extra setup ... Tailscale app switched on'."
+    },
+    {
+      "text": "The conflict resolution is flagged for later stakeholder confirmation (e.g. a change request for the groomer) without blocking the design",
+      "passed": true,
+      "evidence": "requirements/.change-requests/002-shopping-list.md 'For the groomer: Please confirm with the stakeholder. If he wants Firebase anyway ... the design will be revised.' Design status 'Designed – ready for implementation'; nothing blocked."
+    },
+    {
+      "text": "Builds on the existing stack (Ktor, PostgreSQL, React PWA, Caddy) without adding a new database or runtime",
+      "passed": true,
+      "evidence": "'No new container'; backend module in Ktor, two new tables in existing PostgreSQL, React PWA route, Caddy encode matcher. New pieces are libraries (ktor-server-sse, idb) and host-level Tailscale (network, not app runtime/DB)."
+    },
+    {
+      "text": "Addresses that the Pi is currently reachable only in the home network while the list is used in the supermarket over mobile data, and decides how the phone reaches the backend there",
+      "passed": true,
+      "evidence": "ADR 0007 context: 'Until now the app is reachable only in the home network ... shopper in the supermarket, on the mobile network'; decision Tailscale subnet route + split DNS, keeps https://rezepte.home; also considers CGNAT/DS-Lite, port-forward, Cloudflare options."
+    },
+    {
+      "text": "Live updates between household members use a concrete mechanism (e.g. SSE or WebSocket) including reconnect/resync behaviour",
+      "passed": true,
+      "evidence": "SSE via ktor-server-sse: 'On connect: send retry: 3000, then one event: changed so the client refetches (covers changes missed while disconnected)', ': ping' every 25 s; client refetches on changed/online/visibilitychange."
+    },
+    {
+      "text": "Offline viewing and ticking: changes are queued locally and replayed; conflicts (e.g. line deleted or shopping finished while offline) have defined outcomes",
+      "passed": true,
+      "evidence": "Outbox of absolute tick states in IndexedDB, replay 'sequential ... 200 → remove; 404 → remove entry; 401 → stop, login flow; network error → retry 2 s doubling'. R-TICK: 'L missing → 404 (client drops the operation; the line was deleted or finished by someone)'; stale revision → split into ticked seen quantity + open delta, with examples."
+    },
+    {
+      "text": "Merge rules R1/R2/R2a/R2b are specified precisely (case-insensitive name + same unit, only open recipe lines, quantity-less ingredients, free items never merged)",
+      "passed": true,
+      "evidence": "R-KEY (NFC, trim, lowercase) + R-MERGE: 'find an open line with kind = RECIPE, name_key = nk, unit_key IS NOT DISTINCT FROM uk'; null-quantity branch for R2b; 'Ticked lines and FREE lines are never merge targets (R2a, R3)'; worked examples incl. 'Zwiebel' ≠ 'Zwiebeln'."
+    },
+    {
+      "text": "Area assignment is specified: household corrections take priority, then a concrete built-in mapping, fallback Sonstiges; corrections stored household-wide",
+      "passed": true,
+      "evidence": "R-AREA: '1. area_correction(household, k) → its area. 2. dictionary exact 3. word-suffix match 4. Otherwise SONSTIGES'; areas-de.tsv ≥250 entries with required fixture entries listed; area_correction PK (household_id, name_key) = household-wide."
+    },
+    {
+      "text": "The memory/capacity budget of the Pi is re-checked after adding the feature (e.g. long-lived connections)",
+      "passed": true,
+      "evidence": "'Resource budget (4 GB Pi)' table: backend '+ < 5 MB for 10 SSE connections and event bus', tailscaled 100 MB new, 'Total fixed 1.44 GB'; T-MEM-1 and T-LOAD-2 with 10 held SSE connections; overview.md budget row updated."
+    }
+  ],
+  "summary": {
+    "passed": 15,
+    "failed": 0,
+    "total": 15,
+    "pass_rate": 1.0
+  },
+  "notes": "1) Very thorough: revision-based split (seenRevision+seenQuantity) handles the offline-tick-vs-merge race even for R2b null-quantity lines, with worked test examples. 2) Gap: recipe-additions has no idempotency key, so a retry after a lost response doubles quantities under R1 (without_skill handled this). 3) Tailscale adds a third-party coordination service; overview's 'no external services' was amended openly, and CGNAT/DS-Lite was considered explicitly. 4) Updated overview.md comprehensively (stack, components, data model, reachability, conventions, budget) and flagged that referenced ADR 0001–0004/001 design/code are missing from the repo. 5) Invented but documented interpretations (A2 unit case-insensitive, A4 R2b direction, A9 NFC) are recorded as assumptions, not questions."
+}

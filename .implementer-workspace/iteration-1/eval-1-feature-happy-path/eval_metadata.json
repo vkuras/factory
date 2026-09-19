@@ -1,0 +1,6 @@
+{
+ "eval_id": 1,
+ "eval_name": "feature-happy-path",
+ "prompt": "Das Design für 002 ist fertig. Setz es um.",
+ "assertions": []
+}

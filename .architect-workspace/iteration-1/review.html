@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "architect", "runs": [{"id": "eval-1-recipe-mvp-pi-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_message.md", "type": "text", "content": "Die Architektur steht in `docs/architecture/001-recipe-app-mvp.md`, dazu `overview.md` und die ADRs 0001\u20130007. Die App wird ein Kotlin-Stack: ein Ktor-Server, eine PWA in Kotlin/JS mit React (offline per Service Worker) und PostgreSQL. Alles l\u00e4uft in 3 Containern auf dem Pi 5 mit fest verteilten 1,5 GB RAM, nur im Heimnetz, mit HTTPS \u00fcber Caddy und DNS-01. Die 8 Rezepte kommen einmalig per CLI-Import rein.\nEs gibt keine Konflikte zwischen den Anforderungen. Eine Voraussetzung ist neu: F\u00fcr das HTTPS-Zertifikat braucht es eine eigene Domain bei Cloudflare.\n"}], "grading": {"expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": true, "evidence": "final_message.md contains only statements: 'Es gibt keine Konflikte zwischen den Anforderungen. Eine Voraussetzung ist neu: F\u00fcr das HTTPS-Zertifikat braucht es eine eigene Domain bei Cloudflare.' No question, no options, no review/approval request."}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": true, "evidence": "001-recipe-app-mvp.md 'Traceability' table has one row per acceptance criterion S1.1\u2013S11.8 (3+2+3+3+5+5+4+4+3+2+8 = all 42 ACs) and R1\u2013R10, each mapped to concrete elements (e.g. 'S9.1 confirm, then removed for all | delete dialog, DELETE /api/recipes/{id}', 'S5.4 stored recipe unchanged | client-only state, never sent', 'R6 Rounding | half-up to tenths, German format') plus a named test."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": true, "evidence": "No TBD/TODO/'consider'/'either X or Y' found by grep. All choices are fixed (e.g. 'Only the founder (Viktor) can create invitation ... links' A1; Cloudflare DNS-01 chosen in ADR 0005; pool size 5; bcrypt cost 11). Versions are fixed by a rule ('latest stable ... pinned in gradle/libs.versions.toml'), not left open."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "Traceability lists every Out-of-scope item as 'Not built' (ingredient search: 'filter on title only'; offline create/edit: 'no mutation queue'; source field: 'import drops it'; Git sync: 'import once'). Nothing out of scope is designed. Added extras (password reset, backups, members page) are not in the out-of-scope list."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "Data model tables list every field with Postgres type, nullability and constraints (e.g. 'servings | smallint | yes | CHECK 1\u201399', 'ingredients | jsonb' with JSON schema). The Endpoints table gives method, path, request and response for every route (e.g. 'PUT /api/recipes/{id} | owner | multipart: recipe (RecipeWrite + version + photoAction)... | 200 Recipe | 401, 403 NOT_OWNER, 404, 409...'), plus a full Recipe JSON example."}, {"text": "All written files are in English", "passed": true, "evidence": "overview.md, 001-recipe-app-mvp.md and all 7 ADRs are English. German appears only as quoted UI strings (required: German UI) and stakeholder quotes."}, {"text": "Kotlin is used as stated by the stakeholder (at least for the backend) and the choice for each client/frontend is justified against the Kotlin constraint", "passed": true, "evidence": "ADR 0001: 'Kotlin everywhere: Ktor server, Kotlin/JS React web app, shared Kotlin module'. The client choice is weighed against Kotlin options (native Android/Compose, Compose Multiplatform Wasm): 'the only option that serves every device with one client and keeps the whole codebase in Kotlin'. T-LANG-1 Gradle check enforces no JS/TS sources."}, {"text": "Frontend, backend and database all run as Docker containers on the Raspberry Pi 5 (e.g. one docker compose file); no external hosted service replaces one of them", "passed": true, "evidence": "ADR 0004 / design 'Deployment and runtime': compose services web (Caddy + static bundle), app (Ktor), db (postgres:16-alpine) on the Pi. Cloudflare/Let's Encrypt only issue the TLS cert: 'Nothing in the app depends on internet access.'"}, {"text": "The design explicitly requires linux/arm64 images/builds for the Pi", "passed": true, "evidence": "ADR 0004: 'Every base image must be multi-arch with linux/arm64 ... scripts/deploy.sh fails if an image's architecture isn't arm64'; deploy: 'docker buildx build --platform linux/arm64' (T-ARCH-1)."}, {"text": "A memory budget with per-container limits is given, the JVM heap is explicitly capped, and the sum fits in 4 GB with headroom for the OS", "passed": true, "evidence": "ADR 0004 table: web 128 MB, app 896 MB, db 512 MB = 1536 MB, 'leaves \u2248 2.5 GB for OS, Docker, page cache'; JVM flags '-Xms64m -Xmx384m -XX:MaxMetaspaceSize=128m ... -XX:MaxDirectMemorySize=64m'. Resource budget row: 'OS + Docker ~400 MB'."}, {"text": "The 10-concurrent-users requirement is verified by a defined load test (tool, scenario, pass threshold)", "passed": true, "evidence": "T-LOAD-1: 'k6 ... 10 VUs \u00d7 5 min, each iteration logs in once per VU, then GET list \u2192 GET random recipe \u2192 GET its photo \u2192 sleep 1 s; plus 1 VU doing PUT ... Pass: http_req_failed < 1%, p(95) < 300 ms for GETs, p(95) < 1000 ms for PUT'. T-MEM-1 checks memory during it."}, {"text": "Offline reading of previously opened recipes (incl. photo, cooking mode, scaling) has a concrete mechanism (e.g. service worker cache) and failed saves keep the user's input", "passed": true, "evidence": "ADR 0002 + 'Offline behaviour': SW precaches shell, network-first 4 s timeout for /api/recipes/{id} into 'api-v1', cache-first for photos; scaling runs client-side from shared module. R9: editor stays open, draft (incl. resized photo) in localStorage 'draft:<recipeId|new>', restored on reopen. E2E-OFFLINE tests photo, stepper 4\u21926, cooking mode, draft restore."}, {"text": "HTTPS/secure context is provided for the browser clients (needed for service worker and screen wake lock), including how household devices trust it", "passed": true, "evidence": "ADR 0005: Caddy obtains a Let's Encrypt certificate via DNS-01 at Cloudflare, LAN-only A record; 'Trusted by every device with zero setup on phones'; rejects self-signed CA because 'Each device must install and trust a root CA ... fails QE7'. Explicitly tied to SW and Wake Lock needing a secure context."}, {"text": "Cooking mode keeps the screen on via a concrete mechanism (e.g. Screen Wake Lock API)", "passed": true, "evidence": "'Wake lock (web/cooking/WakeLock.kt): ... navigator.wakeLock.request(\"screen\"). On visibilitychange to visible, request again ... If the API is missing or rejects, play the bundled 1-second silent nosleep.mp4'. Verified by E2E-COOK and M-1 (5 min on real devices)."}, {"text": "The import design is based on the real files in /Users/vicokuras/IdeaProjects/rezepte (handles varying heading levels, ingredients written as headings, numbered-heading steps, Short Ribs -> Hauptgerichte, amounts like '1,5 L')", "passed": true, "evidence": "R10 parser spec is tailored to the real files: heading regex '^#+\\s*(.*)$' (handles '##Zutaten'), INGREDIENTS mode turns headings into ingredients ('# 2 eier'), heading steps '^(\\d+)\\.\\s+(.+)$' for Short Ribs, 'A file directly in --source \u2192 Hauptgerichte', unit regex incl. 'L' ('1.5 L hochwertige Rinderbr\u00fche'). Golden table checked against /Users/vicokuras/IdeaProjects/rezepte: totals 8 recipes / 68 ingredients / 19 with amounts / 67 steps, Serviettenkn\u00f6del step 11 '10 in alufolie einpacken', Pute 7/3/4 are all correct."}, {"text": "Scaling rule R5/R6 is specified precisely (formula, only ingredient amounts, one decimal, German decimal comma)", "passed": true, "evidence": "R5/R6: integer formula 'num = milli \u00d7 chosen, den = servings \u00d7 100, tenths = (2\u00b7num + den) / (2\u00b7den)' (half-up to one decimal); 'Ingredients without an amount, units, names and step texts are never changed'; 'comma decimal separator'; example table (1,5 L 4\u21926 \u2192 2,3 L; step '0,5 l Wasser' unchanged; servings null \u2192 no stepper)."}], "summary": {"passed": 16, "failed": 0, "total": 16, "pass_rate": 1.0}, "notes": "1) Import golden table is verified correct against the real files (68 ingredients, 19 with amounts, 67 steps), a very strong, testable spec. 2) A5 moves amounts to the front on display ('Kartoffeln mehlig (900g)' shown as '900 g Kartoffeln mehlig') and the importer strips bold/merges heading lines: this arguably conflicts with S11 'taken over as written'. The without_skill span approach avoids that. 3) Invented scope beyond requirements: founder role + founder-only invites (A1), password-reset links, members page, backup timer/restore, optimistic locking, silent-video wake-lock fallback. All reasonable, none out-of-scope. 4) Test-plan claim is questionable: E2E-OFFLINE runs on Chromium and WebKit, but Playwright supports service workers well only in Chromium. 5) It adds a hard prerequisite (own domain at Cloudflare) that the final message states as a fact, not a question. It cost 2.3x the time/1.7x the tokens of the baseline (698 s / 147k vs 303 s / 88k)."}}, {"id": "eval-1-recipe-mvp-pi-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_message.md", "type": "text", "content": "Die Architektur f\u00fcr 001 (Rezept-App MVP) ist fertig und steht in `docs/architecture.md`. In der Requirement-Datei und in `product.md` steht der Status jetzt auf \"Architected\". Code gibt es noch keinen.\n\n**Kern:**\n- **Eine Web-App, die man auf dem Handy wie eine App installiert (PWA).** Sie l\u00e4uft auf Handy, Tablet und Laptop, egal ob iPhone oder Android, und braucht keinen App Store. Frontend und Service Worker sind in Kotlin/JS (React \u00fcber kotlin-wrappers) geschrieben, das Backend in Ktor (JVM 21). Die Datenbank ist PostgreSQL, Fotos liegen dort mit drin.\n- **Auf dem Pi laufen vier Container:** Caddy (HTTPS und die Web-App), Ktor, Postgres und ein n\u00e4chtliches Backup. Zusammen brauchen sie etwa 1,3 GB von den 4 GB RAM.\n- **Ein gemeinsames Kotlin-Modul** erkennt die Mengen, skaliert sie und rundet sie. Import, Server und Eingabeformular benutzen denselben Code.\n- **Offline:** Der Service Worker speichert jedes ge\u00f6ffnete Rezept samt Foto. Portionen umrechnen und Kochmodus funktionieren deshalb ohne WLAN. Speichern geht nur mit Verbindung. Schl\u00e4gt es fehl, bleiben die Eingaben erhalten, auch nach einem Neuladen.\n- **Zutaten bleiben Text, genau wie geschrieben.** Beim Umrechnen wird nur die erkannte Zahl ersetzt, z. B. \"Kartoffeln mehlig (900g)\" \u2192 \"(1350g)\".\n- **Zugang:** Jeder hat eigenen Benutzernamen und Passwort. Die Einladung ist ein Link, den man per Messenger schickt. Man bleibt 365 Tage angemeldet.\n- **Import:** ein einmaliger Befehl mit Probelauf zum Durchsehen. Er bricht ab, wenn nicht genau 8 Rezepte gefunden werden, und l\u00e4sst sich kein zweites Mal ausf\u00fchren. Die 8 Dateien habe ich durchgesehen und die Regeln passend zu ihren uneinheitlichen Formaten beschrieben.\n- **Umsetzungsreihenfolge:** 8 Schritte, beginnend mit einem lauff\u00e4higen Grundger\u00fcst mit HTTPS auf dem Pi.\n\n**Wichtig, bitte beachten:**\n- **HTTPS ist Pflicht.** Offline-Lesen und das Anlassen des Bildschirms funktionieren im Browser nur \u00fcber HTTPS. Ich bin davon ausgegangen, dass Viktor eine eigene Domain hat oder sich eine holt, und dass die App nur im Heim-WLAN erreichbar sein muss. Ohne Domain geht Tailscale als Alternative, dann braucht aber jedes Ger\u00e4t eine zus\u00e4tzliche App. Das muss vor dem Einrichten auf dem Pi feststehen.\n- **Auf iPhone und iPad muss die App auf den Home-Bildschirm.** Sonst l\u00f6scht iOS nach 7 Tagen ohne Nutzung den Offline-Speicher.\n- **Backup habe ich erg\u00e4nzt, obwohl es nicht in den Requirements steht.** Ohne das Git-Repo ist der Pi sonst die einzige Kopie der Rezepte. Au\u00dferdem empfehle ich eine SSD statt SD-Karte.\n- **Ich habe angenommen, dass jedes Mitglied einladen darf**, weil es laut Requirements keine Rollen gibt.\n"}], "grading": {"expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": false, "evidence": "final_message.md, section 'Wichtig, bitte beachten': 'Ohne Domain geht Tailscale als Alternative ... Das muss vor dem Einrichten auf dem Pi feststehen.' This is an open decision/option handed to the user. Also 'Ich bin davon ausgegangen, dass Viktor eine eigene Domain hat oder sich eine holt'."}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": false, "evidence": "architecture.md has no traceability mapping. Several ACs have no concrete design element: S8.2 (adding servings enables scaling) is not addressed; S9.1 delete confirmation appears only as a word in build slice 6 ('delete confirmation'); S4.1 recipe view contents and R7 section headings in the recipe view (not cooking mode) are not specified; S11.1 'owned by Viktor' only via '--owner viktor' in a command example. The \u00a712 verification table covers only a subset (R5/R6, S11, R1/R2, R4, R9, S10, S6)."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": false, "evidence": "Open alternatives remain: '\u00a79 Alternative if Viktor has no domain ...: Tailscale'; A1 'It must be settled before slice 1 can be finished on the Pi'; 'registry or docker save | ssh'; 'on a developer machine or CI'; 'local DNS entry in the router, or a public A record'; 'external disk or USB stick'; R9 verification 'UI test or manual check'; '\u00a713 Implementation slices (suggested order)'."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "None of the out-of-scope items is designed: search is 'case-insensitive substring match on the title ... Ingredients are not searched'; no source column; ADR-08 'writes online-only ... Offline editing is explicitly out of scope'; import once via import_run. The added backup sidecar is not on the out-of-scope list."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": false, "evidence": "\u00a75 data model is a pseudo-schema with many fields untyped ('session (id_hash bytea pk, member_id fk, created_at, last_seen_at, expires_at)', 'import_run (id pk, ran_at, owner_id, recipe_count)', 'step (recipe_id, section_position, position int, text text, pk(...))'). \u00a76 API table gives method/path/purpose only. Request/response shapes are prose ('full recipe incl. ingredients with amount spans, sections, steps...'), with no DTO/JSON structure, no ingredient/section shape, no error format."}, {"text": "All written files are in English", "passed": true, "evidence": "architecture.md and the edited status lines in requirements/product.md are in English. German appears only as UI strings."}, {"text": "Kotlin is used as stated by the stakeholder (at least for the backend) and the choice for each client/frontend is justified against the Kotlin constraint", "passed": true, "evidence": "\u00a72: 'Backend Kotlin/JVM, frontend and service worker Kotlin/JS, shared code in Kotlin Multiplatform'. ADR-02: 'Frontend in Kotlin/JS + React ... Alternatives: Compose Multiplatform for Web (Wasm, canvas); server-rendered HTML ... Satisfies the Kotlin constraint'. ADR-01 rejects native Android + iOS."}, {"text": "Frontend, backend and database all run as Docker containers on the Raspberry Pi 5 (e.g. one docker compose file); no external hosted service replaces one of them", "passed": true, "evidence": "\u00a73/\u00a79: compose services web (Caddy + static PWA), app (Ktor), db (postgres:17-alpine), plus backup, all on the Pi. Let's Encrypt only issues the cert."}, {"text": "The design explicitly requires linux/arm64 images/builds for the Pi", "passed": true, "evidence": "\u00a72: 'Three containers plus a backup sidecar, all linux/arm64'. \u00a74: 'images are built for linux/arm64 with docker buildx'."}, {"text": "A memory budget with per-container limits is given, the JVM heap is explicitly capped, and the sum fits in 4 GB with headroom for the OS", "passed": false, "evidence": "\u00a79 gives limits for web 64 MB, app 512 MB ('-Xmx320m' heap cap present) and db 512 MB, but the fourth container (backup sidecar) has no limit, and there is no explicit OS headroom budget beyond 'stays under ~1.3 GB of 4 GB'. Per-container limits are incomplete."}, {"text": "The 10-concurrent-users requirement is verified by a defined load test (tool, scenario, pass threshold)", "passed": true, "evidence": "\u00a712: 'Gatling (Kotlin DSL) against the Pi: 10 concurrent users browsing, opening and saving for 5 min \u2192 p95 < 500 ms, no errors, containers within memory limits.' Tool, scenario and threshold are present, though the scenario is coarse."}, {"text": "Offline reading of previously opened recipes (incl. photo, cooking mode, scaling) has a concrete mechanism (e.g. service worker cache) and failed saves keep the user's input", "passed": true, "evidence": "\u00a77: SW network-first with 4 s timeout for GET /api/recipes{,/id}, cache-first for photos, app shell precached. 'Scaling, cooking mode and search are pure client logic on cached data'. R9: 'leaves the form as it was. The form state (without the photo) is also written to localStorage ... The chosen photo is kept in memory.'"}, {"text": "HTTPS/secure context is provided for the browser clients (needed for service worker and screen wake lock), including how household devices trust it", "passed": true, "evidence": "\u00a79/ADR-06: Caddy gets a Let's Encrypt cert via ACME DNS-01, LAN-only hostname. 'DNS-01 gives trusted certificates ... No per-device setup for the wife'; self-signed CA rejected. \u00a72 explains the secure-context need for SW and wake lock. (The unresolved domain/Tailscale choice is penalised under 'No open decisions'.)"}, {"text": "Cooking mode keeps the screen on via a concrete mechanism (e.g. Screen Wake Lock API)", "passed": true, "evidence": "\u00a78.2: 'Screen Wake Lock API (navigator.wakeLock.request('screen')). The lock is requested again on visibilitychange ... released when cooking mode is left', hint if unsupported."}, {"text": "The import design is based on the real files in /Users/vicokuras/IdeaProjects/rezepte (handles varying heading levels, ingredients written as headings, numbered-heading steps, Short Ribs -> Hauptgerichte, amounts like '1,5 L')", "passed": true, "evidence": "\u00a710 is based on the real files: ''##Zutaten' without a space, ingredients written as '# 2 eier''; heading-steps '### 1. Rotwein reduzieren' \u2192 'Short Ribs \u2192 6 steps'; 'Files in the root (Shortribs.md) \u2192 Hauptgerichte'; golden tests with '1,5 L hochwertige Rinderbr\u00fche \u2192 1,5', 'Kartoffeln mehlig (900g) \u2192 900'. It correctly notes Tortellini '3.' and Serviettenkn\u00f6del '2.' duplicates, which match the actual files."}, {"text": "Scaling rule R5/R6 is specified precisely (formula, only ingredient amounts, one decimal, German decimal comma)", "passed": true, "evidence": "\u00a75.2: 'scaled = amount_milli \u00d7 chosenServings \u00f7 recipeServings, computed in exact integer arithmetic and then rounded half-up to one decimal (R5, R6). Examples: 1,5 \u00d7 6/4 = 2,25 \u2192 2,3'; 'decimal comma, no trailing ,0'; 'Only ingredient spans are scaled. Step text and ingredients without an amount stay unchanged.'"}], "summary": {"passed": 11, "failed": 5, "total": 16, "pass_rate": 0.69}, "notes": "1) Stronger fidelity to S11 'as written': ingredients stay verbatim text with a marked amount span, and scaling replaces only the number ('(900g)' \u2192 '(1350g)'). It also handles ranges/fractions. 2) Much less precise than with_skill: no field types or DTO shapes, no traceability, no per-AC tests, and offline/wake-lock verification is manual only. 3) The final message defers a real decision to the user (domain vs Tailscale, 'muss ... feststehen') and adds recommendations (SSD) and unrequested scope (backup sidecar, framed as 'erg\u00e4nzt, obwohl es nicht in den Requirements steht'). 4) A3 lets any member invite. That is a defensible reading, but it differs from S1's 'Viktor invites'. The server re-encodes photos on the Pi's JVM with a 320 MB heap and a 10 MB upload limit, which is a possible memory spike that is never budgeted. 5) Faster and cheaper (303 s / 88k tokens) but leaves more to implementers."}}, {"id": "eval-2-shopping-list-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_message.md", "type": "text", "content": "Das Design f\u00fcr 002 liegt in `docs/architecture/002-shopping-list.md` (dazu ADRs 0005\u20130008 und ein aktualisiertes `overview.md`). Die Einkaufsliste wird als neues `shopping`-Modul im bestehenden Ktor/Postgres-Backend gebaut. Live-Updates laufen \u00fcber SSE, offline wird \u00fcber einen IndexedDB-Snapshot mit Outbox abgehakt, und ein Revisionscheck sorgt daf\u00fcr, dass beim Mergen keine Mengen verloren gehen. Bereiche kommen aus Haushaltskorrekturen und einem W\u00f6rterbuch, alles andere landet in \u201eSonstiges\u201c. Im Laden erreicht man den Pi \u00fcber Tailscale.\nKonflikt: Firebase wird nicht verwendet, weil die Daten laut 001 komplett auf dem Pi laufen m\u00fcssen. Der Change Request dazu liegt in `docs/requirements/.change-requests/002-shopping-list.md`.\n"}], "grading": {"expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": true, "evidence": "final_message.md is two declarative paragraphs; no question mark, no options, no review request. Ends with statement: 'Der Change Request dazu liegt in docs/requirements/.change-requests/002-shopping-list.md.'"}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": true, "evidence": "002-shopping-list.md 'Traceability' table maps every AC S1.1\u2013S1.5, S2.1\u2013S2.6, S3.1\u2013S3.3, S4.1\u2013S4.6, S5.1\u2013S5.4, S6.1\u2013S6.4 and R1, R2, R2a, R2b, R3, R4, R5, R6 to design elements + tests, e.g. 'R2b no-quantity ingredients | R-MERGE null-quantity branch', 'R6 equal rights | No owner checks on shopping endpoints'. Checked each: all concretely backed in body (R-MERGE, R-TICK, R-ORDER, R-AREA, UI section)."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": true, "evidence": "No TBD/TODO; grep for either/consider/if needed/optional finds none in design choices. Ambiguities resolved as numbered Assumptions A1\u2013A12 (e.g. 'A4 \u2013 R2b ... \"1 TL Salz\" absorbs a later \"Salz\"'). Conditionals have defined outcomes ('If the 001 recipe-view code uses a different formula, the 001 code is the truth: change this backend formula'; Tailscale plan fallback defined)."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "Traceability rows 'Out of scope: ... Not built' for pantry, recipe origin ('origin not stored'), area editing (fixed CHECK), multiple lists, line editing (no edit endpoint), offline adding (A1: disabled). No such features in Interfaces/UI."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "Data model tables shopping_line/area_correction with Field|Type|Null|Default (e.g. 'quantity | numeric(10,3) | yes'); Interfaces table with method+path, request and response, e.g. 'PUT /api/shopping-list/lines/{id}/ticked | { \"ticked\": boolean, \"seenRevision\": int, \"seenQuantity\": number|null } | 200 ListResponse', plus Line JSON shape and error codes."}, {"text": "All written files are in English", "passed": true, "evidence": "Design, ADRs 0005\u20130008, CR and overview.md edits are English; German only in binding UI strings and stakeholder quotes (e.g. 'Sync am besten \u00fcber Firebase')."}, {"text": "Detects the conflict between the stakeholder's 'Sync am besten \u00fcber Firebase' and the product constraint that FE+BE+DB run on the Pi, and documents it openly (both requirements, resolution, what is lost) instead of silently picking one", "passed": true, "evidence": "Design 'Requirement conflicts / C1': quotes both 002 'Sync am besten \u00fcber Firebase' and 001 Pi constraint, 'Why they can't both hold', 'Resolution: ... SSE and an offline outbox', 'What is lost: Firebase's managed offline persistence and reachability from anywhere without extra setup ... Tailscale app switched on'."}, {"text": "The conflict resolution is flagged for later stakeholder confirmation (e.g. a change request for the groomer) without blocking the design", "passed": true, "evidence": "requirements/.change-requests/002-shopping-list.md 'For the groomer: Please confirm with the stakeholder. If he wants Firebase anyway ... the design will be revised.' Design status 'Designed \u2013 ready for implementation'; nothing blocked."}, {"text": "Builds on the existing stack (Ktor, PostgreSQL, React PWA, Caddy) without adding a new database or runtime", "passed": true, "evidence": "'No new container'; backend module in Ktor, two new tables in existing PostgreSQL, React PWA route, Caddy encode matcher. New pieces are libraries (ktor-server-sse, idb) and host-level Tailscale (network, not app runtime/DB)."}, {"text": "Addresses that the Pi is currently reachable only in the home network while the list is used in the supermarket over mobile data, and decides how the phone reaches the backend there", "passed": true, "evidence": "ADR 0007 context: 'Until now the app is reachable only in the home network ... shopper in the supermarket, on the mobile network'; decision Tailscale subnet route + split DNS, keeps https://rezepte.home; also considers CGNAT/DS-Lite, port-forward, Cloudflare options."}, {"text": "Live updates between household members use a concrete mechanism (e.g. SSE or WebSocket) including reconnect/resync behaviour", "passed": true, "evidence": "SSE via ktor-server-sse: 'On connect: send retry: 3000, then one event: changed so the client refetches (covers changes missed while disconnected)', ': ping' every 25 s; client refetches on changed/online/visibilitychange."}, {"text": "Offline viewing and ticking: changes are queued locally and replayed; conflicts (e.g. line deleted or shopping finished while offline) have defined outcomes", "passed": true, "evidence": "Outbox of absolute tick states in IndexedDB, replay 'sequential ... 200 \u2192 remove; 404 \u2192 remove entry; 401 \u2192 stop, login flow; network error \u2192 retry 2 s doubling'. R-TICK: 'L missing \u2192 404 (client drops the operation; the line was deleted or finished by someone)'; stale revision \u2192 split into ticked seen quantity + open delta, with examples."}, {"text": "Merge rules R1/R2/R2a/R2b are specified precisely (case-insensitive name + same unit, only open recipe lines, quantity-less ingredients, free items never merged)", "passed": true, "evidence": "R-KEY (NFC, trim, lowercase) + R-MERGE: 'find an open line with kind = RECIPE, name_key = nk, unit_key IS NOT DISTINCT FROM uk'; null-quantity branch for R2b; 'Ticked lines and FREE lines are never merge targets (R2a, R3)'; worked examples incl. 'Zwiebel' \u2260 'Zwiebeln'."}, {"text": "Area assignment is specified: household corrections take priority, then a concrete built-in mapping, fallback Sonstiges; corrections stored household-wide", "passed": true, "evidence": "R-AREA: '1. area_correction(household, k) \u2192 its area. 2. dictionary exact 3. word-suffix match 4. Otherwise SONSTIGES'; areas-de.tsv \u2265250 entries with required fixture entries listed; area_correction PK (household_id, name_key) = household-wide."}, {"text": "The memory/capacity budget of the Pi is re-checked after adding the feature (e.g. long-lived connections)", "passed": true, "evidence": "'Resource budget (4 GB Pi)' table: backend '+ < 5 MB for 10 SSE connections and event bus', tailscaled 100 MB new, 'Total fixed 1.44 GB'; T-MEM-1 and T-LOAD-2 with 10 held SSE connections; overview.md budget row updated."}], "summary": {"passed": 15, "failed": 0, "total": 15, "pass_rate": 1.0}, "notes": "1) Very thorough: revision-based split (seenRevision+seenQuantity) handles the offline-tick-vs-merge race even for R2b null-quantity lines, with worked test examples. 2) Gap: recipe-additions has no idempotency key, so a retry after a lost response doubles quantities under R1 (without_skill handled this). 3) Tailscale adds a third-party coordination service; overview's 'no external services' was amended openly, and CGNAT/DS-Lite was considered explicitly. 4) Updated overview.md comprehensively (stack, components, data model, reachability, conventions, budget) and flagged that referenced ADR 0001\u20130004/001 design/code are missing from the repo. 5) Invented but documented interpretations (A2 unit case-insensitive, A4 R2b direction, A9 NFC) are recorded as assumptions, not questions."}}, {"id": "eval-2-shopping-list-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_message.md", "type": "text", "content": "Das technische Design f\u00fcr 002 Einkaufsliste ist fertig. Eine Sache muss der Stakeholder noch best\u00e4tigen: Ich habe **gegen Firebase entschieden**. Dadurch braucht es f\u00fcrs Live-Update im Laden ein VPN.\n\n**Kernentscheidungen**\n- **Sync ohne Firebase (ADR 0005):** Die Liste liegt in der bestehenden Postgres-DB auf dem Pi. Das neue Ktor-Modul `shoppinglist` schickt \u00c4nderungen per SSE live an alle Ger\u00e4te, bei jeder \u00c4nderung als komplette Liste. Firebase w\u00fcrde die Hard Constraint \u201ealles auf dem Pi\u201c brechen und eine zweite DB und ein zweites Auth-System bringen. Au\u00dferdem l\u00e4gen die Haushaltsdaten dann bei Google, und die Merge-Regeln liefen nicht mehr in Kotlin. Was er mit Firebase eigentlich will (Live-Liste, offline abhaken), ist trotzdem erf\u00fcllt.\n- **Zugriff aus dem Laden (ADR 0006):** Die App ist nur im Heimnetz erreichbar. Deshalb l\u00e4uft WireGuard auf dem Pi-Host oder auf dem Router, auf den Handys \u201eon demand\u201c. Die App selbst bleibt vom Internet aus unerreichbar. Ohne VPN funktioniert die Liste im Laden nur offline, und S1 (Frau f\u00fcgt zu Hause hinzu, er sieht es im Laden) ist dann nicht erf\u00fcllt.\n- **Offline (ADR 0007):** Der letzte Stand der Liste liegt in IndexedDB. Abhaken l\u00e4uft immer \u00fcber eine lokale Warteschlange, die bei Reconnect abgearbeitet wird. Hat jemand eine Zeile offline abgehakt, w\u00e4hrend ein anderer Menge dazugerechnet hat, teilt der Server die Zeile per Split-Regel auf. So geht nichts verloren und R2a bleibt gewahrt. Hinzuf\u00fcgen, L\u00f6schen, Verschieben und Abschlie\u00dfen gehen nur online.\n- **Bereiche:** Zuerst greifen die Korrekturen des Haushalts, dann ein eingebautes deutsches W\u00f6rterbuch (inkl. Endungs-Match f\u00fcr Komposita wie \u201eVollmilch\u201c \u2192 K\u00fchlregal), sonst \u201eSonstiges\u201c. Kein ML, keine externen Dienste.\n- **Rezept hinzuf\u00fcgen:** Der Client skaliert die Mengen mit derselben Funktion wie 001 S3 und schickt die fertigen Zeilen. Ein Idempotency-Key verhindert, dass ein wiederholter Request die Mengen verdoppelt.\n\n**Dateien**\n- `docs/architecture/design/002-shopping-list.md`: das Design mit Datenmodell, Merge-Regeln, API, Frontend, Tests und Reihenfolge der Umsetzung\n- `docs/architecture/adr/0005`, `0006`, `0007`\n- Status-/Indexeintr\u00e4ge in `overview.md`, `product.md` und `002-shopping-list.md` auf \u201eDesigned\u201c gesetzt\n\n**Offen**\n1. **Stakeholder:** Muss \u201ekein Firebase, daf\u00fcr WireGuard\u201c best\u00e4tigen. Daf\u00fcr braucht es eine Portweiterleitung am Router (oder das eingebaute WireGuard des Routers) und eine einmalige Einrichtung auf jedem Handy, mit dem eingekauft wird. Die Umsetzungsschritte 1\u20135 h\u00e4ngen nicht davon ab.\n2. **Im Review zu best\u00e4tigen:** vier kleine Auslegungen, alle leicht \u00e4nderbar (Design \u00a712):\n   - Bei freien Artikeln z\u00e4hlt der Name ohne vorangestellte Menge (\u201e2x Milch\u201c gilt als \u201eMilch\u201c).\n   - Eine Zeile ohne Menge \u00fcbernimmt die Menge, wenn dieselbe Zutat sp\u00e4ter mit Menge dazukommt.\n   - Eine Bereichskorrektur verschiebt nur die eine Zeile, nicht andere gleichnamige Zeilen, die schon auf der Liste stehen.\n   - Die Split-Regel.\n"}], "grading": {"expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": false, "evidence": "final_message.md: 'Eine Sache muss der Stakeholder noch best\u00e4tigen', section '**Offen**' with '1. **Stakeholder:** Muss \u201ekein Firebase, daf\u00fcr WireGuard\u201c best\u00e4tigen' and '2. **Im Review zu best\u00e4tigen:** vier kleine Auslegungen' \u2013 open points/review requests to the user."}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": false, "evidence": "No traceability mapping. Most ACs are covered implicitly in design/002-shopping-list.md, but R6 (equal rights for all members) is not addressed anywhere (grep for R6/equal/owner finds nothing in the design). R5 is implemented with a deviation from R2 ('2x Milch' key 'milch') flagged only as an interpretation to confirm."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": false, "evidence": "Leaves choices open: \u00a79 'If the router has built-in WireGuard (e.g. FRITZ!Box \u2265 7.50), that is an equivalent option' (Pi vs router undecided); ADR 0006 'On the Pi host ... or on the router'; \u00a712 'Interpretations to confirm in review'; ADRs 0005/0006 status 'Proposed \u2013 needs stakeholder confirmation'."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "No recipe origin ('No origin is shown'), no line editing ('Lines are not editable'), add/delete/move/finish disabled offline, single list per household, fixed area enum. Nothing out-of-scope designed."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "\u00a74 SQL DDL with types (e.g. 'quantity numeric(10,3) null', 'area text not null check (...)'); \u00a76 API table with method & path, body and result, e.g. 'PUT /lines/{id}/ticked | { ticked: boolean, seenQuantity: number|null } | Snapshot; 404 LINE_NOT_FOUND', plus Snapshot/Line shapes."}, {"text": "All written files are in English", "passed": true, "evidence": "Design, ADRs 0005\u20130007 and overview/product/requirements edits are English; German only in UI strings and stakeholder quotes."}, {"text": "Detects the conflict between the stakeholder's 'Sync am besten \u00fcber Firebase' and the product constraint that FE+BE+DB run on the Pi, and documents it openly (both requirements, resolution, what is lost) instead of silently picking one", "passed": true, "evidence": "ADR 0005 lists Firebase vs '001 hard constraint' with cons ('The list database moves off the Pi'); resolution option 2; loss stated in \u00a712: 'The honest trade-off: the list only reaches the store if the phones have the VPN'; Firebase pro 'reachable from the store over mobile data with no network setup'."}, {"text": "The conflict resolution is flagged for later stakeholder confirmation (e.g. a change request for the groomer) without blocking the design", "passed": true, "evidence": "\u00a712 'Stakeholder confirmation needed ... Steps 1\u20135 do not depend on this decision'; overview index 'Firebase/VPN decision pending stakeholder confirmation'. Non-blocking, though routed as a question to the user rather than a change request for the groomer."}, {"text": "Builds on the existing stack (Ktor, PostgreSQL, React PWA, Caddy) without adding a new database or runtime", "passed": true, "evidence": "'No new container. WireGuard runs in the host kernel'; new Ktor module in existing app, tables in existing PostgreSQL, Caddy config, React route. No new DB/runtime."}, {"text": "Addresses that the Pi is currently reachable only in the home network while the list is used in the supermarket over mobile data, and decides how the phone reaches the backend there", "passed": true, "evidence": "ADR 0006: 'In the store, the shopper's phone is on mobile data and cannot reach the Pi'; decision self-hosted WireGuard, split tunnel, 'on demand'. (Weakness: requires UDP port forward, CGNAT/DS-Lite risk not discussed; host Pi vs router left open.)"}, {"text": "Live updates between household members use a concrete mechanism (e.g. SSE or WebSocket) including reconnect/resync behaviour", "passed": true, "evidence": "\u00a76 'GET /events: event: snapshot with the current Snapshot right after connecting, then after every committed change. : ping every 25 s'; \u00a78.3 'EventSource reconnects on its own. Each snapshot event replaces the stored snapshot'; outbox flushed on SSE open."}, {"text": "Offline viewing and ticking: changes are queued locally and replayed; conflicts (e.g. line deleted or shopping finished while offline) have defined outcomes", "passed": true, "evidence": "ADR 0007/\u00a78.3: ticks in IndexedDB outbox, flushed on SSE open/online/visibility/30 s; 'A 404 drops the op (the line was deleted or removed by finishing shopping)'; \u00a75.4 split rule for concurrent merges; 'Last write wins between two members'."}, {"text": "Merge rules R1/R2/R2a/R2b are specified precisely (case-insensitive name + same unit, only open recipe lines, quantity-less ingredients, free items never merged)", "passed": true, "evidence": "\u00a75.1 name_key lowercase + unit_key; \u00a75.2 'find the open (unticked) RECIPE line with the same name_key and unit_key', 'Not found (including when only ticked lines match, R2a)', quantity-less R2b rule; \u00a75.5 'Always insert a new FREE line, never merged'."}, {"text": "Area assignment is specified: household corrections take priority, then a concrete built-in mapping, fallback Sonstiges; corrections stored household-wide", "passed": true, "evidence": "\u00a77: '1. Household correction: exact hit in area_override (R5; takes priority). 2. Built-in dictionary areas-de.tsv ... exact / tk prefix / longest suffix 3. Fallback SONSTIGES'; area_override PK (household_id, name_key); \u00a75.5 'upsert area_override ... (R5, household-wide)'."}, {"text": "The memory/capacity budget of the Pi is re-checked after adding the feature (e.g. long-lived connections)", "passed": false, "evidence": "Only restates 'No new container ... Limits stay at 1.34 GB' and ADR 0006 'No change to the container memory budget'. No estimate of memory for held SSE connections/flows or idempotency job; overview.md deployment/budget section not updated. k6 test checks p95 only, not memory."}], "summary": {"passed": 11, "failed": 4, "total": 15, "pass_rate": 0.73}, "notes": "1) Idempotency-Key on add endpoints is a real design strength missing in with_skill. 2) WireGuard choice requires UDP port forward + DynDNS and ignores CGNAT/DS-Lite (common in Germany); it even names Tailscale only as fallback. 3) overview.md only got a design-index row: still says reachable 'only inside the home network', no new tables/module/SSE/budget \u2013 architecture overview is now stale. 4) Invented rule: free-item name_key strips leading quantities ('2x Milch' \u2192 'milch'), contradicting R2's 'same spelling' definition that R5 references. 5) Dictionary 'seeding from the household's imported recipes' is vague for a static TSV; split rule ignores the case where a quantity-less line was given a quantity (seenQuantity null)."}}, {"id": "eval-3-reminders-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_message.md", "type": "text", "content": "Das Design f\u00fcr die Erinnerungen steht in `docs/architecture/002-task-reminders.md`, dazu gibt es die ADRs 0005\u20130007 und ein aktualisiertes `overview.md`.\nDie Push-Nachrichten laufen \u00fcber OneSignal Web Push, wie gew\u00fcnscht. Ein Cron-Job in der bestehenden NestJS-API startet um 07:00 Uhr Europe/Berlin und nutzt eine Outbox-Tabelle, damit jeder h\u00f6chstens eine Nachricht pro Tag bekommt. Verpasste L\u00e4ufe werden bis 07:59 nachgeholt und danach verworfen. Die bayerischen Feiertage werden selbst berechnet, samt Ostertermin. Beim Antippen \u00f6ffnet sich die Aufgabe oder die Liste per URL.\nEs gibt keine Konflikte mit den Anforderungen. Im Repo liegen nur die Docs und kein Code von 001, deshalb baut das Design auf `overview.md` auf.\n"}], "grading": {"expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": true, "evidence": "final_message.md is a 4-sentence report with no question, options or review request; ends 'Es gibt keine Konflikte mit den Anforderungen.'"}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": true, "evidence": "002-task-reminders.md 'Traceability' table has rows for S1.1-S1.7, S2.1-S2.6, S3.1-S3.6, S4.1-S4.3 and R1-R12, each tied to a design element and a test ID. The worked examples T-PLAN-1..18 are correct when checked (e.g. S1.3 'A due Wed 2026-01-07 (Tue 01-06 is Epiphany)... no pre-due reminder'; S3.5 re-notice on Tue 10-06)."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": true, "evidence": "grep finds no TBD/TODO/consider/if needed. The conditionals that remain resolve to one answer, e.g. 'If the existing detail route/API restricts it to the assignee, allow MEISTER for all tasks'. Every choice (luxon, react-onesignal, injectManifest, 07:59 window) is stated as decided."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "Traceability lists each out-of-scope item as 'Not built'. There is no settings screen ('No settings screen (Out of scope)'). /overview is reused with no overdue view. Tasks assigned to a MEISTER produce no reminder (T-PLAN-18). There is no email fallback ('NO_DEVICE logged, no other channel')."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "Field tables for PushSubscription, ReminderRun and ReminderMessage (types, nullability, defaults, @@unique([runDate, recipientId, kind])). 'PUT /api/push-subscriptions/:subscriptionId' with body '{ \"userAgent\"?: string }' returns '204'. The DELETE endpoint is specified too. The OneSignal POST request body and the response-to-status mapping are given."}, {"text": "All written files are in English", "passed": true, "evidence": "002-task-reminders.md, ADRs 0005-0007 and the overview.md additions are in English. The only German text is the push and UI strings, which QE2 requires. final_message.md is German, but it is the chat reply, not a repo file."}, {"text": "Stays on the existing stack (NestJS/TypeScript, Prisma, PostgreSQL, React PWA) and introduces no new language or database", "passed": true, "evidence": "'New api dependencies: @nestjs/schedule ^4, luxon ^3 ... New web dependency: react-onesignal ^3'. 'No new process or container'. There is no new database or language."}, {"text": "Uses OneSignal for push as the stakeholder stated, including how devices/users are registered (e.g. external user id = Taskli user id)", "passed": true, "evidence": "ADR 0005 chooses OneSignal Web Push. For registration, the PWA sends 'PUT /api/push-subscriptions/<id>' with the OneSignal subscription id, the api stores it against the authenticated user and sends with 'include_subscription_ids'. External ids are deliberately not used, with a stated security reason ('a client could claim another user's id')."}, {"text": "The 07:00 trigger is defined in Europe/Berlin although the server runs in UTC, and DST transitions are handled", "passed": true, "evidence": "\"@Cron('*/5 7 * * *', { timeZone: 'Europe/Berlin' ...})\" and '05:00 UTC in summer, 06:00 UTC in winter'. Test T-CAL-3 checks '2026-03-30T05:00Z and 2026-10-26T06:00Z are both 07:00 local'; both are correct for the 2026 DST dates."}, {"text": "Bavarian holidays are computed per year including Easter-based movable holidays and exclude 15 Aug and 8 Aug", "passed": true, "evidence": "'bavarianHolidays(y)' = the 7 fixed dates plus E-2/E+1/E+39/E+50/E+60, using the Meeus/Jones/Butcher formula written out in the doc. 'Not holidays: 15 Aug, 8 Aug'. The table of Easter dates for 2026-2030 is correct (checked)."}, {"text": "The daily run is idempotent: a restart or duplicate run never sends a second message to a person on the same day (persisted record)", "passed": true, "evidence": "ReminderRun has runDate as @id. ReminderMessage has @@unique([runDate, recipientId, kind]). 'a row once SENT, NO_DEVICE or FAILED is never sent again'. The OneSignal idempotency_key equals the row id, which covers a crash between send and status update (T-RUN-3, T-RUN-4)."}, {"text": "Behaviour after a missed 07:00 run (server down) is defined and consistent with R2/R8", "passed": false, "evidence": "The behaviour is defined: catch-up until 07:59, then the day is dropped. It is not consistent with R8. Assumption A1 says the catch-up message has 'content as at that moment (not as at 07:00)', so tasks created or assigned between 07:00 and the catch-up are included, although R8 says such tasks are 'only considered from the next regular 07:00'. ADR 0006 claims 'This keeps R2 ... and R8', which contradicts A1."}, {"text": "Meister notice is sent once per task, persisted, and can re-trigger after a due-date change (R10)", "passed": true, "evidence": "'workingDaysOverdue(due, today) == 2. Exactly 2 (not >= 2) ... a changed due date yields a new 2nd day and therefore a new notice'. The notice is persisted as a MEISTER_NOTICE row with taskIds and is unique per date. T-PLAN-12 and T-PLAN-15 cover both cases."}, {"text": "'Today', 'tomorrow' and working-day overdue counting are computed in Europe/Berlin on date-only due dates", "passed": true, "evidence": "'LocalDate = YYYY-MM-DD in Europe/Berlin. today = Berlin date of the run. Task.dueDate (@db.Date) is read as its YYYY-MM-DD value (... toISOString().slice(0, 10), never local-time getters)'. 'workingDaysOverdue' counts dates w with due < w <= today. T-CAL-3 checks the date at '2026-09-23T22:30Z is 2026-09-24'."}, {"text": "Tap targets specified: single task opens that task, multiple opens the employee list or the Meister overview", "passed": true, "evidence": "'Employee message with exactly 1 task in total -> ${baseUrl}/tasks/<taskId>; >= 2 tasks -> ${baseUrl}/tasks'. 'Meister notice with exactly 1 task -> /tasks/<taskId>; >= 2 tasks -> /overview'. OneSignal is set to navigate on tap, and login keeps the target via 'next'."}], "summary": {"passed": 14, "failed": 1, "total": 15, "pass_rate": 0.93}, "timing": {"total_duration_seconds": 397.9, "total_tokens": 101803}, "notes": "1) Stronger security than a naive external_id approach: subscriptions are bound to the user on the server, so no client can claim another user's reminders (QE4). 2) The R8 deviation during catch-up is written down openly as assumption A1, but ADR 0006 still says the design 'keeps R8', which is a contradiction inside the docs. 3) ttl 43200 means a phone that is off at 07:00 can still show the message until 19:00. That is delivery rather than sending, but it stretches 'messages arrive at 07:00' and R8's 'nothing is sent during the day'. 4) The design is very detailed (dry-run CLI, CSP headers, a 'not available' state on task detail). Nothing out of scope is built, but the design is on the heavy side. 5) The eval set has no assertion on the security of push targeting; this run would have scored better on one."}}, {"id": "eval-3-reminders-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "final_message.md", "type": "text", "content": "Das Design f\u00fcr 002 (Erinnerungen) ist fertig und bereit f\u00fcrs Implementieren. Code habe ich keinen geschrieben.\n\n**Neue und ge\u00e4nderte Dateien:**\n- `docs/architecture/design/002-task-reminders.md` \u2013 das eigentliche Design\n- `docs/architecture/adr/0005-push-via-onesignal-web-push.md`\n- `docs/architecture/adr/0006-in-process-scheduler-with-persisted-daily-plan.md`\n- `docs/architecture/overview.md` \u2013 Stack, Komponenten, Datenmodell, Secrets, harte Constraints und Design-Index erg\u00e4nzt\n- In `product.md` und im Requirement 002 steht der Status jetzt auf \u201eDesigned\u201c.\n\n**Die wichtigsten Entscheidungen:**\n- **Push:** OneSignal Web Push, wie vom Stakeholder gew\u00fcnscht. Die Ger\u00e4te melden sich mit der User-ID (`external_id`) an. Das Backend schickt \u00fcber die REST-API und gibt einen Idempotency-Key mit, damit nichts doppelt ankommt. Der OneSignal-Worker kommt per `importScripts` in den bestehenden PWA-Service-Worker.\n- **Zeitplan:** Ein Cron in der API l\u00e4uft von 07:00 bis 09:55 Uhr (Berliner Zeit) alle 5 Minuten. Der erste Lauf an einem Werktag plant den ganzen Tag und speichert das in Postgres: das ist der Stand von 07:00 (R8). Die folgenden L\u00e4ufe schicken nur noch ab, was noch offen ist. Pro Person und Tag ist h\u00f6chstens eine Nachricht erlaubt, das erzwingt die Datenbank (R7). Bei einem Neustart gehen keine Nachrichten doppelt raus.\n- **Feiertage:** Die bayerischen Feiertage werden berechnet (Ostern-Algorithmus plus feste Tage). Es gibt keine Datenpflege und keine Library. 15.8. und 8.8. sind ausgenommen.\n- **Meister-Hinweis:** Er geht raus, wenn eine Aufgabe genau 2 Werktage \u00fcberf\u00e4llig ist. \u00c4ndert sich das F\u00e4lligkeitsdatum, kann er deshalb automatisch erneut kommen (R10).\n- **Antippen:** Bei genau einer Aufgabe \u00f6ffnet sich `/tasks/:id`. Bei mehreren \u00f6ffnet sich `/tasks` (Mitarbeiter) bzw. `/overview` (Meister).\n\n**Was ich ohne R\u00fcckfrage selbst entschieden habe (bitte pr\u00fcfen):**\n1. **Zeitfenster bis 09:00:** War die API um 07:00 down, wird bis 09:00 nachgeholt. Danach f\u00e4llt der Tag komplett aus.\n2. **Aktivieren-Banner:** Ein kleines Banner \u201eErinnerungen aufs Handy bekommen \u2013 Aktivieren\u201c ist n\u00f6tig, weil der Browser die Push-Erlaubnis nur nach einem Tippen erteilt. Eine Einstellungsseite ist das nicht.\n3. **Inaktive Nutzer** bekommen keine Erinnerungen. Ihre Aufgaben z\u00e4hlen aber weiter f\u00fcr den Meister-Hinweis.\n\n**Risiken und To-dos vor dem Go-live:**\n- **Datenschutz:** Kundennamen gehen \u00fcber OneSignal, einen US-Dienstleister. Der Betrieb muss daf\u00fcr den Auftragsverarbeitungsvertrag (DPA) von OneSignal akzeptieren. Wenn nicht, ersetzen wir OneSignal durch selbst gehostetes Web Push; die Alternative steht in ADR 0005.\n- **Zuerst ein halber Tag Spike auf einem echten Firmenhandy:** Er kl\u00e4rt drei Punkte:\n  - ob der OneSignal-Worker neben dem PWA-Worker l\u00e4uft,\n  - ob die Nachricht zuverl\u00e4ssig ankommt,\n  - ob sich beim Antippen die PWA \u00f6ffnet und nicht ein Chrome-Tab.\n- **Falls der Meister ein iPhone hat,** kommt Push dort nur an, wenn Taskli auf dem Homescreen installiert ist.\n"}], "grading": {"expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": false, "evidence": "final_message.md contains 'Was ich ohne R\u00fcckfrage selbst entschieden habe (bitte pr\u00fcfen):' and 'Risiken und To-dos vor dem Go-live', and says the business 'muss ... den Auftragsverarbeitungsvertrag (DPA) von OneSignal akzeptieren. Wenn nicht, ersetzen wir OneSignal ...'. It also proposes a spike to settle 'drei Punkte'."}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": true, "evidence": "\u00a72 maps R1-R12 and S4 one by one to design elements. The S1-S3 acceptance criteria are not listed individually, but each one is covered by a concrete planner rule (\u00a76.1: dueTomorrow, overdue, meisterTasks ==2, status=OPEN / dueDate != null filter, R8 snapshot), and \u00a710 lists one test per acceptance criterion. Checked all ACs: none is left without a design element. This is weaker than an explicit per-AC mapping."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": false, "evidence": "\u00a75: 'The 09:00 cutoff ... is not in the requirement ... Change the constant SEND_WINDOW_END = '09:00' if the stakeholder wants something else.' \u00a711 R2: 'If that is not acceptable, fall back to self-hosted Web Push'. \u00a712: 'Update this design if something fails.' \u00a73: \"serviceWorkerPath: 'sw.js' (whatever the generated file is called)\". ADR 0005: 'Check this when signing up.'"}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "No settings screen ('It is not a settings screen: there is no switch to turn reminders off'), no email fallback, no overdue-only view (/overview reused), no shifting of reminders. The permission-denied hint text and the test-push script are not on the out-of-scope list."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "Full Prisma schema for ReminderRun and ReminderMessage with types and constraints (\u00a78). OneSignal 'POST https://api.onesignal.com/notifications' with the full JSON body (\u00a77). Internal interface 'PushSender.send({ messageId, recipientId, heading, body, url }) -> { providerId }'. There are no new Taskli HTTP endpoints because registration goes through external_id. The OneSignal response fields are only named loosely (providerId, recipient count)."}, {"text": "All written files are in English", "passed": true, "evidence": "The design, ADRs 0005/0006 and the overview.md additions are in English. The German text is limited to push and UI strings, which QE2 requires."}, {"text": "Stays on the existing stack (NestJS/TypeScript, Prisma, PostgreSQL, React PWA) and introduces no new language or database", "passed": true, "evidence": "'New dependency: @nestjs/schedule (v4 ...)'. The web side adds 'react-onesignal'. ADR 0006 rejects Redis/BullMQ. There is no new language or database."}, {"text": "Uses OneSignal for push as the stakeholder stated, including how devices/users are registered (e.g. external user id = Taskli user id)", "passed": true, "evidence": "ADR 0005: 'Users are targeted by external_id = User.id'. \u00a73: 'call OneSignal.login(user.id)' after login and on app start, 'OneSignal.logout()' on logout. The send uses 'include_aliases': { 'external_id': [...] }."}, {"text": "The 07:00 trigger is defined in Europe/Berlin although the server runs in UTC, and DST transitions are handled", "passed": true, "evidence": "\"@Cron('*/5 7-9 * * *', { timeZone: 'Europe/Berlin' })\". \u00a75: 'The server runs in UTC ... DST changes are handled by the cron library. Node's bundled ICU contains the tz data'. There is no DST test case, but the handling is defined."}, {"text": "Bavarian holidays are computed per year including Easter-based movable holidays and exclude 15 Aug and 8 Aug", "passed": true, "evidence": "\u00a74: fixed dates plus 'Good Friday \u22122, Easter Monday +1, Ascension +39, Whit Monday +50, Corpus Christi +60' using the Meeus algorithm. 'Explicitly not included: 08-15, 08-08 (a test asserts both are working days)'."}, {"text": "The daily run is idempotent: a restart or duplicate run never sends a second message to a person on the same day (persisted record)", "passed": true, "evidence": "ReminderRun is keyed by date and planned once. There is '@@unique([runDate, recipientId])', 'pg_try_advisory_xact_lock', and 'idempotency_key = the message's UUID, so a retry after a timeout never creates a second notification'."}, {"text": "Behaviour after a missed 07:00 run (server down) is defined and consistent with R2/R8", "passed": false, "evidence": "The behaviour is defined (catch-up until 09:00), but it is inconsistent. Messages can go out as late as 08:55, and planning happens at that moment, so tasks created after 07:00 are included. Even so, \u00a75 claims 'The plan is the snapshot of the task state at 07:00 (R8)', which is false for catch-up. The design admits 'The 09:00 cutoff ... is not in the requirement'."}, {"text": "Meister notice is sent once per task, persisted, and can re-trigger after a due-date change (R10)", "passed": true, "evidence": "\u00a72 R10: 'Notice iff workingDaysOverdue(dueDate, today) == 2; deterministic per due date, so a changed due date re-arms it'. The notice is persisted as a MEISTER_NOTICE ReminderMessage with taskIds. Unit tests cover 'Meister exactly at 2, not at 1 or 3' and 'changed due date re-arms'."}, {"text": "'Today', 'tomorrow' and working-day overdue counting are computed in Europe/Berlin on date-only due dates", "passed": true, "evidence": "'clock.todayInBerlin()', and 'Dates are YYYY-MM-DD strings (LocalDate), no Date objects'. 'dueDate == today + 1 day'. 'workingDaysOverdue(due, today) = number of working days d with due < d <= today'. ReminderRun.runDate is a 'Berlin local date'."}, {"text": "Tap targets specified: single task opens that task, multiple opens the employee list or the Meister overview", "passed": true, "evidence": "\u00a76.4 table: 'Employee or Meister | exactly 1 | /tasks/{id}'; 'Employee | >= 2 | /tasks'; 'Meister | >= 2 | /overview'. The URL is sent as web_url."}], "summary": {"passed": 12, "failed": 3, "total": 15, "pass_rate": 0.8}, "timing": {"total_duration_seconds": 244.0, "total_tokens": 78218}, "notes": "1) Security flaw: targeting relies on the client calling OneSignal.login(user.id) with no identity verification, so any client could register as another user and receive their tasks and customer names (QE4). The with_skill run explicitly avoids this. 2) The 2-hour catch-up window (up to 08:55 sends) stretches R2's '07:00' and R8's 'nothing during the day' further than the with_skill run, and the doc falsely claims the late plan is the 07:00 snapshot. 3) '@@unique([runDate, recipientId])' covers all message kinds, while the planner creates an EMPLOYEE_REMINDER 'per assignee' without excluding MEISTER assignees. A task assigned to the Meister therefore breaks the out-of-scope rule 'no reminders for the Meister about his own tasks', and on a day that also has a Meister notice it hits a unique violation that aborts the whole day's plan. 4) Recipients with no device are marked SENT; this hides failures, although deviceCount partly compensates. 5) The design hands several things back to the stakeholder (DPA acceptance or a switch to self-hosted, the cutoff time, a spike that may change the design), which undercuts 'ready for implementation'."}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "architect", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-09-19T10:05:09Z", "evals_run": [1, 2, 3], "runs_per_configuration": 3}, "runs": [{"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 16, "failed": 0, "total": 16, "time_seconds": 697.8, "tokens": 147467, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": true, "evidence": "final_message.md contains only statements: 'Es gibt keine Konflikte zwischen den Anforderungen. Eine Voraussetzung ist neu: F\u00fcr das HTTPS-Zertifikat braucht es eine eigene Domain bei Cloudflare.' No question, no options, no review/approval request."}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": true, "evidence": "001-recipe-app-mvp.md 'Traceability' table has one row per acceptance criterion S1.1\u2013S11.8 (3+2+3+3+5+5+4+4+3+2+8 = all 42 ACs) and R1\u2013R10, each mapped to concrete elements (e.g. 'S9.1 confirm, then removed for all | delete dialog, DELETE /api/recipes/{id}', 'S5.4 stored recipe unchanged | client-only state, never sent', 'R6 Rounding | half-up to tenths, German format') plus a named test."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": true, "evidence": "No TBD/TODO/'consider'/'either X or Y' found by grep. All choices are fixed (e.g. 'Only the founder (Viktor) can create invitation ... links' A1; Cloudflare DNS-01 chosen in ADR 0005; pool size 5; bcrypt cost 11). Versions are fixed by a rule ('latest stable ... pinned in gradle/libs.versions.toml'), not left open."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "Traceability lists every Out-of-scope item as 'Not built' (ingredient search: 'filter on title only'; offline create/edit: 'no mutation queue'; source field: 'import drops it'; Git sync: 'import once'). Nothing out of scope is designed. Added extras (password reset, backups, members page) are not in the out-of-scope list."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "Data model tables list every field with Postgres type, nullability and constraints (e.g. 'servings | smallint | yes | CHECK 1\u201399', 'ingredients | jsonb' with JSON schema). The Endpoints table gives method, path, request and response for every route (e.g. 'PUT /api/recipes/{id} | owner | multipart: recipe (RecipeWrite + version + photoAction)... | 200 Recipe | 401, 403 NOT_OWNER, 404, 409...'), plus a full Recipe JSON example."}, {"text": "All written files are in English", "passed": true, "evidence": "overview.md, 001-recipe-app-mvp.md and all 7 ADRs are English. German appears only as quoted UI strings (required: German UI) and stakeholder quotes."}, {"text": "Kotlin is used as stated by the stakeholder (at least for the backend) and the choice for each client/frontend is justified against the Kotlin constraint", "passed": true, "evidence": "ADR 0001: 'Kotlin everywhere: Ktor server, Kotlin/JS React web app, shared Kotlin module'. The client choice is weighed against Kotlin options (native Android/Compose, Compose Multiplatform Wasm): 'the only option that serves every device with one client and keeps the whole codebase in Kotlin'. T-LANG-1 Gradle check enforces no JS/TS sources."}, {"text": "Frontend, backend and database all run as Docker containers on the Raspberry Pi 5 (e.g. one docker compose file); no external hosted service replaces one of them", "passed": true, "evidence": "ADR 0004 / design 'Deployment and runtime': compose services web (Caddy + static bundle), app (Ktor), db (postgres:16-alpine) on the Pi. Cloudflare/Let's Encrypt only issue the TLS cert: 'Nothing in the app depends on internet access.'"}, {"text": "The design explicitly requires linux/arm64 images/builds for the Pi", "passed": true, "evidence": "ADR 0004: 'Every base image must be multi-arch with linux/arm64 ... scripts/deploy.sh fails if an image's architecture isn't arm64'; deploy: 'docker buildx build --platform linux/arm64' (T-ARCH-1)."}, {"text": "A memory budget with per-container limits is given, the JVM heap is explicitly capped, and the sum fits in 4 GB with headroom for the OS", "passed": true, "evidence": "ADR 0004 table: web 128 MB, app 896 MB, db 512 MB = 1536 MB, 'leaves \u2248 2.5 GB for OS, Docker, page cache'; JVM flags '-Xms64m -Xmx384m -XX:MaxMetaspaceSize=128m ... -XX:MaxDirectMemorySize=64m'. Resource budget row: 'OS + Docker ~400 MB'."}, {"text": "The 10-concurrent-users requirement is verified by a defined load test (tool, scenario, pass threshold)", "passed": true, "evidence": "T-LOAD-1: 'k6 ... 10 VUs \u00d7 5 min, each iteration logs in once per VU, then GET list \u2192 GET random recipe \u2192 GET its photo \u2192 sleep 1 s; plus 1 VU doing PUT ... Pass: http_req_failed < 1%, p(95) < 300 ms for GETs, p(95) < 1000 ms for PUT'. T-MEM-1 checks memory during it."}, {"text": "Offline reading of previously opened recipes (incl. photo, cooking mode, scaling) has a concrete mechanism (e.g. service worker cache) and failed saves keep the user's input", "passed": true, "evidence": "ADR 0002 + 'Offline behaviour': SW precaches shell, network-first 4 s timeout for /api/recipes/{id} into 'api-v1', cache-first for photos; scaling runs client-side from shared module. R9: editor stays open, draft (incl. resized photo) in localStorage 'draft:<recipeId|new>', restored on reopen. E2E-OFFLINE tests photo, stepper 4\u21926, cooking mode, draft restore."}, {"text": "HTTPS/secure context is provided for the browser clients (needed for service worker and screen wake lock), including how household devices trust it", "passed": true, "evidence": "ADR 0005: Caddy obtains a Let's Encrypt certificate via DNS-01 at Cloudflare, LAN-only A record; 'Trusted by every device with zero setup on phones'; rejects self-signed CA because 'Each device must install and trust a root CA ... fails QE7'. Explicitly tied to SW and Wake Lock needing a secure context."}, {"text": "Cooking mode keeps the screen on via a concrete mechanism (e.g. Screen Wake Lock API)", "passed": true, "evidence": "'Wake lock (web/cooking/WakeLock.kt): ... navigator.wakeLock.request(\"screen\"). On visibilitychange to visible, request again ... If the API is missing or rejects, play the bundled 1-second silent nosleep.mp4'. Verified by E2E-COOK and M-1 (5 min on real devices)."}, {"text": "The import design is based on the real files in /Users/vicokuras/IdeaProjects/rezepte (handles varying heading levels, ingredients written as headings, numbered-heading steps, Short Ribs -> Hauptgerichte, amounts like '1,5 L')", "passed": true, "evidence": "R10 parser spec is tailored to the real files: heading regex '^#+\\s*(.*)$' (handles '##Zutaten'), INGREDIENTS mode turns headings into ingredients ('# 2 eier'), heading steps '^(\\d+)\\.\\s+(.+)$' for Short Ribs, 'A file directly in --source \u2192 Hauptgerichte', unit regex incl. 'L' ('1.5 L hochwertige Rinderbr\u00fche'). Golden table checked against /Users/vicokuras/IdeaProjects/rezepte: totals 8 recipes / 68 ingredients / 19 with amounts / 67 steps, Serviettenkn\u00f6del step 11 '10 in alufolie einpacken', Pute 7/3/4 are all correct."}, {"text": "Scaling rule R5/R6 is specified precisely (formula, only ingredient amounts, one decimal, German decimal comma)", "passed": true, "evidence": "R5/R6: integer formula 'num = milli \u00d7 chosen, den = servings \u00d7 100, tenths = (2\u00b7num + den) / (2\u00b7den)' (half-up to one decimal); 'Ingredients without an amount, units, names and step texts are never changed'; 'comma decimal separator'; example table (1,5 L 4\u21926 \u2192 2,3 L; step '0,5 l Wasser' unchanged; servings null \u2192 no stepper)."}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 15, "failed": 0, "total": 15, "time_seconds": 504.8, "tokens": 119842, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": true, "evidence": "final_message.md is two declarative paragraphs; no question mark, no options, no review request. Ends with statement: 'Der Change Request dazu liegt in docs/requirements/.change-requests/002-shopping-list.md.'"}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": true, "evidence": "002-shopping-list.md 'Traceability' table maps every AC S1.1\u2013S1.5, S2.1\u2013S2.6, S3.1\u2013S3.3, S4.1\u2013S4.6, S5.1\u2013S5.4, S6.1\u2013S6.4 and R1, R2, R2a, R2b, R3, R4, R5, R6 to design elements + tests, e.g. 'R2b no-quantity ingredients | R-MERGE null-quantity branch', 'R6 equal rights | No owner checks on shopping endpoints'. Checked each: all concretely backed in body (R-MERGE, R-TICK, R-ORDER, R-AREA, UI section)."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": true, "evidence": "No TBD/TODO; grep for either/consider/if needed/optional finds none in design choices. Ambiguities resolved as numbered Assumptions A1\u2013A12 (e.g. 'A4 \u2013 R2b ... \"1 TL Salz\" absorbs a later \"Salz\"'). Conditionals have defined outcomes ('If the 001 recipe-view code uses a different formula, the 001 code is the truth: change this backend formula'; Tailscale plan fallback defined)."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "Traceability rows 'Out of scope: ... Not built' for pantry, recipe origin ('origin not stored'), area editing (fixed CHECK), multiple lists, line editing (no edit endpoint), offline adding (A1: disabled). No such features in Interfaces/UI."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "Data model tables shopping_line/area_correction with Field|Type|Null|Default (e.g. 'quantity | numeric(10,3) | yes'); Interfaces table with method+path, request and response, e.g. 'PUT /api/shopping-list/lines/{id}/ticked | { \"ticked\": boolean, \"seenRevision\": int, \"seenQuantity\": number|null } | 200 ListResponse', plus Line JSON shape and error codes."}, {"text": "All written files are in English", "passed": true, "evidence": "Design, ADRs 0005\u20130008, CR and overview.md edits are English; German only in binding UI strings and stakeholder quotes (e.g. 'Sync am besten \u00fcber Firebase')."}, {"text": "Detects the conflict between the stakeholder's 'Sync am besten \u00fcber Firebase' and the product constraint that FE+BE+DB run on the Pi, and documents it openly (both requirements, resolution, what is lost) instead of silently picking one", "passed": true, "evidence": "Design 'Requirement conflicts / C1': quotes both 002 'Sync am besten \u00fcber Firebase' and 001 Pi constraint, 'Why they can't both hold', 'Resolution: ... SSE and an offline outbox', 'What is lost: Firebase's managed offline persistence and reachability from anywhere without extra setup ... Tailscale app switched on'."}, {"text": "The conflict resolution is flagged for later stakeholder confirmation (e.g. a change request for the groomer) without blocking the design", "passed": true, "evidence": "requirements/.change-requests/002-shopping-list.md 'For the groomer: Please confirm with the stakeholder. If he wants Firebase anyway ... the design will be revised.' Design status 'Designed \u2013 ready for implementation'; nothing blocked."}, {"text": "Builds on the existing stack (Ktor, PostgreSQL, React PWA, Caddy) without adding a new database or runtime", "passed": true, "evidence": "'No new container'; backend module in Ktor, two new tables in existing PostgreSQL, React PWA route, Caddy encode matcher. New pieces are libraries (ktor-server-sse, idb) and host-level Tailscale (network, not app runtime/DB)."}, {"text": "Addresses that the Pi is currently reachable only in the home network while the list is used in the supermarket over mobile data, and decides how the phone reaches the backend there", "passed": true, "evidence": "ADR 0007 context: 'Until now the app is reachable only in the home network ... shopper in the supermarket, on the mobile network'; decision Tailscale subnet route + split DNS, keeps https://rezepte.home; also considers CGNAT/DS-Lite, port-forward, Cloudflare options."}, {"text": "Live updates between household members use a concrete mechanism (e.g. SSE or WebSocket) including reconnect/resync behaviour", "passed": true, "evidence": "SSE via ktor-server-sse: 'On connect: send retry: 3000, then one event: changed so the client refetches (covers changes missed while disconnected)', ': ping' every 25 s; client refetches on changed/online/visibilitychange."}, {"text": "Offline viewing and ticking: changes are queued locally and replayed; conflicts (e.g. line deleted or shopping finished while offline) have defined outcomes", "passed": true, "evidence": "Outbox of absolute tick states in IndexedDB, replay 'sequential ... 200 \u2192 remove; 404 \u2192 remove entry; 401 \u2192 stop, login flow; network error \u2192 retry 2 s doubling'. R-TICK: 'L missing \u2192 404 (client drops the operation; the line was deleted or finished by someone)'; stale revision \u2192 split into ticked seen quantity + open delta, with examples."}, {"text": "Merge rules R1/R2/R2a/R2b are specified precisely (case-insensitive name + same unit, only open recipe lines, quantity-less ingredients, free items never merged)", "passed": true, "evidence": "R-KEY (NFC, trim, lowercase) + R-MERGE: 'find an open line with kind = RECIPE, name_key = nk, unit_key IS NOT DISTINCT FROM uk'; null-quantity branch for R2b; 'Ticked lines and FREE lines are never merge targets (R2a, R3)'; worked examples incl. 'Zwiebel' \u2260 'Zwiebeln'."}, {"text": "Area assignment is specified: household corrections take priority, then a concrete built-in mapping, fallback Sonstiges; corrections stored household-wide", "passed": true, "evidence": "R-AREA: '1. area_correction(household, k) \u2192 its area. 2. dictionary exact 3. word-suffix match 4. Otherwise SONSTIGES'; areas-de.tsv \u2265250 entries with required fixture entries listed; area_correction PK (household_id, name_key) = household-wide."}, {"text": "The memory/capacity budget of the Pi is re-checked after adding the feature (e.g. long-lived connections)", "passed": true, "evidence": "'Resource budget (4 GB Pi)' table: backend '+ < 5 MB for 10 SSE connections and event bus', tailscaled 100 MB new, 'Total fixed 1.44 GB'; T-MEM-1 and T-LOAD-2 with 10 held SSE connections; overview.md budget row updated."}], "notes": []}, {"eval_id": 3, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 0.93, "passed": 14, "failed": 1, "total": 15, "time_seconds": 397.9, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": true, "evidence": "final_message.md is a 4-sentence report with no question, options or review request; ends 'Es gibt keine Konflikte mit den Anforderungen.'"}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": true, "evidence": "002-task-reminders.md 'Traceability' table has rows for S1.1-S1.7, S2.1-S2.6, S3.1-S3.6, S4.1-S4.3 and R1-R12, each tied to a design element and a test ID. The worked examples T-PLAN-1..18 are correct when checked (e.g. S1.3 'A due Wed 2026-01-07 (Tue 01-06 is Epiphany)... no pre-due reminder'; S3.5 re-notice on Tue 10-06)."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": true, "evidence": "grep finds no TBD/TODO/consider/if needed. The conditionals that remain resolve to one answer, e.g. 'If the existing detail route/API restricts it to the assignee, allow MEISTER for all tasks'. Every choice (luxon, react-onesignal, injectManifest, 07:59 window) is stated as decided."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "Traceability lists each out-of-scope item as 'Not built'. There is no settings screen ('No settings screen (Out of scope)'). /overview is reused with no overdue view. Tasks assigned to a MEISTER produce no reminder (T-PLAN-18). There is no email fallback ('NO_DEVICE logged, no other channel')."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "Field tables for PushSubscription, ReminderRun and ReminderMessage (types, nullability, defaults, @@unique([runDate, recipientId, kind])). 'PUT /api/push-subscriptions/:subscriptionId' with body '{ \"userAgent\"?: string }' returns '204'. The DELETE endpoint is specified too. The OneSignal POST request body and the response-to-status mapping are given."}, {"text": "All written files are in English", "passed": true, "evidence": "002-task-reminders.md, ADRs 0005-0007 and the overview.md additions are in English. The only German text is the push and UI strings, which QE2 requires. final_message.md is German, but it is the chat reply, not a repo file."}, {"text": "Stays on the existing stack (NestJS/TypeScript, Prisma, PostgreSQL, React PWA) and introduces no new language or database", "passed": true, "evidence": "'New api dependencies: @nestjs/schedule ^4, luxon ^3 ... New web dependency: react-onesignal ^3'. 'No new process or container'. There is no new database or language."}, {"text": "Uses OneSignal for push as the stakeholder stated, including how devices/users are registered (e.g. external user id = Taskli user id)", "passed": true, "evidence": "ADR 0005 chooses OneSignal Web Push. For registration, the PWA sends 'PUT /api/push-subscriptions/<id>' with the OneSignal subscription id, the api stores it against the authenticated user and sends with 'include_subscription_ids'. External ids are deliberately not used, with a stated security reason ('a client could claim another user's id')."}, {"text": "The 07:00 trigger is defined in Europe/Berlin although the server runs in UTC, and DST transitions are handled", "passed": true, "evidence": "\"@Cron('*/5 7 * * *', { timeZone: 'Europe/Berlin' ...})\" and '05:00 UTC in summer, 06:00 UTC in winter'. Test T-CAL-3 checks '2026-03-30T05:00Z and 2026-10-26T06:00Z are both 07:00 local'; both are correct for the 2026 DST dates."}, {"text": "Bavarian holidays are computed per year including Easter-based movable holidays and exclude 15 Aug and 8 Aug", "passed": true, "evidence": "'bavarianHolidays(y)' = the 7 fixed dates plus E-2/E+1/E+39/E+50/E+60, using the Meeus/Jones/Butcher formula written out in the doc. 'Not holidays: 15 Aug, 8 Aug'. The table of Easter dates for 2026-2030 is correct (checked)."}, {"text": "The daily run is idempotent: a restart or duplicate run never sends a second message to a person on the same day (persisted record)", "passed": true, "evidence": "ReminderRun has runDate as @id. ReminderMessage has @@unique([runDate, recipientId, kind]). 'a row once SENT, NO_DEVICE or FAILED is never sent again'. The OneSignal idempotency_key equals the row id, which covers a crash between send and status update (T-RUN-3, T-RUN-4)."}, {"text": "Behaviour after a missed 07:00 run (server down) is defined and consistent with R2/R8", "passed": false, "evidence": "The behaviour is defined: catch-up until 07:59, then the day is dropped. It is not consistent with R8. Assumption A1 says the catch-up message has 'content as at that moment (not as at 07:00)', so tasks created or assigned between 07:00 and the catch-up are included, although R8 says such tasks are 'only considered from the next regular 07:00'. ADR 0006 claims 'This keeps R2 ... and R8', which contradicts A1."}, {"text": "Meister notice is sent once per task, persisted, and can re-trigger after a due-date change (R10)", "passed": true, "evidence": "'workingDaysOverdue(due, today) == 2. Exactly 2 (not >= 2) ... a changed due date yields a new 2nd day and therefore a new notice'. The notice is persisted as a MEISTER_NOTICE row with taskIds and is unique per date. T-PLAN-12 and T-PLAN-15 cover both cases."}, {"text": "'Today', 'tomorrow' and working-day overdue counting are computed in Europe/Berlin on date-only due dates", "passed": true, "evidence": "'LocalDate = YYYY-MM-DD in Europe/Berlin. today = Berlin date of the run. Task.dueDate (@db.Date) is read as its YYYY-MM-DD value (... toISOString().slice(0, 10), never local-time getters)'. 'workingDaysOverdue' counts dates w with due < w <= today. T-CAL-3 checks the date at '2026-09-23T22:30Z is 2026-09-24'."}, {"text": "Tap targets specified: single task opens that task, multiple opens the employee list or the Meister overview", "passed": true, "evidence": "'Employee message with exactly 1 task in total -> ${baseUrl}/tasks/<taskId>; >= 2 tasks -> ${baseUrl}/tasks'. 'Meister notice with exactly 1 task -> /tasks/<taskId>; >= 2 tasks -> /overview'. OneSignal is set to navigate on tap, and login keeps the target via 'next'."}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.69, "passed": 11, "failed": 5, "total": 16, "time_seconds": 302.9, "tokens": 87672, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": false, "evidence": "final_message.md, section 'Wichtig, bitte beachten': 'Ohne Domain geht Tailscale als Alternative ... Das muss vor dem Einrichten auf dem Pi feststehen.' This is an open decision/option handed to the user. Also 'Ich bin davon ausgegangen, dass Viktor eine eigene Domain hat oder sich eine holt'."}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": false, "evidence": "architecture.md has no traceability mapping. Several ACs have no concrete design element: S8.2 (adding servings enables scaling) is not addressed; S9.1 delete confirmation appears only as a word in build slice 6 ('delete confirmation'); S4.1 recipe view contents and R7 section headings in the recipe view (not cooking mode) are not specified; S11.1 'owned by Viktor' only via '--owner viktor' in a command example. The \u00a712 verification table covers only a subset (R5/R6, S11, R1/R2, R4, R9, S10, S6)."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": false, "evidence": "Open alternatives remain: '\u00a79 Alternative if Viktor has no domain ...: Tailscale'; A1 'It must be settled before slice 1 can be finished on the Pi'; 'registry or docker save | ssh'; 'on a developer machine or CI'; 'local DNS entry in the router, or a public A record'; 'external disk or USB stick'; R9 verification 'UI test or manual check'; '\u00a713 Implementation slices (suggested order)'."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "None of the out-of-scope items is designed: search is 'case-insensitive substring match on the title ... Ingredients are not searched'; no source column; ADR-08 'writes online-only ... Offline editing is explicitly out of scope'; import once via import_run. The added backup sidecar is not on the out-of-scope list."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": false, "evidence": "\u00a75 data model is a pseudo-schema with many fields untyped ('session (id_hash bytea pk, member_id fk, created_at, last_seen_at, expires_at)', 'import_run (id pk, ran_at, owner_id, recipe_count)', 'step (recipe_id, section_position, position int, text text, pk(...))'). \u00a76 API table gives method/path/purpose only. Request/response shapes are prose ('full recipe incl. ingredients with amount spans, sections, steps...'), with no DTO/JSON structure, no ingredient/section shape, no error format."}, {"text": "All written files are in English", "passed": true, "evidence": "architecture.md and the edited status lines in requirements/product.md are in English. German appears only as UI strings."}, {"text": "Kotlin is used as stated by the stakeholder (at least for the backend) and the choice for each client/frontend is justified against the Kotlin constraint", "passed": true, "evidence": "\u00a72: 'Backend Kotlin/JVM, frontend and service worker Kotlin/JS, shared code in Kotlin Multiplatform'. ADR-02: 'Frontend in Kotlin/JS + React ... Alternatives: Compose Multiplatform for Web (Wasm, canvas); server-rendered HTML ... Satisfies the Kotlin constraint'. ADR-01 rejects native Android + iOS."}, {"text": "Frontend, backend and database all run as Docker containers on the Raspberry Pi 5 (e.g. one docker compose file); no external hosted service replaces one of them", "passed": true, "evidence": "\u00a73/\u00a79: compose services web (Caddy + static PWA), app (Ktor), db (postgres:17-alpine), plus backup, all on the Pi. Let's Encrypt only issues the cert."}, {"text": "The design explicitly requires linux/arm64 images/builds for the Pi", "passed": true, "evidence": "\u00a72: 'Three containers plus a backup sidecar, all linux/arm64'. \u00a74: 'images are built for linux/arm64 with docker buildx'."}, {"text": "A memory budget with per-container limits is given, the JVM heap is explicitly capped, and the sum fits in 4 GB with headroom for the OS", "passed": false, "evidence": "\u00a79 gives limits for web 64 MB, app 512 MB ('-Xmx320m' heap cap present) and db 512 MB, but the fourth container (backup sidecar) has no limit, and there is no explicit OS headroom budget beyond 'stays under ~1.3 GB of 4 GB'. Per-container limits are incomplete."}, {"text": "The 10-concurrent-users requirement is verified by a defined load test (tool, scenario, pass threshold)", "passed": true, "evidence": "\u00a712: 'Gatling (Kotlin DSL) against the Pi: 10 concurrent users browsing, opening and saving for 5 min \u2192 p95 < 500 ms, no errors, containers within memory limits.' Tool, scenario and threshold are present, though the scenario is coarse."}, {"text": "Offline reading of previously opened recipes (incl. photo, cooking mode, scaling) has a concrete mechanism (e.g. service worker cache) and failed saves keep the user's input", "passed": true, "evidence": "\u00a77: SW network-first with 4 s timeout for GET /api/recipes{,/id}, cache-first for photos, app shell precached. 'Scaling, cooking mode and search are pure client logic on cached data'. R9: 'leaves the form as it was. The form state (without the photo) is also written to localStorage ... The chosen photo is kept in memory.'"}, {"text": "HTTPS/secure context is provided for the browser clients (needed for service worker and screen wake lock), including how household devices trust it", "passed": true, "evidence": "\u00a79/ADR-06: Caddy gets a Let's Encrypt cert via ACME DNS-01, LAN-only hostname. 'DNS-01 gives trusted certificates ... No per-device setup for the wife'; self-signed CA rejected. \u00a72 explains the secure-context need for SW and wake lock. (The unresolved domain/Tailscale choice is penalised under 'No open decisions'.)"}, {"text": "Cooking mode keeps the screen on via a concrete mechanism (e.g. Screen Wake Lock API)", "passed": true, "evidence": "\u00a78.2: 'Screen Wake Lock API (navigator.wakeLock.request('screen')). The lock is requested again on visibilitychange ... released when cooking mode is left', hint if unsupported."}, {"text": "The import design is based on the real files in /Users/vicokuras/IdeaProjects/rezepte (handles varying heading levels, ingredients written as headings, numbered-heading steps, Short Ribs -> Hauptgerichte, amounts like '1,5 L')", "passed": true, "evidence": "\u00a710 is based on the real files: ''##Zutaten' without a space, ingredients written as '# 2 eier''; heading-steps '### 1. Rotwein reduzieren' \u2192 'Short Ribs \u2192 6 steps'; 'Files in the root (Shortribs.md) \u2192 Hauptgerichte'; golden tests with '1,5 L hochwertige Rinderbr\u00fche \u2192 1,5', 'Kartoffeln mehlig (900g) \u2192 900'. It correctly notes Tortellini '3.' and Serviettenkn\u00f6del '2.' duplicates, which match the actual files."}, {"text": "Scaling rule R5/R6 is specified precisely (formula, only ingredient amounts, one decimal, German decimal comma)", "passed": true, "evidence": "\u00a75.2: 'scaled = amount_milli \u00d7 chosenServings \u00f7 recipeServings, computed in exact integer arithmetic and then rounded half-up to one decimal (R5, R6). Examples: 1,5 \u00d7 6/4 = 2,25 \u2192 2,3'; 'decimal comma, no trailing ,0'; 'Only ingredient spans are scaled. Step text and ingredients without an amount stay unchanged.'"}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.73, "passed": 11, "failed": 4, "total": 15, "time_seconds": 264.9, "tokens": 80812, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": false, "evidence": "final_message.md: 'Eine Sache muss der Stakeholder noch best\u00e4tigen', section '**Offen**' with '1. **Stakeholder:** Muss \u201ekein Firebase, daf\u00fcr WireGuard\u201c best\u00e4tigen' and '2. **Im Review zu best\u00e4tigen:** vier kleine Auslegungen' \u2013 open points/review requests to the user."}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": false, "evidence": "No traceability mapping. Most ACs are covered implicitly in design/002-shopping-list.md, but R6 (equal rights for all members) is not addressed anywhere (grep for R6/equal/owner finds nothing in the design). R5 is implemented with a deviation from R2 ('2x Milch' key 'milch') flagged only as an interpretation to confirm."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": false, "evidence": "Leaves choices open: \u00a79 'If the router has built-in WireGuard (e.g. FRITZ!Box \u2265 7.50), that is an equivalent option' (Pi vs router undecided); ADR 0006 'On the Pi host ... or on the router'; \u00a712 'Interpretations to confirm in review'; ADRs 0005/0006 status 'Proposed \u2013 needs stakeholder confirmation'."}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "No recipe origin ('No origin is shown'), no line editing ('Lines are not editable'), add/delete/move/finish disabled offline, single list per household, fixed area enum. Nothing out-of-scope designed."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "\u00a74 SQL DDL with types (e.g. 'quantity numeric(10,3) null', 'area text not null check (...)'); \u00a76 API table with method & path, body and result, e.g. 'PUT /lines/{id}/ticked | { ticked: boolean, seenQuantity: number|null } | Snapshot; 404 LINE_NOT_FOUND', plus Snapshot/Line shapes."}, {"text": "All written files are in English", "passed": true, "evidence": "Design, ADRs 0005\u20130007 and overview/product/requirements edits are English; German only in UI strings and stakeholder quotes."}, {"text": "Detects the conflict between the stakeholder's 'Sync am besten \u00fcber Firebase' and the product constraint that FE+BE+DB run on the Pi, and documents it openly (both requirements, resolution, what is lost) instead of silently picking one", "passed": true, "evidence": "ADR 0005 lists Firebase vs '001 hard constraint' with cons ('The list database moves off the Pi'); resolution option 2; loss stated in \u00a712: 'The honest trade-off: the list only reaches the store if the phones have the VPN'; Firebase pro 'reachable from the store over mobile data with no network setup'."}, {"text": "The conflict resolution is flagged for later stakeholder confirmation (e.g. a change request for the groomer) without blocking the design", "passed": true, "evidence": "\u00a712 'Stakeholder confirmation needed ... Steps 1\u20135 do not depend on this decision'; overview index 'Firebase/VPN decision pending stakeholder confirmation'. Non-blocking, though routed as a question to the user rather than a change request for the groomer."}, {"text": "Builds on the existing stack (Ktor, PostgreSQL, React PWA, Caddy) without adding a new database or runtime", "passed": true, "evidence": "'No new container. WireGuard runs in the host kernel'; new Ktor module in existing app, tables in existing PostgreSQL, Caddy config, React route. No new DB/runtime."}, {"text": "Addresses that the Pi is currently reachable only in the home network while the list is used in the supermarket over mobile data, and decides how the phone reaches the backend there", "passed": true, "evidence": "ADR 0006: 'In the store, the shopper's phone is on mobile data and cannot reach the Pi'; decision self-hosted WireGuard, split tunnel, 'on demand'. (Weakness: requires UDP port forward, CGNAT/DS-Lite risk not discussed; host Pi vs router left open.)"}, {"text": "Live updates between household members use a concrete mechanism (e.g. SSE or WebSocket) including reconnect/resync behaviour", "passed": true, "evidence": "\u00a76 'GET /events: event: snapshot with the current Snapshot right after connecting, then after every committed change. : ping every 25 s'; \u00a78.3 'EventSource reconnects on its own. Each snapshot event replaces the stored snapshot'; outbox flushed on SSE open."}, {"text": "Offline viewing and ticking: changes are queued locally and replayed; conflicts (e.g. line deleted or shopping finished while offline) have defined outcomes", "passed": true, "evidence": "ADR 0007/\u00a78.3: ticks in IndexedDB outbox, flushed on SSE open/online/visibility/30 s; 'A 404 drops the op (the line was deleted or removed by finishing shopping)'; \u00a75.4 split rule for concurrent merges; 'Last write wins between two members'."}, {"text": "Merge rules R1/R2/R2a/R2b are specified precisely (case-insensitive name + same unit, only open recipe lines, quantity-less ingredients, free items never merged)", "passed": true, "evidence": "\u00a75.1 name_key lowercase + unit_key; \u00a75.2 'find the open (unticked) RECIPE line with the same name_key and unit_key', 'Not found (including when only ticked lines match, R2a)', quantity-less R2b rule; \u00a75.5 'Always insert a new FREE line, never merged'."}, {"text": "Area assignment is specified: household corrections take priority, then a concrete built-in mapping, fallback Sonstiges; corrections stored household-wide", "passed": true, "evidence": "\u00a77: '1. Household correction: exact hit in area_override (R5; takes priority). 2. Built-in dictionary areas-de.tsv ... exact / tk prefix / longest suffix 3. Fallback SONSTIGES'; area_override PK (household_id, name_key); \u00a75.5 'upsert area_override ... (R5, household-wide)'."}, {"text": "The memory/capacity budget of the Pi is re-checked after adding the feature (e.g. long-lived connections)", "passed": false, "evidence": "Only restates 'No new container ... Limits stay at 1.34 GB' and ADR 0006 'No change to the container memory budget'. No estimate of memory for held SSE connections/flows or idempotency job; overview.md deployment/budget section not updated. k6 test checks p95 only, not memory."}], "notes": []}, {"eval_id": 3, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.8, "passed": 12, "failed": 3, "total": 15, "time_seconds": 244.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve", "passed": false, "evidence": "final_message.md contains 'Was ich ohne R\u00fcckfrage selbst entschieden habe (bitte pr\u00fcfen):' and 'Risiken und To-dos vor dem Go-live', and says the business 'muss ... den Auftragsverarbeitungsvertrag (DPA) von OneSignal akzeptieren. Wenn nicht, ersetzen wir OneSignal ...'. It also proposes a spike to settle 'drei Punkte'."}, {"text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element", "passed": true, "evidence": "\u00a72 maps R1-R12 and S4 one by one to design elements. The S1-S3 acceptance criteria are not listed individually, but each one is covered by a concrete planner rule (\u00a76.1: dueTomorrow, overdue, meisterTasks ==2, status=OPEN / dueDate != null filter, R8 snapshot), and \u00a710 lists one test per acceptance criterion. Checked all ACs: none is left without a design element. This is weaker than an explicit per-AC mapping."}, {"text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices", "passed": false, "evidence": "\u00a75: 'The 09:00 cutoff ... is not in the requirement ... Change the constant SEND_WINDOW_END = '09:00' if the stakeholder wants something else.' \u00a711 R2: 'If that is not acceptable, fall back to self-hosted Web Push'. \u00a712: 'Update this design if something fails.' \u00a73: \"serviceWorkerPath: 'sw.js' (whatever the generated file is called)\". ADR 0005: 'Check this when signing up.'"}, {"text": "Out-of-scope items of the target requirements are not designed or built", "passed": true, "evidence": "No settings screen ('It is not a settings screen: there is no switch to turn reminders off'), no email fallback, no overdue-only view (/overview reused), no shifting of reminders. The permission-denied hint text and the test-push script are not on the out-of-scope list."}, {"text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape", "passed": true, "evidence": "Full Prisma schema for ReminderRun and ReminderMessage with types and constraints (\u00a78). OneSignal 'POST https://api.onesignal.com/notifications' with the full JSON body (\u00a77). Internal interface 'PushSender.send({ messageId, recipientId, heading, body, url }) -> { providerId }'. There are no new Taskli HTTP endpoints because registration goes through external_id. The OneSignal response fields are only named loosely (providerId, recipient count)."}, {"text": "All written files are in English", "passed": true, "evidence": "The design, ADRs 0005/0006 and the overview.md additions are in English. The German text is limited to push and UI strings, which QE2 requires."}, {"text": "Stays on the existing stack (NestJS/TypeScript, Prisma, PostgreSQL, React PWA) and introduces no new language or database", "passed": true, "evidence": "'New dependency: @nestjs/schedule (v4 ...)'. The web side adds 'react-onesignal'. ADR 0006 rejects Redis/BullMQ. There is no new language or database."}, {"text": "Uses OneSignal for push as the stakeholder stated, including how devices/users are registered (e.g. external user id = Taskli user id)", "passed": true, "evidence": "ADR 0005: 'Users are targeted by external_id = User.id'. \u00a73: 'call OneSignal.login(user.id)' after login and on app start, 'OneSignal.logout()' on logout. The send uses 'include_aliases': { 'external_id': [...] }."}, {"text": "The 07:00 trigger is defined in Europe/Berlin although the server runs in UTC, and DST transitions are handled", "passed": true, "evidence": "\"@Cron('*/5 7-9 * * *', { timeZone: 'Europe/Berlin' })\". \u00a75: 'The server runs in UTC ... DST changes are handled by the cron library. Node's bundled ICU contains the tz data'. There is no DST test case, but the handling is defined."}, {"text": "Bavarian holidays are computed per year including Easter-based movable holidays and exclude 15 Aug and 8 Aug", "passed": true, "evidence": "\u00a74: fixed dates plus 'Good Friday \u22122, Easter Monday +1, Ascension +39, Whit Monday +50, Corpus Christi +60' using the Meeus algorithm. 'Explicitly not included: 08-15, 08-08 (a test asserts both are working days)'."}, {"text": "The daily run is idempotent: a restart or duplicate run never sends a second message to a person on the same day (persisted record)", "passed": true, "evidence": "ReminderRun is keyed by date and planned once. There is '@@unique([runDate, recipientId])', 'pg_try_advisory_xact_lock', and 'idempotency_key = the message's UUID, so a retry after a timeout never creates a second notification'."}, {"text": "Behaviour after a missed 07:00 run (server down) is defined and consistent with R2/R8", "passed": false, "evidence": "The behaviour is defined (catch-up until 09:00), but it is inconsistent. Messages can go out as late as 08:55, and planning happens at that moment, so tasks created after 07:00 are included. Even so, \u00a75 claims 'The plan is the snapshot of the task state at 07:00 (R8)', which is false for catch-up. The design admits 'The 09:00 cutoff ... is not in the requirement'."}, {"text": "Meister notice is sent once per task, persisted, and can re-trigger after a due-date change (R10)", "passed": true, "evidence": "\u00a72 R10: 'Notice iff workingDaysOverdue(dueDate, today) == 2; deterministic per due date, so a changed due date re-arms it'. The notice is persisted as a MEISTER_NOTICE ReminderMessage with taskIds. Unit tests cover 'Meister exactly at 2, not at 1 or 3' and 'changed due date re-arms'."}, {"text": "'Today', 'tomorrow' and working-day overdue counting are computed in Europe/Berlin on date-only due dates", "passed": true, "evidence": "'clock.todayInBerlin()', and 'Dates are YYYY-MM-DD strings (LocalDate), no Date objects'. 'dueDate == today + 1 day'. 'workingDaysOverdue(due, today) = number of working days d with due < d <= today'. ReminderRun.runDate is a 'Berlin local date'."}, {"text": "Tap targets specified: single task opens that task, multiple opens the employee list or the Meister overview", "passed": true, "evidence": "\u00a76.4 table: 'Employee or Meister | exactly 1 | /tasks/{id}'; 'Employee | >= 2 | /tasks'; 'Meister | >= 2 | /overview'. The URL is sent as web_url."}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 0.9767, "stddev": 0.0404, "min": 0.93, "max": 1.0}, "time_seconds": {"mean": 533.5, "stddev": 151.996, "min": 397.9, "max": 697.8}, "tokens": {"mean": 89103.0, "stddev": 78391.9231, "min": 0, "max": 147467}}, "without_skill": {"pass_rate": {"mean": 0.74, "stddev": 0.0557, "min": 0.69, "max": 0.8}, "time_seconds": {"mean": 270.6, "stddev": 29.8608, "min": 244.0, "max": 302.9}, "tokens": {"mean": 56161.3333, "stddev": 48757.937, "min": 0, "max": 87672}}, "delta": {"pass_rate": "+0.24", "time_seconds": "+262.9", "tokens": "+32942"}}, "notes": ["Most technical assertions (Kotlin, arm64, wake lock, HTTPS, OneSignal, holidays, DST) pass in both configs: the baseline model already knows the tech. The skill's gains come from process: no questions to the user, no open decisions, full traceability, explicit budgets.", "Baseline asked the user/stakeholder to confirm things in all 3 evals ('bitte pr\u00fcfen', 'muss best\u00e4tigen', 'vor Go-live kl\u00e4ren') - exactly what the architect must not do.", "Both configs detected the Firebase vs Pi conflict; only with_skill wrote a change request and kept the design decided.", "with_skill still failed R8 in eval 3: catch-up until 07:59 plans with state at catch-up time, not 07:00.", "Not covered by assertions: with_skill eval 1 reorders imported ingredient text (S11 'as written'); with_skill eval 2 lacks idempotency for 'add recipe' retries; with_skill eval 1 adds unrequested scope (password reset, founder role).", "Cost: with_skill takes ~2x time (534s vs 271s), mostly on eval 1 (698s)."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

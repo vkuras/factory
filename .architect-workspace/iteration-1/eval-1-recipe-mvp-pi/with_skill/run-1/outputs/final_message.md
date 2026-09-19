@@ -1,0 +1,2 @@
+Die Architektur steht in `docs/architecture/001-recipe-app-mvp.md`, dazu `overview.md` und die ADRs 0001–0007. Die App wird ein Kotlin-Stack: ein Ktor-Server, eine PWA in Kotlin/JS mit React (offline per Service Worker) und PostgreSQL. Alles läuft in 3 Containern auf dem Pi 5 mit fest verteilten 1,5 GB RAM, nur im Heimnetz, mit HTTPS über Caddy und DNS-01. Die 8 Rezepte kommen einmalig per CLI-Import rein.
+Es gibt keine Konflikte zwischen den Anforderungen. Eine Voraussetzung ist neu: Für das HTTPS-Zertifikat braucht es eine eigene Domain bei Cloudflare.

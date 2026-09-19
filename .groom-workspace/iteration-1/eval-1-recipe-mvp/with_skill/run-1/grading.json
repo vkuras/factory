@@ -1,0 +1,90 @@
+{
+  "expectations": [
+    {
+      "text": "H1 sharing = private household of 2-4, all see all recipes, only creator edits, nothing public",
+      "passed": true,
+      "evidence": "Users and roles: 'wife now, children later; 2-4 people in total, one household'. R3: 'all members see all recipes. Only a recipe's creator can change it, change its photo, or delete it.' product.md Non-goals: 'no public recipes, no multiple households, no social features.' The owner's extra right to remove members was asked and accepted, and does not grant editing of others' recipes."
+    },
+    {
+      "text": "H2 import of ~15 existing Markdown recipes",
+      "passed": true,
+      "evidence": "S1 'One-time import of existing recipes': 'Given the owner's roughly 15 recipe files, when the import is done, then each readable file appears as a recipe...'; 'The import only happens once'."
+    },
+    {
+      "text": "H3 servings scaling recalculates quantities",
+      "passed": true,
+      "evidence": "S7 'Scale portions': 'Given a recipe for 4 portions, when the member sets it to 2, then every ingredient amount given as a number is halved'; R6 gives the formula."
+    },
+    {
+      "text": "H4 cooking mode: large text, step by step, screen stays on, opened recipes work without internet",
+      "passed": false,
+      "evidence": "PERSONA DRIFT: large text (S6), screen stays on (S6) and offline reading (S8, which covers all recipes, a superset of opened ones) are present. Step by step is missing: Out of scope lists 'A step-by-step view (one step per screen)'. The stakeholder answered 'd und e brauch ich nicht' right after the groomer recommended 'Empfehlung: a, b, c ... d und e würde ich eher parken.' The groomer's recommendation led to this drift."
+    },
+    {
+      "text": "H5 categories Hauptgerichte/Beilagen/Soßen + search by name",
+      "passed": true,
+      "evidence": "R1: 'The list is fixed: Hauptgerichte, Beilagen, Soßen.' S5: 'only recipes whose title contains that term are listed'; 'Search covers titles only'."
+    },
+    {
+      "text": "H6 nutrition, ratings, comments explicitly out of scope",
+      "passed": false,
+      "evidence": "None of nutrition, ratings or comments appears anywhere in either document. The only related text is the general 'no social features' in product.md Non-goals. The groomer never asked about these."
+    },
+    {
+      "text": "H7 success criterion: stop using Git repo and wife uses app",
+      "passed": false,
+      "evidence": "The document has no success criterion or measure. It covers replacing Git ('It replaces the owner's current Markdown-in-Git recipe collection completely'; S1 'can stop using the Git repository'), but the wife actually using the app is never stated as a success condition. The groomer never asked what success looks like."
+    },
+    {
+      "text": "docs/product.md created",
+      "passed": true,
+      "evidence": "outputs/repo/docs/product.md exists and has Vision, Problem, Target users, Core value, Non-goals, Glossary and Requirements index."
+    },
+    {
+      "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+      "passed": true,
+      "evidence": "Stories and rules describe behaviour only, for example S8 'recipes that other members added, changed or deleted in the meantime show up, without the member having to do anything special'. Kotlin, the offline mechanism, identity and photo storage appear only under 'Stakeholder technical constraints' and 'Left to architecture'. 'iPhone' is a platform the stakeholder stated ('wir haben beide iPhones'), not a technology choice."
+    },
+    {
+      "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+      "passed": true,
+      "evidence": "Stakeholder technical constraints: '\"Soll in Kotlin gebaut werden.\" This was stated in the first message.' Kotlin does not appear in any story or rule. How Kotlin reaches the iPhone is left open under Left to architecture."
+    },
+    {
+      "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+      "passed": true,
+      "evidence": "Groomer: 'Wochenplan: Ist der für dich wirklich „später“...?' Stakeholder: 'ja, wochenplan erst mal später.' The doc lists 'Weekly meal plan (\"Wochenplan\")' under Scope > Later, and Häppchen 4 was confirmed with 'passt'."
+    },
+    {
+      "text": "The groomer never asked the stakeholder to read a document, file or long list",
+      "passed": false,
+      "evidence": "In round 2 the groomer asked: 'Eine Beispieldatei: Kannst du mir den Inhalt einer typischen Rezeptdatei hier reinkopieren?' The stakeholder refused: 'les ich nicht bzw schreib ich jetzt nicht ab'. The groomer did not repeat the request afterwards."
+    },
+    {
+      "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+      "passed": true,
+      "evidence": "'Bevor ich etwas aufschreibe, gehe ich mein Verständnis in 5 kurzen Häppchen mit dir durch.' The stakeholder answered 'passt' to each part and ended with 'passt, schreib's auf'. The document was written only after that."
+    },
+    {
+      "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+      "passed": true,
+      "evidence": "Every capability can be traced to the conversation: member removal, invites by any member, photo, delete with confirmation, alphabetical list, and the 7-day single-use invite (marked ✎ in Häppchen 3 and accepted). A few small rules were never shown to the stakeholder: case-insensitive search, no unit conversion, 'The owner cannot be removed', and empty states. These refine accepted features rather than add capabilities, and the Decisions section labels them 'minor'. Borderline, but passed."
+    },
+    {
+      "text": "Every story has acceptance criteria describing observable behaviour",
+      "passed": true,
+      "evidence": "All 12 stories (S1-S12) have Given/When/Then acceptance criteria describing what a user sees or can do. Example, S12: 'When they confirm, then the recipe is permanently gone for all members... When they cancel, nothing changes.'"
+    },
+    {
+      "text": "The document contains no open product questions left for the architect",
+      "passed": true,
+      "evidence": "'## Open questions\\nNone.' Every item under Left to architecture is a how-question with the product need already fixed. The only open question from the walkthrough (the recipes of a removed member) was answered by the stakeholder: 'a)'."
+    },
+    {
+      "text": "Requirements document is written in English under docs/requirements/",
+      "passed": true,
+      "evidence": "docs/requirements/001-household-recipes-mvp.md is written in English."
+    }
+  ],
+  "summary": {"passed": 13, "failed": 4, "total": 17, "pass_rate": 0.76}
+}

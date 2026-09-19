@@ -1,0 +1,90 @@
+{
+ "expectations": [
+  {
+   "text": "H1 reminder one working day before due date at 7:00 (Monday due -> Friday)",
+   "passed": true,
+   "evidence": "R1: 'on the **last working day before** the due date' at 07:00; example table 'Mon | previous Fri'; 'If the day before the due date is not a working day, the reminder moves back'. Confirmed by stakeholder ('Ein Tag vorher, morgens 7 Uhr', 'Ja passt so')."
+  },
+  {
+   "text": "H2 overdue: daily reminder to assignee on workdays; Meister notified once after 2 working days overdue",
+   "passed": true,
+   "evidence": "R2: 'From the first working day after the due date, the task appears ... every working day until it is done.' R3: Meister 'once, on the 2nd working day after the due date'; example 'Mon -> Wed'. Stakeholder: 'erst nach 2 Werktagen überfällig, und dann nur einmal'. Note: brief is ambiguous; this reading reports one day earlier than with_skill's (Tue due -> Thu vs Fri)."
+  },
+  {
+   "text": "Trap H3: no reminders on weekends AND Bavarian public holidays",
+   "passed": true,
+   "evidence": "Definitions: 'Working day: Monday to Friday, except public holidays in Bavaria (Germany).' Goal: 'Nobody is disturbed on weekends or public holidays.' Groomer asked 'Und sollen Feiertage auch ruhig sein? Wenn ja: welches Bundesland?'."
+  },
+  {
+   "text": "H4 employees cannot disable or snooze reminders",
+   "passed": true,
+   "evidence": "R4 AC: 'Employees cannot switch their own reminders off.' Snooze not mentioned, none offered. Note: R4 adds a Meister per-employee on/off switch not in the brief (PERSONA DRIFT via leading Q6 'oder legt das nur der Meister fest?' and recommended option b), but it does not let employees disable."
+  },
+  {
+   "text": "H5 no reminders for tasks without due date or done tasks",
+   "passed": true,
+   "evidence": "Scope: 'Tasks without a due date never get one. Done tasks never get one.'"
+  },
+  {
+   "text": "H6 push on phone only, no email",
+   "passed": true,
+   "evidence": "Goal: 'push notification on their company phone'; Out of scope: 'Reminders by e-mail, SMS or any other channel besides push.'"
+  },
+  {
+   "text": "H7 reminder shows title, customer, due date; tap opens task",
+   "passed": false,
+   "evidence": "R5: 'at least the title, the customer name and the due date' (matches, but never discussed with stakeholder), 'Tapping the notification opens the app on the task list' - not the task. Groomer invention, not persona drift; bundled digest (groomer proposal Q3) precludes opening the task."
+  },
+  {
+   "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+   "passed": true,
+   "evidence": "Stories/definitions behavioural; push provider, holiday source, send mechanics, registration, storage all in 'Left to architecture'. Minor: 'Open task: a task with status \"open\"' is data-model flavoured but acceptable."
+  },
+  {
+   "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+   "passed": false,
+   "evidence": "No verbatim quote and no stakeholder-constraints section. Paraphrased inside 'Left to architecture': 'The stakeholder **prefers OneSignal** because he knows it, but it is not required.' Not expanded into requirements, but not preserved verbatim as a constraint."
+  },
+  {
+   "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+   "passed": true,
+   "evidence": "Q5: 'Wochenende: Samstag und Sonntag kommt nichts, klar. ... Und sollen Feiertage auch ruhig sein?'; stakeholder 'Freitag, und Feiertage natürlich auch nicht, wir sind in Bayern.' Reflected in Definitions and Decisions."
+  },
+  {
+   "text": "The groomer never asked the stakeholder to read a document, file or long list",
+   "passed": true,
+   "evidence": "Never asked to read a document or file. Borderline: opening message is a 7-item question list with proposals, and the post-write message asks to check a list of assumptions."
+  },
+  {
+   "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+   "passed": false,
+   "evidence": "No overall restatement before writing. Only partial confirmations (Friday rule, Meister example). Summary comes after: 'Danke, die Anforderung ist fertig und geht an den Architekten. Kurz zusammengefasst: ...' plus 'Folgendes habe ich angenommen. Bitte kurz Bescheid geben'."
+  },
+  {
+   "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+   "passed": false,
+   "evidence": "Added without stakeholder statement/acceptance: R5 content 'title, the customer name and the due date' and 'separated into \"due soon\" and \"overdue\"', tap opens task list; 'Assumptions (not explicitly confirmed)': new employees default on, Meister re-notified after date change, 'Existing tasks get reminders from launch day onward', Heiligabend/Silvester working days; 'If the due date is removed, the task gets no more reminders'."
+  },
+  {
+   "text": "Every story has acceptance criteria describing observable behaviour",
+   "passed": false,
+   "evidence": "R2 ('daily reminder while overdue') and R5 ('Digest content') have no acceptance criteria. Stories also lack a user-story form."
+  },
+  {
+   "text": "The document contains no open product questions left for the architect",
+   "passed": false,
+   "evidence": "'## Open points for the stakeholder: Should the Meister be able to see whether an employee's phone actually receives push notifications?' plus a section 'Assumptions (not explicitly confirmed)' leaves product decisions unresolved."
+  },
+  {
+   "text": "Requirements document is written in English under docs/requirements/",
+   "passed": true,
+   "evidence": "English, at docs/requirements/002-task-reminders.md."
+  }
+ ],
+ "summary": {
+  "passed": 10,
+  "failed": 6,
+  "total": 16,
+  "pass_rate": 0.62
+ }
+}

@@ -1,0 +1,86 @@
+{
+  "expectations": [
+    {
+      "text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+      "passed": false,
+      "evidence": "final_message.md: 'Eine Sache muss der Stakeholder noch bestätigen', section '**Offen**' with '1. **Stakeholder:** Muss „kein Firebase, dafür WireGuard“ bestätigen' and '2. **Im Review zu bestätigen:** vier kleine Auslegungen' – open points/review requests to the user."
+    },
+    {
+      "text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+      "passed": false,
+      "evidence": "No traceability mapping. Most ACs are covered implicitly in design/002-shopping-list.md, but R6 (equal rights for all members) is not addressed anywhere (grep for R6/equal/owner finds nothing in the design). R5 is implemented with a deviation from R2 ('2x Milch' key 'milch') flagged only as an interpretation to confirm."
+    },
+    {
+      "text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+      "passed": false,
+      "evidence": "Leaves choices open: §9 'If the router has built-in WireGuard (e.g. FRITZ!Box ≥ 7.50), that is an equivalent option' (Pi vs router undecided); ADR 0006 'On the Pi host ... or on the router'; §12 'Interpretations to confirm in review'; ADRs 0005/0006 status 'Proposed – needs stakeholder confirmation'."
+    },
+    {
+      "text": "Out-of-scope items of the target requirements are not designed or built",
+      "passed": true,
+      "evidence": "No recipe origin ('No origin is shown'), no line editing ('Lines are not editable'), add/delete/move/finish disabled offline, single list per household, fixed area enum. Nothing out-of-scope designed."
+    },
+    {
+      "text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+      "passed": true,
+      "evidence": "§4 SQL DDL with types (e.g. 'quantity numeric(10,3) null', 'area text not null check (...)'); §6 API table with method & path, body and result, e.g. 'PUT /lines/{id}/ticked | { ticked: boolean, seenQuantity: number|null } | Snapshot; 404 LINE_NOT_FOUND', plus Snapshot/Line shapes."
+    },
+    {
+      "text": "All written files are in English",
+      "passed": true,
+      "evidence": "Design, ADRs 0005–0007 and overview/product/requirements edits are English; German only in UI strings and stakeholder quotes."
+    },
+    {
+      "text": "Detects the conflict between the stakeholder's 'Sync am besten über Firebase' and the product constraint that FE+BE+DB run on the Pi, and documents it openly (both requirements, resolution, what is lost) instead of silently picking one",
+      "passed": true,
+      "evidence": "ADR 0005 lists Firebase vs '001 hard constraint' with cons ('The list database moves off the Pi'); resolution option 2; loss stated in §12: 'The honest trade-off: the list only reaches the store if the phones have the VPN'; Firebase pro 'reachable from the store over mobile data with no network setup'."
+    },
+    {
+      "text": "The conflict resolution is flagged for later stakeholder confirmation (e.g. a change request for the groomer) without blocking the design",
+      "passed": true,
+      "evidence": "§12 'Stakeholder confirmation needed ... Steps 1–5 do not depend on this decision'; overview index 'Firebase/VPN decision pending stakeholder confirmation'. Non-blocking, though routed as a question to the user rather than a change request for the groomer."
+    },
+    {
+      "text": "Builds on the existing stack (Ktor, PostgreSQL, React PWA, Caddy) without adding a new database or runtime",
+      "passed": true,
+      "evidence": "'No new container. WireGuard runs in the host kernel'; new Ktor module in existing app, tables in existing PostgreSQL, Caddy config, React route. No new DB/runtime."
+    },
+    {
+      "text": "Addresses that the Pi is currently reachable only in the home network while the list is used in the supermarket over mobile data, and decides how the phone reaches the backend there",
+      "passed": true,
+      "evidence": "ADR 0006: 'In the store, the shopper's phone is on mobile data and cannot reach the Pi'; decision self-hosted WireGuard, split tunnel, 'on demand'. (Weakness: requires UDP port forward, CGNAT/DS-Lite risk not discussed; host Pi vs router left open.)"
+    },
+    {
+      "text": "Live updates between household members use a concrete mechanism (e.g. SSE or WebSocket) including reconnect/resync behaviour",
+      "passed": true,
+      "evidence": "§6 'GET /events: event: snapshot with the current Snapshot right after connecting, then after every committed change. : ping every 25 s'; §8.3 'EventSource reconnects on its own. Each snapshot event replaces the stored snapshot'; outbox flushed on SSE open."
+    },
+    {
+      "text": "Offline viewing and ticking: changes are queued locally and replayed; conflicts (e.g. line deleted or shopping finished while offline) have defined outcomes",
+      "passed": true,
+      "evidence": "ADR 0007/§8.3: ticks in IndexedDB outbox, flushed on SSE open/online/visibility/30 s; 'A 404 drops the op (the line was deleted or removed by finishing shopping)'; §5.4 split rule for concurrent merges; 'Last write wins between two members'."
+    },
+    {
+      "text": "Merge rules R1/R2/R2a/R2b are specified precisely (case-insensitive name + same unit, only open recipe lines, quantity-less ingredients, free items never merged)",
+      "passed": true,
+      "evidence": "§5.1 name_key lowercase + unit_key; §5.2 'find the open (unticked) RECIPE line with the same name_key and unit_key', 'Not found (including when only ticked lines match, R2a)', quantity-less R2b rule; §5.5 'Always insert a new FREE line, never merged'."
+    },
+    {
+      "text": "Area assignment is specified: household corrections take priority, then a concrete built-in mapping, fallback Sonstiges; corrections stored household-wide",
+      "passed": true,
+      "evidence": "§7: '1. Household correction: exact hit in area_override (R5; takes priority). 2. Built-in dictionary areas-de.tsv ... exact / tk prefix / longest suffix 3. Fallback SONSTIGES'; area_override PK (household_id, name_key); §5.5 'upsert area_override ... (R5, household-wide)'."
+    },
+    {
+      "text": "The memory/capacity budget of the Pi is re-checked after adding the feature (e.g. long-lived connections)",
+      "passed": false,
+      "evidence": "Only restates 'No new container ... Limits stay at 1.34 GB' and ADR 0006 'No change to the container memory budget'. No estimate of memory for held SSE connections/flows or idempotency job; overview.md deployment/budget section not updated. k6 test checks p95 only, not memory."
+    }
+  ],
+  "summary": {
+    "passed": 11,
+    "failed": 4,
+    "total": 15,
+    "pass_rate": 0.73
+  },
+  "notes": "1) Idempotency-Key on add endpoints is a real design strength missing in with_skill. 2) WireGuard choice requires UDP port forward + DynDNS and ignores CGNAT/DS-Lite (common in Germany); it even names Tailscale only as fallback. 3) overview.md only got a design-index row: still says reachable 'only inside the home network', no new tables/module/SSE/budget – architecture overview is now stale. 4) Invented rule: free-item name_key strips leading quantities ('2x Milch' → 'milch'), contradicting R2's 'same spelling' definition that R5 references. 5) Dictionary 'seeding from the household's imported recipes' is vague for a static TSV; split rule ignores the case where a quantity-less line was given a quantity (seenQuantity null)."
+}

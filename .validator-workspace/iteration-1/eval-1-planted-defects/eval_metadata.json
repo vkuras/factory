@@ -1,0 +1,6 @@
+{
+ "eval_id": 1,
+ "eval_name": "planted-defects",
+ "prompt": "002 ist implementiert. Validier es.",
+ "assertions": []
+}

@@ -1,0 +1,6 @@
+{
+ "eval_id": 2,
+ "eval_name": "performance-and-design-conflict",
+ "prompt": "Bitte validiere 002, der Implementer meldet ready-for-validation.",
+ "assertions": []
+}

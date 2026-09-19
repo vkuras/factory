@@ -1,0 +1,23 @@
+{
+ "eval_id": 3,
+ "eval_name": "reminders",
+ "prompt": "Wir brauchen Erinnerungen f\u00fcr Aufgaben. Die Leute vergessen st\u00e4ndig ihre Sachen. Am besten per Push, ich w\u00fcrd OneSignal nehmen, das kenn ich. Und am Wochenende soll keiner genervt werden.",
+ "assertions": [
+  "H1 reminder one working day before due date at 7:00 (Monday due -> Friday)",
+  "H2 overdue: daily reminder to assignee on workdays; Meister notified once after 2 working days overdue",
+  "Trap H3: no reminders on weekends AND Bavarian public holidays",
+  "H4 employees cannot disable or snooze reminders",
+  "H5 no reminders for tasks without due date or done tasks",
+  "H6 push on phone only, no email",
+  "H7 reminder shows title, customer, due date; tap opens task",
+  "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+  "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+  "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+  "The groomer never asked the stakeholder to read a document, file or long list",
+  "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+  "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+  "Every story has acceptance criteria describing observable behaviour",
+  "The document contains no open product questions left for the architect",
+  "Requirements document is written in English under docs/requirements/"
+ ]
+}

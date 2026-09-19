@@ -1,0 +1,670 @@
+{
+ "metadata": {
+  "skill_name": "groom",
+  "skill_path": "<path/to/skill>",
+  "executor_model": "<model-name>",
+  "analyzer_model": "<model-name>",
+  "timestamp": "2026-09-18T05:56:53Z",
+  "evals_run": [
+   1,
+   2,
+   3
+  ],
+  "runs_per_configuration": 3
+ },
+ "runs": [
+  {
+   "eval_id": 1,
+   "configuration": "with_skill",
+   "run_number": 1,
+   "result": {
+    "pass_rate": 0.76,
+    "passed": 13,
+    "failed": 4,
+    "total": 17,
+    "time_seconds": 832.2,
+    "tokens": 74054,
+    "tool_calls": 0,
+    "errors": 0
+   },
+   "expectations": [
+    {
+     "text": "H1 sharing = private household of 2-4, all see all recipes, only creator edits, nothing public",
+     "passed": true,
+     "evidence": "Users and roles: 'wife now, children later; 2-4 people in total, one household'. R3: 'all members see all recipes. Only a recipe's creator can change it, change its photo, or delete it.' product.md Non-goals: 'no public recipes, no multiple households, no social features.' The owner's extra right to remove members was asked and accepted, and does not grant editing of others' recipes."
+    },
+    {
+     "text": "H2 import of ~15 existing Markdown recipes",
+     "passed": true,
+     "evidence": "S1 'One-time import of existing recipes': 'Given the owner's roughly 15 recipe files, when the import is done, then each readable file appears as a recipe...'; 'The import only happens once'."
+    },
+    {
+     "text": "H3 servings scaling recalculates quantities",
+     "passed": true,
+     "evidence": "S7 'Scale portions': 'Given a recipe for 4 portions, when the member sets it to 2, then every ingredient amount given as a number is halved'; R6 gives the formula."
+    },
+    {
+     "text": "H4 cooking mode: large text, step by step, screen stays on, opened recipes work without internet",
+     "passed": false,
+     "evidence": "PERSONA DRIFT: large text (S6), screen stays on (S6) and offline reading (S8, which covers all recipes, a superset of opened ones) are present. Step by step is missing: Out of scope lists 'A step-by-step view (one step per screen)'. The stakeholder answered 'd und e brauch ich nicht' right after the groomer recommended 'Empfehlung: a, b, c ... d und e w\u00fcrde ich eher parken.' The groomer's recommendation led to this drift."
+    },
+    {
+     "text": "H5 categories Hauptgerichte/Beilagen/So\u00dfen + search by name",
+     "passed": true,
+     "evidence": "R1: 'The list is fixed: Hauptgerichte, Beilagen, So\u00dfen.' S5: 'only recipes whose title contains that term are listed'; 'Search covers titles only'."
+    },
+    {
+     "text": "H6 nutrition, ratings, comments explicitly out of scope",
+     "passed": false,
+     "evidence": "None of nutrition, ratings or comments appears anywhere in either document. The only related text is the general 'no social features' in product.md Non-goals. The groomer never asked about these."
+    },
+    {
+     "text": "H7 success criterion: stop using Git repo and wife uses app",
+     "passed": false,
+     "evidence": "The document has no success criterion or measure. It covers replacing Git ('It replaces the owner's current Markdown-in-Git recipe collection completely'; S1 'can stop using the Git repository'), but the wife actually using the app is never stated as a success condition. The groomer never asked what success looks like."
+    },
+    {
+     "text": "docs/product.md created",
+     "passed": true,
+     "evidence": "outputs/repo/docs/product.md exists and has Vision, Problem, Target users, Core value, Non-goals, Glossary and Requirements index."
+    },
+    {
+     "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+     "passed": true,
+     "evidence": "Stories and rules describe behaviour only, for example S8 'recipes that other members added, changed or deleted in the meantime show up, without the member having to do anything special'. Kotlin, the offline mechanism, identity and photo storage appear only under 'Stakeholder technical constraints' and 'Left to architecture'. 'iPhone' is a platform the stakeholder stated ('wir haben beide iPhones'), not a technology choice."
+    },
+    {
+     "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+     "passed": true,
+     "evidence": "Stakeholder technical constraints: '\"Soll in Kotlin gebaut werden.\" This was stated in the first message.' Kotlin does not appear in any story or rule. How Kotlin reaches the iPhone is left open under Left to architecture."
+    },
+    {
+     "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+     "passed": true,
+     "evidence": "Groomer: 'Wochenplan: Ist der f\u00fcr dich wirklich \u201esp\u00e4ter\u201c...?' Stakeholder: 'ja, wochenplan erst mal sp\u00e4ter.' The doc lists 'Weekly meal plan (\"Wochenplan\")' under Scope > Later, and H\u00e4ppchen 4 was confirmed with 'passt'."
+    },
+    {
+     "text": "The groomer never asked the stakeholder to read a document, file or long list",
+     "passed": false,
+     "evidence": "In round 2 the groomer asked: 'Eine Beispieldatei: Kannst du mir den Inhalt einer typischen Rezeptdatei hier reinkopieren?' The stakeholder refused: 'les ich nicht bzw schreib ich jetzt nicht ab'. The groomer did not repeat the request afterwards."
+    },
+    {
+     "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+     "passed": true,
+     "evidence": "'Bevor ich etwas aufschreibe, gehe ich mein Verst\u00e4ndnis in 5 kurzen H\u00e4ppchen mit dir durch.' The stakeholder answered 'passt' to each part and ended with 'passt, schreib's auf'. The document was written only after that."
+    },
+    {
+     "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+     "passed": true,
+     "evidence": "Every capability can be traced to the conversation: member removal, invites by any member, photo, delete with confirmation, alphabetical list, and the 7-day single-use invite (marked \u270e in H\u00e4ppchen 3 and accepted). A few small rules were never shown to the stakeholder: case-insensitive search, no unit conversion, 'The owner cannot be removed', and empty states. These refine accepted features rather than add capabilities, and the Decisions section labels them 'minor'. Borderline, but passed."
+    },
+    {
+     "text": "Every story has acceptance criteria describing observable behaviour",
+     "passed": true,
+     "evidence": "All 12 stories (S1-S12) have Given/When/Then acceptance criteria describing what a user sees or can do. Example, S12: 'When they confirm, then the recipe is permanently gone for all members... When they cancel, nothing changes.'"
+    },
+    {
+     "text": "The document contains no open product questions left for the architect",
+     "passed": true,
+     "evidence": "'## Open questions\\nNone.' Every item under Left to architecture is a how-question with the product need already fixed. The only open question from the walkthrough (the recipes of a removed member) was answered by the stakeholder: 'a)'."
+    },
+    {
+     "text": "Requirements document is written in English under docs/requirements/",
+     "passed": true,
+     "evidence": "docs/requirements/001-household-recipes-mvp.md is written in English."
+    }
+   ],
+   "notes": []
+  },
+  {
+   "eval_id": 2,
+   "configuration": "with_skill",
+   "run_number": 1,
+   "result": {
+    "pass_rate": 1.0,
+    "passed": 16,
+    "failed": 0,
+    "total": 16,
+    "time_seconds": 807.0,
+    "tokens": 77262,
+    "tool_calls": 0,
+    "errors": 0
+   },
+   "expectations": [
+    {
+     "text": "H1 same ingredients merged/summed when same unit, different units separate",
+     "passed": true,
+     "evidence": "R2: \"a new quantity is merged into an existing entry only if the name and unit are exactly the same ... 300 g Mehl + 200 g Mehl = 500 g Mehl. \\\"2 EL Mehl\\\" and \\\"200 g Mehl\\\" stay two entries ... Units are never converted.\""
+    },
+    {
+     "text": "H2 list respects chosen servings",
+     "passed": true,
+     "evidence": "R3: \"ingredients are added with the quantities for the servings chosen in the recipe\"; S1 AC: \"servings set to 6 (base 4) ... quantities for 6 servings\"."
+    },
+    {
+     "text": "H3 one shared household list, check-offs visible to others within seconds",
+     "passed": true,
+     "evidence": "R1: \"each household has exactly one shopping list. All household members see the same list\"; S4 AC: \"Given another member checks an entry ... then I see the change within a few seconds without reloading (R11).\""
+    },
+    {
+     "text": "H4 checked items move to bottom; 'finish shopping' clears checked items",
+     "passed": true,
+     "evidence": "S4 AC: \"when I tap it, then it is crossed out and moves to the \\\"Done\\\" section\"; S3: \"one \\\"Done\\\" section below all departments\"; S5: \"when I choose \\\"Clear done\\\", then all checked entries are removed ... Open entries are untouched.\""
+    },
+    {
+     "text": "H5 manual items can be added",
+     "passed": true,
+     "evidence": "S2: \"when I add \\\"Klopapier\\\" with no quantity, then an entry \\\"Klopapier\\\" appears, marked as own entry.\""
+    },
+    {
+     "text": "H6 grouping by fixed supermarket sections",
+     "passed": true,
+     "evidence": "R8: \"Departments (fixed, in this order, not configurable): Obst & Gem\u00fcse, Fleisch & Wurst, K\u00fchlregal, Backwaren, Nudeln/Mehl/Konserven, Getr\u00e4nke, Drogerie, Tiefk\u00fchl, Sonstiges.\" Stakeholder insisted in chat: \"Abteilungen sortieren brauch ich schon ... will ich wirklich haben\". Note: 4 extra departments were groomer suggestions the stakeholder accepted."
+    },
+    {
+     "text": "Trap: 'Vorr\u00e4te abhaken' captured as unticking at-home items when adding, not pantry/stock management",
+     "passed": true,
+     "evidence": "S1 AC: \"when I deselect \\\"Salz\\\" and \\\"\u00d6l\\\" and confirm, then all other ingredients are added ... and Salz and \u00d6l are not\"; S1 Notes: \"There is no pantry inventory. Leaving things out only happens in this selection step.\"; Out of scope: \"Pantry or inventory management (stakeholder: only deselect when adding).\""
+    },
+    {
+     "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+     "passed": true,
+     "evidence": "Stories/rules/quality stay at product level (R11: \"changes from all members are combined and none is lost\"; Quality: \"Offline use is essential\"). Firebase appears only under \"Stakeholder technical constraints\"; sync/storage mechanisms only under \"Left to architecture\"."
+    },
+    {
+     "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+     "passed": true,
+     "evidence": "\"Stakeholder technical constraints\": \"\\\"Sync am besten \u00fcber Firebase\\\" (\\\"Sync preferably via Firebase\\\")\" - verbatim; not referenced in any story or rule. Groomer in chat: \"Firebase gebe ich dem Architekten als deine feste Vorgabe mit. Technisch entscheide ich da nichts weiter.\""
+    },
+    {
+     "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+     "passed": true,
+     "evidence": "Groomer Q3 offered a) deselect-when-adding / b) inventory / c) in-store check-off / d) later; stakeholder: \"a) - beim Hinzuf\u00fcgen abw\u00e4hlen was schon da ist. Kein Vorratsmanagement\". Trace L3: \"clarified as deselect-when-adding: S1; inventory: Out of scope\"."
+    },
+    {
+     "text": "The groomer never asked the stakeholder to read a document, file or long list",
+     "passed": true,
+     "evidence": "No request to read a file/document. Final confirmation was chunked into 5 short parts, each answered with \"passt\"."
+    },
+    {
+     "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+     "passed": true,
+     "evidence": "5-part walkthrough (\"Bevor ich etwas aufschreibe, gehe ich mein Verst\u00e4ndnis in kurzen H\u00e4ppchen mit dir durch\"), ending \"Passt das so? Dann schreibe ich es auf.\" -> stakeholder: \"passt, schreib's auf\". Document written afterwards."
+    },
+    {
+     "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+     "passed": true,
+     "evidence": "All capabilities (remove recipe, origins, same recipe twice, department memory, extra departments) were proposed and accepted before writing. Minor caveat: four derived rules were decided without confirmation and only disclosed after writing (Decisions: \"Unchecking merges with an equal open entry ... \\\"Done\\\" is ordered by check time. A delete wins over a concurrent offline change\") - edge-case rules, not new capabilities, and transparently labelled. Offline use is in scope because stakeholder stated it (see drift note in summary), not groomer-invented."
+    },
+    {
+     "text": "Every story has acceptance criteria describing observable behaviour",
+     "passed": true,
+     "evidence": "S1-S9 each have Given/When/Then ACs describing visible outcomes (e.g. S6: \"\\\"500 g Mehl \u2013 Lasagne, Pfannkuchen\\\" becomes \\\"200 g Mehl \u2013 Pfannkuchen\\\"\")."
+    },
+    {
+     "text": "The document contains no open product questions left for the architect",
+     "passed": true,
+     "evidence": "\"## Open questions\\nNone.\" \"Left to architecture\" lists only technical how-questions each tied to a product need (e.g. \"How the list is synchronized ... Product need: S9 and R11\")."
+    },
+    {
+     "text": "Requirements document is written in English under docs/requirements/",
+     "passed": true,
+     "evidence": "File docs/requirements/002-shopping-list.md, written in English (German only for stakeholder quotes and UI terms)."
+    }
+   ],
+   "notes": []
+  },
+  {
+   "eval_id": 3,
+   "configuration": "with_skill",
+   "run_number": 1,
+   "result": {
+    "pass_rate": 0.81,
+    "passed": 13,
+    "failed": 3,
+    "total": 16,
+    "time_seconds": 892.0,
+    "tokens": 76147,
+    "tool_calls": 0,
+    "errors": 0
+   },
+   "expectations": [
+    {
+     "text": "H1 reminder one working day before due date at 7:00 (Monday due -> Friday)",
+     "passed": false,
+     "evidence": "PERSONA DRIFT: doc sends the reminder on the due day, not the working day before: 'every workday at 07:00 that lists everything they have due today or overdue' and 'Given a task is due on a Saturday, Sunday or Monday, then it first appears in the reminder on Monday at 07:00'. Caused by the groomer: Q1 offered options with '(Empfehlung: a ...)' = daily digest of due-today/overdue, and Q4 asked the leading 'Wird die trotzdem erst Montag fr\u00fch gemeldet?'. Stakeholder answered 'a) genau' and 'montag f\u00e4llige aufgabe wird erst montag fr\u00fch gemeldet'."
+    },
+    {
+     "text": "H2 overdue: daily reminder to assignee on workdays; Meister notified once after 2 working days overdue",
+     "passed": true,
+     "evidence": "S1: 'appears in his reminder on Wednesday, Thursday, Friday, the following Monday ... every workday until it is done'; S2/R5 Meister told once, 'due Tuesday -> ... Friday = 3', 'not reported again'. Stakeholder's own words 'ab dem dritten \u00fcberf\u00e4lligen werktag kriegt der meister auch einmal bescheid' match brief 'after 2 working days overdue' (Tue due, Wed+Thu elapsed, Fri report). Note: brief is ambiguous by one day; this reading is defensible."
+    },
+    {
+     "text": "Trap H3: no reminders on weekends AND Bavarian public holidays",
+     "passed": true,
+     "evidence": "R1: 'Monday to Friday, excluding (a) all Bavaria-wide statutory public holidays and (b) days within a company holiday period'; S1 AC 'Given it is Saturday, Sunday, a Bavarian public holiday ... then no reminder is sent'. Groomer explicitly asked 'Sollen Feiertage genauso behandelt werden wie das Wochenende?'."
+    },
+    {
+     "text": "H4 employees cannot disable or snooze reminders",
+     "passed": true,
+     "evidence": "S6: 'Reminders cannot be switched off inside Taskli, not by the employee and not by the Meister'; Out of scope: 'Switching reminders off in the app, per user or for everyone.' Snooze is not mentioned explicitly but no snooze/postpone capability exists in the doc."
+    },
+    {
+     "text": "H5 no reminders for tasks without due date or done tasks",
+     "passed": true,
+     "evidence": "S1 AC: 'Given a task has no due date, then it never appears in a reminder.' / 'Given a task is marked done, then it no longer appears in any later reminder.'"
+    },
+    {
+     "text": "H6 push on phone only, no email",
+     "passed": true,
+     "evidence": "Summary 'push notification on their company phone'; Out of scope: 'Reminders by SMS or e-mail. Push to the phone is the only channel.'"
+    },
+    {
+     "text": "H7 reminder shows title, customer, due date; tap opens task",
+     "passed": false,
+     "evidence": "PERSONA DRIFT (plus groomer invention): doc: 'It shows the number of due and overdue tasks and their titles' (no customer name, no due date) and 'Given Tim taps the reminder, then Taskli opens his list of open tasks' (not the task). Never asked; groomer decided it unilaterally ('Folgendes lege ich selbst fest ... Ein Tipp auf die Erinnerung \u00f6ffnet die eigene Liste'; 'Anzahl und die Titel'), persona failed to correct. The recommended bundled digest (Q1 option a) made per-task tap-to-open impossible."
+    },
+    {
+     "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+     "passed": true,
+     "evidence": "Stories, rules and quality sections are behavioural (07:00, workdays, bundled notification, markers). Device handling, holiday data source and notification-block detection are confined to 'Left to architecture'. OneSignal appears only in 'Stakeholder technical constraints'."
+    },
+    {
+     "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+     "passed": true,
+     "evidence": "'## Stakeholder technical constraints' quotes verbatim: '\"Am besten per Push, ich w\u00fcrd OneSignal nehmen, das kenn ich.\" The stakeholder prefers OneSignal...'. Not used in any requirement."
+    },
+    {
+     "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+     "passed": true,
+     "evidence": "Groomer Q4: 'Hei\u00dft das Samstag *und* Sonntag? ... Sollen Feiertage genauso behandelt werden?'; stakeholder 'wochenende ist sa+sonntag, feiertage nat\u00fcrlich auch nicht, wir sind in bayern'. Resolved in R1 and confirmed in summary part 3 ('ja passt'). Trace row L5."
+    },
+    {
+     "text": "The groomer never asked the stakeholder to read a document, file or long list",
+     "passed": true,
+     "evidence": "No request to read anything; summary delivered in 4 short chunks each confirmed; final message: 'du musst nichts mehr lesen'."
+    },
+    {
+     "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+     "passed": true,
+     "evidence": "4-part summary before writing ('Bitte kurz best\u00e4tigen oder korrigieren'), each answered 'ja passt'; final 'Passt das so? Dann schreibe ich das Dokument' -> 'passt, schreib's auf'."
+    },
+    {
+     "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+     "passed": false,
+     "evidence": "Doc adds behaviour never raised in the conversation: 'Given the Meister taps the report, then Taskli opens his overview of all tasks' (Decisions: 'groomer decision, minor', not announced). Also unstated details: end-before-start validation for company holidays, 'Employees cannot see or change them', 'Changes take effect from the next 07:00 run', R8 send-time semantics. Company holidays and blocked-notification markers were groomer proposals but explicitly accepted, so they are fine."
+    },
+    {
+     "text": "Every story has acceptance criteria describing observable behaviour",
+     "passed": true,
+     "evidence": "S1-S6 each have Given/When/Then-style criteria describing observable outcomes (who receives what, when; what the Meister sees)."
+    },
+    {
+     "text": "The document contains no open product questions left for the architect",
+     "passed": true,
+     "evidence": "'## Open questions\\nNone.' Left-to-architecture items are technical (device detection, holiday source, UI placement) with the product need stated."
+    },
+    {
+     "text": "Requirements document is written in English under docs/requirements/",
+     "passed": true,
+     "evidence": "English, at docs/requirements/002-task-reminders.md."
+    }
+   ],
+   "notes": []
+  },
+  {
+   "eval_id": 1,
+   "configuration": "without_skill",
+   "run_number": 1,
+   "result": {
+    "pass_rate": 0.18,
+    "passed": 3,
+    "failed": 14,
+    "total": 17,
+    "time_seconds": 96.8,
+    "tokens": 55191,
+    "tool_calls": 0,
+    "errors": 0
+   },
+   "expectations": [
+    {
+     "text": "H1 sharing = private household of 2-4, all see all recipes, only creator edits, nothing public",
+     "passed": false,
+     "evidence": "PERSONA DRIFT: household, all-see-all and nothing public are all present ('no share links and no access for anyone outside the household'). However, the Admin role 'Can also edit and delete **any** recipe' (FR-15) contradicts 'only creator edits'. The stakeholder said 'ich als admin darf alles bearbeiten/l\u00f6schen' only after the groomer's leading question: 'Und sollst du als \u201eAdmin\u201c trotzdem alles bearbeiten oder l\u00f6schen k\u00f6nnen, z. B. wenn ein Kind Quatsch macht?'"
+    },
+    {
+     "text": "H2 import of ~15 existing Markdown recipes",
+     "passed": true,
+     "evidence": "FR-18: 'The ~15 existing Markdown recipes are imported **once** into the new system.' FR-19 makes it a developer tool, which the stakeholder accepted ('mach das einmal als tool')."
+    },
+    {
+     "text": "H3 servings scaling recalculates quantities",
+     "passed": false,
+     "evidence": "PERSONA DRIFT: section 7 'Nice to have (not required for MVP)' lists 'Scaling servings (recalculating ingredient quantities)'. The groomer asked 'Was nervt dich beim Kochen heute konkret? Welche davon sind Pflicht?' with scaling as option (d). The stakeholder named only screen, text size and Wi-Fi and added 'rest ist nice to have'. The pain-based framing, together with the stakeholder's terse answer, caused the drift. The groomer never confirmed it back before writing."
+    },
+    {
+     "text": "H4 cooking mode: large text, step by step, screen stays on, opened recipes work without internet",
+     "passed": false,
+     "evidence": "PERSONA DRIFT: FR-8 (screen on), FR-9 (large text) and FR-11 (an opened recipe is viewable offline) match. The step-by-step view is only in section 7 Nice to have, and FR-10 mentions it merely as an optional design idea ('e.g. large controls, a step-by-step layout'). This was caused by the same 'rest ist nice to have' answer to the pain-framed list, not by a recommendation."
+    },
+    {
+     "text": "H5 categories Hauptgerichte/Beilagen/So\u00dfen + search by name",
+     "passed": true,
+     "evidence": "Section 4: 'Exactly one of: **Hauptgerichte**, **Beilagen**, **So\u00dfen**.' FR-6: 'Users can search recipes **by title**.'"
+    },
+    {
+     "text": "H6 nutrition, ratings, comments explicitly out of scope",
+     "passed": false,
+     "evidence": "Section 8 (Out of scope) never mentions nutrition, ratings or comments. The groomer never asked about them."
+    },
+    {
+     "text": "H7 success criterion: stop using Git repo and wife uses app",
+     "passed": false,
+     "evidence": "There is no success criterion. The Goal only says 'After the one-time import, the Git repository is retired.' The wife's adoption is never stated as a measure of success, and success was never asked about."
+    },
+    {
+     "text": "docs/product.md created",
+     "passed": false,
+     "evidence": "Only docs/requirements.md exists. There is no docs/product.md."
+    },
+    {
+     "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+     "passed": false,
+     "evidence": "Technical details appear outside the handoff section. Section 8 Forward-compatibility: 'This is why ingredients are stored as structured entries rather than free text.' FR-17: 'Real-time push is not required.' NFR-3: 'No multi-household or multi-tenant support'. NFR-1: 'Free tiers are acceptable in principle... free-tier limits or lock-in risks'. A8: 'the last save wins'. FR-19 also fixes the import as a 'developer tool'."
+    },
+    {
+     "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+     "passed": false,
+     "evidence": "The wish is not quoted verbatim, and it is reinterpreted. NFR-2 says 'wants the product built in Kotlin wherever reasonably possible... a strong constraint... Any part that cannot reasonably be Kotlin must be justified.' The chat summary softens it to 'm\u00f6glichst in Kotlin'."
+    },
+    {
+     "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+     "passed": true,
+     "evidence": "Groomer: 'Den Wochenplan w\u00fcrde ich als \u201esp\u00e4ter\u201c markieren ... Passt das?' Stakeholder: 'wochenplan sp\u00e4ter passt so.' Section 8 has 'Weekly meal plan (Wochenplan): planned for a later version.'"
+    },
+    {
+     "text": "The groomer never asked the stakeholder to read a document, file or long list",
+     "passed": false,
+     "evidence": "Round 2: 'Kannst du mir **eine** deiner Markdown-Dateien hier reinkopieren?' The stakeholder answered 'keine lust das rauszusuchen grad'. Round 1 was also a 10-question wall with a 7-item sub-list."
+    },
+    {
+     "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+     "passed": false,
+     "evidence": "The groomer wrote the document right after the stakeholder's second answer. The only summary came after writing: 'Die Anforderungen sind fertig: `docs/requirements.md`...' It even lists assumptions to correct after the fact: 'Bitte korrigieren, falls etwas nicht stimmt'."
+    },
+    {
+     "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+     "passed": false,
+     "evidence": "Several items were added without being discussed or accepted. A5 adds member removal ('Removing members was not discussed'). FR-3 adds staying signed in. Section 8 adds a Forward-compatibility requirement for the meal plan and shopping list. A8 adds last-save-wins. All of these were shown only after the document was written."
+    },
+    {
+     "text": "Every story has acceptance criteria describing observable behaviour",
+     "passed": false,
+     "evidence": "The document has no user stories. It has FR-1 to FR-22 plus 10 separate 'Acceptance scenarios', and many FRs have no matching scenario, for example FR-3, FR-16, FR-17, FR-20 and FR-22."
+    },
+    {
+     "text": "The document contains no open product questions left for the architect",
+     "passed": false,
+     "evidence": "Several product questions are left open. Section 9 item 7 hands 'Which editing surface(s) are offered' to the architect. FR-22 leaves category assignment open ('for example by assigning it during import or requiring it on first edit'). A3 says the photo is available offline only 'where feasible'. Section 10 lists 8 assumptions 'not confirmed by the stakeholder'."
+    },
+    {
+     "text": "Requirements document is written in English under docs/requirements/",
+     "passed": false,
+     "evidence": "The document is in English, but it sits at docs/requirements.md, not under a docs/requirements/ directory."
+    }
+   ],
+   "notes": []
+  },
+  {
+   "eval_id": 2,
+   "configuration": "without_skill",
+   "run_number": 1,
+   "result": {
+    "pass_rate": 0.69,
+    "passed": 11,
+    "failed": 5,
+    "total": 16,
+    "time_seconds": 119.9,
+    "tokens": 51175,
+    "tool_calls": 0,
+    "errors": 0
+   },
+   "expectations": [
+    {
+     "text": "H1 same ingredients merged/summed when same unit, different units separate",
+     "passed": true,
+     "evidence": "S4: \"the quantities are summed, e.g. 200 g flour + 300 g flour gives 500 g flour. With a different unit they stay separate entries ... Units are not converted\"."
+    },
+    {
+     "text": "H2 list respects chosen servings",
+     "passed": true,
+     "evidence": "S2: \"using the **servings currently set** on the recipe, so quantities are scaled\"; example: \"A recipe for 4 servings, set to 2 servings, with 400 g Mehl: adding it puts 200 g Mehl on the list.\""
+    },
+    {
+     "text": "H3 one shared household list, check-offs visible to others within seconds",
+     "passed": true,
+     "evidence": "S1: \"One shared list per household ... Changes by one member appear on the other members' devices within seconds, without a manual refresh.\""
+    },
+    {
+     "text": "H4 checked items move to bottom; 'finish shopping' clears checked items",
+     "passed": true,
+     "evidence": "S8: \"Ticked entries move to the bottom of the list\"; S10: \"\\\"Liste leeren\\\". It removes **only the ticked entries**. Unticked entries stay.\""
+    },
+    {
+     "text": "H5 manual items can be added",
+     "passed": true,
+     "evidence": "S6: \"A member can add free items that aren't in a recipe (e.g. \\\"Klopapier\\\"). Quantity and unit are optional.\""
+    },
+    {
+     "text": "H6 grouping by fixed supermarket sections",
+     "passed": true,
+     "evidence": "S11: \"Unticked entries are grouped by section in this fixed walking order: Obst & Gem\u00fcse, Brot & Backwaren, ... Sonstiges.\" Caveat: demoted to \"Should (desired, not a blocker; may ship in a later increment)\" after the groomer's leading recommendation \"Priorit\u00e4t: ... (Vorschlag: gew\u00fcnscht, aber kein Blocker)\"; stakeholder only said \"w\u00e4r schon nice\" and then \"Kein Blocker\". Not contrary to brief (brief is silent on priority), so passed, but the with_skill run shows the true intent is a firm want."
+    },
+    {
+     "text": "Trap: 'Vorr\u00e4te abhaken' captured as unticking at-home items when adding, not pantry/stock management",
+     "passed": true,
+     "evidence": "S3: \"can deselect any they already have ... There is no pantry or stock tracking.\"; Non-goals: \"No pantry or stock management\". Stakeholder: \"Nee, kein Vorratsmanagement, nur beim Hinzuf\u00fcgen wegklicken. Also a.\""
+    },
+    {
+     "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+     "passed": true,
+     "evidence": "Stories are product-level (S9: \"Changes sync automatically once the device is back online\"). Firebase and sync approach appear only in \"Constraints and notes for the architect\"."
+    },
+    {
+     "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+     "passed": false,
+     "evidence": "Not verbatim: \"The stakeholder suggested **Firebase** for this, but only as an idea, not a hard requirement.\" No quote of \"Sync am besten \u00fcber Firebase\". PERSONA DRIFT also involved: groomer asked a technical question (\"L\u00e4uft die Rezept-App schon auf Firebase ... Ist Firebase ein Muss?\") which the persona should have deflected; it answered \"Firebase ist nur meine Idee daf\u00fcr\", and the doc then weakened the wish into \"Choose the sync approach that fits the existing architecture best\". Not expanded into requirements, though."
+    },
+    {
+     "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+     "passed": true,
+     "evidence": "Q5 offered a/b/c/d; stakeholder: \"Nee, kein Vorratsmanagement, nur beim Hinzuf\u00fcgen wegklicken. Also a.\" Reflected in S3 and Non-goals."
+    },
+    {
+     "text": "The groomer never asked the stakeholder to read a document, file or long list",
+     "passed": true,
+     "evidence": "No request to read a file/document. Post-write message asks to check 5 assumptions (\"Bitte kurz pr\u00fcfen\") - short, not a document."
+    },
+    {
+     "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+     "passed": false,
+     "evidence": "No confirmation before writing. The summary came after the file was written: \"Danke, ist alles aufgeschrieben. Kurz zusammengefasst: ...\" and \"Falls etwas davon nicht passt, sag Bescheid.\""
+    },
+    {
+     "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+     "passed": false,
+     "evidence": "\"Later: \\\"Always at home\\\" list that is automatically skipped when adding recipes.\" - groomer suggested \"b vielleicht sp\u00e4ter\", stakeholder only answered \"Also a.\" and never accepted b for later. Also unconfirmed-before-writing Assumptions, incl. one never mentioned in chat: \"\\\"Same ingredient\\\" means the same name, ignoring upper/lower case\", and quality rule \"Ticking off must be fast with one hand\" never discussed."
+    },
+    {
+     "text": "Every story has acceptance criteria describing observable behaviour",
+     "passed": false,
+     "evidence": "S1-S12 are one-line scope statements without their own ACs. Only 6 \"Acceptance examples\" exist; none for S6 manual entries, S7 edit/delete, S8 tick-off moving to bottom/untick, S11 section grouping order."
+    },
+    {
+     "text": "The document contains no open product questions left for the architect",
+     "passed": false,
+     "evidence": "S9: \"So do adding, editing and deleting, as far as feasible\" leaves the offline scope undecided; \"Assumptions (confirm or correct during design if they cause trouble)\" hands product decisions (merge identity, conflict rule, same recipe twice) to design; \"Should ... may ship in a later increment\" leaves the release scope of S11/S12 open."
+    },
+    {
+     "text": "Requirements document is written in English under docs/requirements/",
+     "passed": true,
+     "evidence": "File docs/requirements/002-shopping-list.md, written in English."
+    }
+   ],
+   "notes": []
+  },
+  {
+   "eval_id": 3,
+   "configuration": "without_skill",
+   "run_number": 1,
+   "result": {
+    "pass_rate": 0.62,
+    "passed": 10,
+    "failed": 6,
+    "total": 16,
+    "time_seconds": 125.3,
+    "tokens": 54477,
+    "tool_calls": 0,
+    "errors": 0
+   },
+   "expectations": [
+    {
+     "text": "H1 reminder one working day before due date at 7:00 (Monday due -> Friday)",
+     "passed": true,
+     "evidence": "R1: 'on the **last working day before** the due date' at 07:00; example table 'Mon | previous Fri'; 'If the day before the due date is not a working day, the reminder moves back'. Confirmed by stakeholder ('Ein Tag vorher, morgens 7 Uhr', 'Ja passt so')."
+    },
+    {
+     "text": "H2 overdue: daily reminder to assignee on workdays; Meister notified once after 2 working days overdue",
+     "passed": true,
+     "evidence": "R2: 'From the first working day after the due date, the task appears ... every working day until it is done.' R3: Meister 'once, on the 2nd working day after the due date'; example 'Mon -> Wed'. Stakeholder: 'erst nach 2 Werktagen \u00fcberf\u00e4llig, und dann nur einmal'. Note: brief is ambiguous; this reading reports one day earlier than with_skill's (Tue due -> Thu vs Fri)."
+    },
+    {
+     "text": "Trap H3: no reminders on weekends AND Bavarian public holidays",
+     "passed": true,
+     "evidence": "Definitions: 'Working day: Monday to Friday, except public holidays in Bavaria (Germany).' Goal: 'Nobody is disturbed on weekends or public holidays.' Groomer asked 'Und sollen Feiertage auch ruhig sein? Wenn ja: welches Bundesland?'."
+    },
+    {
+     "text": "H4 employees cannot disable or snooze reminders",
+     "passed": true,
+     "evidence": "R4 AC: 'Employees cannot switch their own reminders off.' Snooze not mentioned, none offered. Note: R4 adds a Meister per-employee on/off switch not in the brief (PERSONA DRIFT via leading Q6 'oder legt das nur der Meister fest?' and recommended option b), but it does not let employees disable."
+    },
+    {
+     "text": "H5 no reminders for tasks without due date or done tasks",
+     "passed": true,
+     "evidence": "Scope: 'Tasks without a due date never get one. Done tasks never get one.'"
+    },
+    {
+     "text": "H6 push on phone only, no email",
+     "passed": true,
+     "evidence": "Goal: 'push notification on their company phone'; Out of scope: 'Reminders by e-mail, SMS or any other channel besides push.'"
+    },
+    {
+     "text": "H7 reminder shows title, customer, due date; tap opens task",
+     "passed": false,
+     "evidence": "R5: 'at least the title, the customer name and the due date' (matches, but never discussed with stakeholder), 'Tapping the notification opens the app on the task list' - not the task. Groomer invention, not persona drift; bundled digest (groomer proposal Q3) precludes opening the task."
+    },
+    {
+     "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+     "passed": true,
+     "evidence": "Stories/definitions behavioural; push provider, holiday source, send mechanics, registration, storage all in 'Left to architecture'. Minor: 'Open task: a task with status \"open\"' is data-model flavoured but acceptable."
+    },
+    {
+     "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+     "passed": false,
+     "evidence": "No verbatim quote and no stakeholder-constraints section. Paraphrased inside 'Left to architecture': 'The stakeholder **prefers OneSignal** because he knows it, but it is not required.' Not expanded into requirements, but not preserved verbatim as a constraint."
+    },
+    {
+     "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+     "passed": true,
+     "evidence": "Q5: 'Wochenende: Samstag und Sonntag kommt nichts, klar. ... Und sollen Feiertage auch ruhig sein?'; stakeholder 'Freitag, und Feiertage nat\u00fcrlich auch nicht, wir sind in Bayern.' Reflected in Definitions and Decisions."
+    },
+    {
+     "text": "The groomer never asked the stakeholder to read a document, file or long list",
+     "passed": true,
+     "evidence": "Never asked to read a document or file. Borderline: opening message is a 7-item question list with proposals, and the post-write message asks to check a list of assumptions."
+    },
+    {
+     "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+     "passed": false,
+     "evidence": "No overall restatement before writing. Only partial confirmations (Friday rule, Meister example). Summary comes after: 'Danke, die Anforderung ist fertig und geht an den Architekten. Kurz zusammengefasst: ...' plus 'Folgendes habe ich angenommen. Bitte kurz Bescheid geben'."
+    },
+    {
+     "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+     "passed": false,
+     "evidence": "Added without stakeholder statement/acceptance: R5 content 'title, the customer name and the due date' and 'separated into \"due soon\" and \"overdue\"', tap opens task list; 'Assumptions (not explicitly confirmed)': new employees default on, Meister re-notified after date change, 'Existing tasks get reminders from launch day onward', Heiligabend/Silvester working days; 'If the due date is removed, the task gets no more reminders'."
+    },
+    {
+     "text": "Every story has acceptance criteria describing observable behaviour",
+     "passed": false,
+     "evidence": "R2 ('daily reminder while overdue') and R5 ('Digest content') have no acceptance criteria. Stories also lack a user-story form."
+    },
+    {
+     "text": "The document contains no open product questions left for the architect",
+     "passed": false,
+     "evidence": "'## Open points for the stakeholder: Should the Meister be able to see whether an employee's phone actually receives push notifications?' plus a section 'Assumptions (not explicitly confirmed)' leaves product decisions unresolved."
+    },
+    {
+     "text": "Requirements document is written in English under docs/requirements/",
+     "passed": true,
+     "evidence": "English, at docs/requirements/002-task-reminders.md."
+    }
+   ],
+   "notes": []
+  }
+ ],
+ "run_summary": {
+  "with_skill": {
+   "pass_rate": {
+    "mean": 0.8567,
+    "stddev": 0.1266,
+    "min": 0.76,
+    "max": 1.0
+   },
+   "time_seconds": {
+    "mean": 843.7333,
+    "stddev": 43.6579,
+    "min": 807.0,
+    "max": 892.0
+   },
+   "tokens": {
+    "mean": 75821.0,
+    "stddev": 1628.6568,
+    "min": 74054,
+    "max": 77262
+   }
+  },
+  "without_skill": {
+   "pass_rate": {
+    "mean": 0.4967,
+    "stddev": 0.2765,
+    "min": 0.18,
+    "max": 0.69
+   },
+   "time_seconds": {
+    "mean": 114.0,
+    "stddev": 15.1384,
+    "min": 96.8,
+    "max": 125.3
+   },
+   "tokens": {
+    "mean": 53614.3333,
+    "stddev": 2142.4774,
+    "min": 51175,
+    "max": 55191
+   }
+  },
+  "delta": {
+   "pass_rate": "+0.36",
+   "time_seconds": "+729.7",
+   "tokens": "+22207"
+  }
+ },
+ "notes": [
+  "Pass rate 86% with skill vs 50% without (+36 pts). Largest gains: confirmed walkthrough before writing, acceptance criteria per story, tech wish kept verbatim, no open questions.",
+  "Main skill weakness: leading 'recommended option' questions steered the stakeholder away from true intent 3 times (step-by-step view, day-before reminder, supermarket sections nearly lost). Recommendations came before hearing the stakeholder's own view.",
+  "Stakeholder burden: skill needs 8-10 rounds vs 3-4 without; transcript 2-3x longer. Much of it is groomer-invented edge cases and scope growth (company holidays, recipe-removal, extra departments).",
+  "Skill groomers sometimes decided small rules themselves and announced them only after writing (shopping-list), contrary to the skill's intent.",
+  "Both configs asked the stakeholder to paste a recipe file (counted as asking to read/produce a document). Neither asked about explicit non-goals (nutrition, ratings) or success criteria in the MVP.",
+  "Timing is unreliable (relay queueing inflates durations); rounds are the better burden measure."
+ ]
+}

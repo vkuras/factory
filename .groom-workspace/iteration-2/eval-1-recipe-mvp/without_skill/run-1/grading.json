@@ -1,0 +1,90 @@
+{
+  "expectations": [
+    {
+      "text": "H1 sharing = private household of 2-4, all see all recipes, only creator edits, nothing public",
+      "passed": false,
+      "evidence": "PERSONA DRIFT: household, all-see-all and nothing public are all present ('no share links and no access for anyone outside the household'). However, the Admin role 'Can also edit and delete **any** recipe' (FR-15) contradicts 'only creator edits'. The stakeholder said 'ich als admin darf alles bearbeiten/löschen' only after the groomer's leading question: 'Und sollst du als „Admin“ trotzdem alles bearbeiten oder löschen können, z. B. wenn ein Kind Quatsch macht?'"
+    },
+    {
+      "text": "H2 import of ~15 existing Markdown recipes",
+      "passed": true,
+      "evidence": "FR-18: 'The ~15 existing Markdown recipes are imported **once** into the new system.' FR-19 makes it a developer tool, which the stakeholder accepted ('mach das einmal als tool')."
+    },
+    {
+      "text": "H3 servings scaling recalculates quantities",
+      "passed": false,
+      "evidence": "PERSONA DRIFT: section 7 'Nice to have (not required for MVP)' lists 'Scaling servings (recalculating ingredient quantities)'. The groomer asked 'Was nervt dich beim Kochen heute konkret? Welche davon sind Pflicht?' with scaling as option (d). The stakeholder named only screen, text size and Wi-Fi and added 'rest ist nice to have'. The pain-based framing, together with the stakeholder's terse answer, caused the drift. The groomer never confirmed it back before writing."
+    },
+    {
+      "text": "H4 cooking mode: large text, step by step, screen stays on, opened recipes work without internet",
+      "passed": false,
+      "evidence": "PERSONA DRIFT: FR-8 (screen on), FR-9 (large text) and FR-11 (an opened recipe is viewable offline) match. The step-by-step view is only in section 7 Nice to have, and FR-10 mentions it merely as an optional design idea ('e.g. large controls, a step-by-step layout'). This was caused by the same 'rest ist nice to have' answer to the pain-framed list, not by a recommendation."
+    },
+    {
+      "text": "H5 categories Hauptgerichte/Beilagen/Soßen + search by name",
+      "passed": true,
+      "evidence": "Section 4: 'Exactly one of: **Hauptgerichte**, **Beilagen**, **Soßen**.' FR-6: 'Users can search recipes **by title**.'"
+    },
+    {
+      "text": "H6 nutrition, ratings, comments explicitly out of scope",
+      "passed": false,
+      "evidence": "Section 8 (Out of scope) never mentions nutrition, ratings or comments. The groomer never asked about them."
+    },
+    {
+      "text": "H7 success criterion: stop using Git repo and wife uses app",
+      "passed": false,
+      "evidence": "There is no success criterion. The Goal only says 'After the one-time import, the Git repository is retired.' The wife's adoption is never stated as a measure of success, and success was never asked about."
+    },
+    {
+      "text": "docs/product.md created",
+      "passed": false,
+      "evidence": "Only docs/requirements.md exists. There is no docs/product.md."
+    },
+    {
+      "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+      "passed": false,
+      "evidence": "Technical details appear outside the handoff section. Section 8 Forward-compatibility: 'This is why ingredients are stored as structured entries rather than free text.' FR-17: 'Real-time push is not required.' NFR-3: 'No multi-household or multi-tenant support'. NFR-1: 'Free tiers are acceptable in principle... free-tier limits or lock-in risks'. A8: 'the last save wins'. FR-19 also fixes the import as a 'developer tool'."
+    },
+    {
+      "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+      "passed": false,
+      "evidence": "The wish is not quoted verbatim, and it is reinterpreted. NFR-2 says 'wants the product built in Kotlin wherever reasonably possible... a strong constraint... Any part that cannot reasonably be Kotlin must be justified.' The chat summary softens it to 'möglichst in Kotlin'."
+    },
+    {
+      "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+      "passed": true,
+      "evidence": "Groomer: 'Den Wochenplan würde ich als „später“ markieren ... Passt das?' Stakeholder: 'wochenplan später passt so.' Section 8 has 'Weekly meal plan (Wochenplan): planned for a later version.'"
+    },
+    {
+      "text": "The groomer never asked the stakeholder to read a document, file or long list",
+      "passed": false,
+      "evidence": "Round 2: 'Kannst du mir **eine** deiner Markdown-Dateien hier reinkopieren?' The stakeholder answered 'keine lust das rauszusuchen grad'. Round 1 was also a 10-question wall with a 7-item sub-list."
+    },
+    {
+      "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+      "passed": false,
+      "evidence": "The groomer wrote the document right after the stakeholder's second answer. The only summary came after writing: 'Die Anforderungen sind fertig: `docs/requirements.md`...' It even lists assumptions to correct after the fact: 'Bitte korrigieren, falls etwas nicht stimmt'."
+    },
+    {
+      "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+      "passed": false,
+      "evidence": "Several items were added without being discussed or accepted. A5 adds member removal ('Removing members was not discussed'). FR-3 adds staying signed in. Section 8 adds a Forward-compatibility requirement for the meal plan and shopping list. A8 adds last-save-wins. All of these were shown only after the document was written."
+    },
+    {
+      "text": "Every story has acceptance criteria describing observable behaviour",
+      "passed": false,
+      "evidence": "The document has no user stories. It has FR-1 to FR-22 plus 10 separate 'Acceptance scenarios', and many FRs have no matching scenario, for example FR-3, FR-16, FR-17, FR-20 and FR-22."
+    },
+    {
+      "text": "The document contains no open product questions left for the architect",
+      "passed": false,
+      "evidence": "Several product questions are left open. Section 9 item 7 hands 'Which editing surface(s) are offered' to the architect. FR-22 leaves category assignment open ('for example by assigning it during import or requiring it on first edit'). A3 says the photo is available offline only 'where feasible'. Section 10 lists 8 assumptions 'not confirmed by the stakeholder'."
+    },
+    {
+      "text": "Requirements document is written in English under docs/requirements/",
+      "passed": false,
+      "evidence": "The document is in English, but it sits at docs/requirements.md, not under a docs/requirements/ directory."
+    }
+  ],
+  "summary": {"passed": 3, "failed": 14, "total": 17, "pass_rate": 0.18}
+}

@@ -1,0 +1,91 @@
+{
+  "expectations": [
+    {
+      "text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+      "passed": false,
+      "evidence": "final_message.md, section 'Wichtig, bitte beachten': 'Ohne Domain geht Tailscale als Alternative ... Das muss vor dem Einrichten auf dem Pi feststehen.' This is an open decision/option handed to the user. Also 'Ich bin davon ausgegangen, dass Viktor eine eigene Domain hat oder sich eine holt'."
+    },
+    {
+      "text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+      "passed": false,
+      "evidence": "architecture.md has no traceability mapping. Several ACs have no concrete design element: S8.2 (adding servings enables scaling) is not addressed; S9.1 delete confirmation appears only as a word in build slice 6 ('delete confirmation'); S4.1 recipe view contents and R7 section headings in the recipe view (not cooking mode) are not specified; S11.1 'owned by Viktor' only via '--owner viktor' in a command example. The §12 verification table covers only a subset (R5/R6, S11, R1/R2, R4, R9, S10, S6)."
+    },
+    {
+      "text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+      "passed": false,
+      "evidence": "Open alternatives remain: '§9 Alternative if Viktor has no domain ...: Tailscale'; A1 'It must be settled before slice 1 can be finished on the Pi'; 'registry or docker save | ssh'; 'on a developer machine or CI'; 'local DNS entry in the router, or a public A record'; 'external disk or USB stick'; R9 verification 'UI test or manual check'; '§13 Implementation slices (suggested order)'."
+    },
+    {
+      "text": "Out-of-scope items of the target requirements are not designed or built",
+      "passed": true,
+      "evidence": "None of the out-of-scope items is designed: search is 'case-insensitive substring match on the title ... Ingredients are not searched'; no source column; ADR-08 'writes online-only ... Offline editing is explicitly out of scope'; import once via import_run. The added backup sidecar is not on the out-of-scope list."
+    },
+    {
+      "text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+      "passed": false,
+      "evidence": "§5 data model is a pseudo-schema with many fields untyped ('session (id_hash bytea pk, member_id fk, created_at, last_seen_at, expires_at)', 'import_run (id pk, ran_at, owner_id, recipe_count)', 'step (recipe_id, section_position, position int, text text, pk(...))'). §6 API table gives method/path/purpose only. Request/response shapes are prose ('full recipe incl. ingredients with amount spans, sections, steps...'), with no DTO/JSON structure, no ingredient/section shape, no error format."
+    },
+    {
+      "text": "All written files are in English",
+      "passed": true,
+      "evidence": "architecture.md and the edited status lines in requirements/product.md are in English. German appears only as UI strings."
+    },
+    {
+      "text": "Kotlin is used as stated by the stakeholder (at least for the backend) and the choice for each client/frontend is justified against the Kotlin constraint",
+      "passed": true,
+      "evidence": "§2: 'Backend Kotlin/JVM, frontend and service worker Kotlin/JS, shared code in Kotlin Multiplatform'. ADR-02: 'Frontend in Kotlin/JS + React ... Alternatives: Compose Multiplatform for Web (Wasm, canvas); server-rendered HTML ... Satisfies the Kotlin constraint'. ADR-01 rejects native Android + iOS."
+    },
+    {
+      "text": "Frontend, backend and database all run as Docker containers on the Raspberry Pi 5 (e.g. one docker compose file); no external hosted service replaces one of them",
+      "passed": true,
+      "evidence": "§3/§9: compose services web (Caddy + static PWA), app (Ktor), db (postgres:17-alpine), plus backup, all on the Pi. Let's Encrypt only issues the cert."
+    },
+    {
+      "text": "The design explicitly requires linux/arm64 images/builds for the Pi",
+      "passed": true,
+      "evidence": "§2: 'Three containers plus a backup sidecar, all linux/arm64'. §4: 'images are built for linux/arm64 with docker buildx'."
+    },
+    {
+      "text": "A memory budget with per-container limits is given, the JVM heap is explicitly capped, and the sum fits in 4 GB with headroom for the OS",
+      "passed": false,
+      "evidence": "§9 gives limits for web 64 MB, app 512 MB ('-Xmx320m' heap cap present) and db 512 MB, but the fourth container (backup sidecar) has no limit, and there is no explicit OS headroom budget beyond 'stays under ~1.3 GB of 4 GB'. Per-container limits are incomplete."
+    },
+    {
+      "text": "The 10-concurrent-users requirement is verified by a defined load test (tool, scenario, pass threshold)",
+      "passed": true,
+      "evidence": "§12: 'Gatling (Kotlin DSL) against the Pi: 10 concurrent users browsing, opening and saving for 5 min → p95 < 500 ms, no errors, containers within memory limits.' Tool, scenario and threshold are present, though the scenario is coarse."
+    },
+    {
+      "text": "Offline reading of previously opened recipes (incl. photo, cooking mode, scaling) has a concrete mechanism (e.g. service worker cache) and failed saves keep the user's input",
+      "passed": true,
+      "evidence": "§7: SW network-first with 4 s timeout for GET /api/recipes{,/id}, cache-first for photos, app shell precached. 'Scaling, cooking mode and search are pure client logic on cached data'. R9: 'leaves the form as it was. The form state (without the photo) is also written to localStorage ... The chosen photo is kept in memory.'"
+    },
+    {
+      "text": "HTTPS/secure context is provided for the browser clients (needed for service worker and screen wake lock), including how household devices trust it",
+      "passed": true,
+      "evidence": "§9/ADR-06: Caddy gets a Let's Encrypt cert via ACME DNS-01, LAN-only hostname. 'DNS-01 gives trusted certificates ... No per-device setup for the wife'; self-signed CA rejected. §2 explains the secure-context need for SW and wake lock. (The unresolved domain/Tailscale choice is penalised under 'No open decisions'.)"
+    },
+    {
+      "text": "Cooking mode keeps the screen on via a concrete mechanism (e.g. Screen Wake Lock API)",
+      "passed": true,
+      "evidence": "§8.2: 'Screen Wake Lock API (navigator.wakeLock.request('screen')). The lock is requested again on visibilitychange ... released when cooking mode is left', hint if unsupported."
+    },
+    {
+      "text": "The import design is based on the real files in /Users/vicokuras/IdeaProjects/rezepte (handles varying heading levels, ingredients written as headings, numbered-heading steps, Short Ribs -> Hauptgerichte, amounts like '1,5 L')",
+      "passed": true,
+      "evidence": "§10 is based on the real files: ''##Zutaten' without a space, ingredients written as '# 2 eier''; heading-steps '### 1. Rotwein reduzieren' → 'Short Ribs → 6 steps'; 'Files in the root (Shortribs.md) → Hauptgerichte'; golden tests with '1,5 L hochwertige Rinderbrühe → 1,5', 'Kartoffeln mehlig (900g) → 900'. It correctly notes Tortellini '3.' and Serviettenknödel '2.' duplicates, which match the actual files."
+    },
+    {
+      "text": "Scaling rule R5/R6 is specified precisely (formula, only ingredient amounts, one decimal, German decimal comma)",
+      "passed": true,
+      "evidence": "§5.2: 'scaled = amount_milli × chosenServings ÷ recipeServings, computed in exact integer arithmetic and then rounded half-up to one decimal (R5, R6). Examples: 1,5 × 6/4 = 2,25 → 2,3'; 'decimal comma, no trailing ,0'; 'Only ingredient spans are scaled. Step text and ingredients without an amount stay unchanged.'"
+    }
+  ],
+  "summary": {
+    "passed": 11,
+    "failed": 5,
+    "total": 16,
+    "pass_rate": 0.69
+  },
+  "notes": "1) Stronger fidelity to S11 'as written': ingredients stay verbatim text with a marked amount span, and scaling replaces only the number ('(900g)' → '(1350g)'). It also handles ranges/fractions. 2) Much less precise than with_skill: no field types or DTO shapes, no traceability, no per-AC tests, and offline/wake-lock verification is manual only. 3) The final message defers a real decision to the user (domain vs Tailscale, 'muss ... feststehen') and adds recommendations (SSD) and unrequested scope (backup sidecar, framed as 'ergänzt, obwohl es nicht in den Requirements steht'). 4) A3 lets any member invite. That is a defensible reading, but it differs from S1's 'Viktor invites'. The server re-encodes photos on the Pi's JVM with a 320 MB heap and a 10 MB upload limit, which is a possible memory spike that is never budgeted. 5) Faster and cheaper (303 s / 88k tokens) but leaves more to implementers."
+}

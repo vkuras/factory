@@ -1,0 +1,90 @@
+{
+ "expectations": [
+  {
+   "text": "H1 reminder one working day before due date at 7:00 (Monday due -> Friday)",
+   "passed": false,
+   "evidence": "PERSONA DRIFT: doc sends the reminder on the due day, not the working day before: 'every workday at 07:00 that lists everything they have due today or overdue' and 'Given a task is due on a Saturday, Sunday or Monday, then it first appears in the reminder on Monday at 07:00'. Caused by the groomer: Q1 offered options with '(Empfehlung: a ...)' = daily digest of due-today/overdue, and Q4 asked the leading 'Wird die trotzdem erst Montag früh gemeldet?'. Stakeholder answered 'a) genau' and 'montag fällige aufgabe wird erst montag früh gemeldet'."
+  },
+  {
+   "text": "H2 overdue: daily reminder to assignee on workdays; Meister notified once after 2 working days overdue",
+   "passed": true,
+   "evidence": "S1: 'appears in his reminder on Wednesday, Thursday, Friday, the following Monday ... every workday until it is done'; S2/R5 Meister told once, 'due Tuesday -> ... Friday = 3', 'not reported again'. Stakeholder's own words 'ab dem dritten überfälligen werktag kriegt der meister auch einmal bescheid' match brief 'after 2 working days overdue' (Tue due, Wed+Thu elapsed, Fri report). Note: brief is ambiguous by one day; this reading is defensible."
+  },
+  {
+   "text": "Trap H3: no reminders on weekends AND Bavarian public holidays",
+   "passed": true,
+   "evidence": "R1: 'Monday to Friday, excluding (a) all Bavaria-wide statutory public holidays and (b) days within a company holiday period'; S1 AC 'Given it is Saturday, Sunday, a Bavarian public holiday ... then no reminder is sent'. Groomer explicitly asked 'Sollen Feiertage genauso behandelt werden wie das Wochenende?'."
+  },
+  {
+   "text": "H4 employees cannot disable or snooze reminders",
+   "passed": true,
+   "evidence": "S6: 'Reminders cannot be switched off inside Taskli, not by the employee and not by the Meister'; Out of scope: 'Switching reminders off in the app, per user or for everyone.' Snooze is not mentioned explicitly but no snooze/postpone capability exists in the doc."
+  },
+  {
+   "text": "H5 no reminders for tasks without due date or done tasks",
+   "passed": true,
+   "evidence": "S1 AC: 'Given a task has no due date, then it never appears in a reminder.' / 'Given a task is marked done, then it no longer appears in any later reminder.'"
+  },
+  {
+   "text": "H6 push on phone only, no email",
+   "passed": true,
+   "evidence": "Summary 'push notification on their company phone'; Out of scope: 'Reminders by SMS or e-mail. Push to the phone is the only channel.'"
+  },
+  {
+   "text": "H7 reminder shows title, customer, due date; tap opens task",
+   "passed": false,
+   "evidence": "PERSONA DRIFT (plus groomer invention): doc: 'It shows the number of due and overdue tasks and their titles' (no customer name, no due date) and 'Given Tim taps the reminder, then Taskli opens his list of open tasks' (not the task). Never asked; groomer decided it unilaterally ('Folgendes lege ich selbst fest ... Ein Tipp auf die Erinnerung öffnet die eigene Liste'; 'Anzahl und die Titel'), persona failed to correct. The recommended bundled digest (Q1 option a) made per-task tap-to-open impossible."
+  },
+  {
+   "text": "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+   "passed": true,
+   "evidence": "Stories, rules and quality sections are behavioural (07:00, workdays, bundled notification, markers). Device handling, holiday data source and notification-block detection are confined to 'Left to architecture'. OneSignal appears only in 'Stakeholder technical constraints'."
+  },
+  {
+   "text": "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+   "passed": true,
+   "evidence": "'## Stakeholder technical constraints' quotes verbatim: '\"Am besten per Push, ich würd OneSignal nehmen, das kenn ich.\" The stakeholder prefers OneSignal...'. Not used in any requirement."
+  },
+  {
+   "text": "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+   "passed": true,
+   "evidence": "Groomer Q4: 'Heißt das Samstag *und* Sonntag? ... Sollen Feiertage genauso behandelt werden?'; stakeholder 'wochenende ist sa+sonntag, feiertage natürlich auch nicht, wir sind in bayern'. Resolved in R1 and confirmed in summary part 3 ('ja passt'). Trace row L5."
+  },
+  {
+   "text": "The groomer never asked the stakeholder to read a document, file or long list",
+   "passed": true,
+   "evidence": "No request to read anything; summary delivered in 4 short chunks each confirmed; final message: 'du musst nichts mehr lesen'."
+  },
+  {
+   "text": "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+   "passed": true,
+   "evidence": "4-part summary before writing ('Bitte kurz bestätigen oder korrigieren'), each answered 'ja passt'; final 'Passt das so? Dann schreibe ich das Dokument' -> 'passt, schreib's auf'."
+  },
+  {
+   "text": "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+   "passed": false,
+   "evidence": "Doc adds behaviour never raised in the conversation: 'Given the Meister taps the report, then Taskli opens his overview of all tasks' (Decisions: 'groomer decision, minor', not announced). Also unstated details: end-before-start validation for company holidays, 'Employees cannot see or change them', 'Changes take effect from the next 07:00 run', R8 send-time semantics. Company holidays and blocked-notification markers were groomer proposals but explicitly accepted, so they are fine."
+  },
+  {
+   "text": "Every story has acceptance criteria describing observable behaviour",
+   "passed": true,
+   "evidence": "S1-S6 each have Given/When/Then-style criteria describing observable outcomes (who receives what, when; what the Meister sees)."
+  },
+  {
+   "text": "The document contains no open product questions left for the architect",
+   "passed": true,
+   "evidence": "'## Open questions\\nNone.' Left-to-architecture items are technical (device detection, holiday source, UI placement) with the product need stated."
+  },
+  {
+   "text": "Requirements document is written in English under docs/requirements/",
+   "passed": true,
+   "evidence": "English, at docs/requirements/002-task-reminders.md."
+  }
+ ],
+ "summary": {
+  "passed": 13,
+  "failed": 3,
+  "total": 16,
+  "pass_rate": 0.81
+ }
+}

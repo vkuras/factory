@@ -1,0 +1,24 @@
+{
+ "eval_id": 1,
+ "eval_name": "recipe-mvp",
+ "prompt": "Ich will eine App f\u00fcr meine Rezepte bauen. Ich hab die grad als Markdown Files in nem Git Repo, das nervt. Man soll die mit der Familie teilen k\u00f6nnen und beim Kochen gut benutzen. Soll in Kotlin gebaut werden. Irgendwann w\u00e4r auch ein Wochenplan cool.",
+ "assertions": [
+  "H1 sharing = private household of 2-4, all see all recipes, only creator edits, nothing public",
+  "H2 import of ~15 existing Markdown recipes",
+  "H3 servings scaling recalculates quantities",
+  "H4 cooking mode: large text, step by step, screen stays on, opened recipes work without internet",
+  "H5 categories Hauptgerichte/Beilagen/So\u00dfen + search by name",
+  "H6 nutrition, ratings, comments explicitly out of scope",
+  "H7 success criterion: stop using Git repo and wife uses app",
+  "docs/product.md created",
+  "No technical details (frameworks, APIs, schemas, storage, sync mechanisms) appear in requirements/stories/rules; tech only in stakeholder-constraints or left-to-architecture sections",
+  "The stakeholder's tech wish is preserved verbatim as a stakeholder constraint and not expanded into requirements",
+  "The side remark from the opening message is explicitly resolved (in scope, later, or out of scope) with the stakeholder's agreement",
+  "The groomer never asked the stakeholder to read a document, file or long list",
+  "Before writing the document the groomer confirmed its understanding with the stakeholder in the chat",
+  "No feature was added to the requirements that the stakeholder did not state or explicitly accept",
+  "Every story has acceptance criteria describing observable behaviour",
+  "The document contains no open product questions left for the architect",
+  "Requirements document is written in English under docs/requirements/"
+ ]
+}

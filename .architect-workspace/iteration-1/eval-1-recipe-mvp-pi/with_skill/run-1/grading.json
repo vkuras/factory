@@ -1,0 +1,91 @@
+{
+  "expectations": [
+    {
+      "text": "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+      "passed": true,
+      "evidence": "final_message.md contains only statements: 'Es gibt keine Konflikte zwischen den Anforderungen. Eine Voraussetzung ist neu: Für das HTTPS-Zertifikat braucht es eine eigene Domain bei Cloudflare.' No question, no options, no review/approval request."
+    },
+    {
+      "text": "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+      "passed": true,
+      "evidence": "001-recipe-app-mvp.md 'Traceability' table has one row per acceptance criterion S1.1–S11.8 (3+2+3+3+5+5+4+4+3+2+8 = all 42 ACs) and R1–R10, each mapped to concrete elements (e.g. 'S9.1 confirm, then removed for all | delete dialog, DELETE /api/recipes/{id}', 'S5.4 stored recipe unchanged | client-only state, never sent', 'R6 Rounding | half-up to tenths, German format') plus a named test."
+    },
+    {
+      "text": "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+      "passed": true,
+      "evidence": "No TBD/TODO/'consider'/'either X or Y' found by grep. All choices are fixed (e.g. 'Only the founder (Viktor) can create invitation ... links' A1; Cloudflare DNS-01 chosen in ADR 0005; pool size 5; bcrypt cost 11). Versions are fixed by a rule ('latest stable ... pinned in gradle/libs.versions.toml'), not left open."
+    },
+    {
+      "text": "Out-of-scope items of the target requirements are not designed or built",
+      "passed": true,
+      "evidence": "Traceability lists every Out-of-scope item as 'Not built' (ingredient search: 'filter on title only'; offline create/edit: 'no mutation queue'; source field: 'import drops it'; Git sync: 'import once'). Nothing out of scope is designed. Added extras (password reset, backups, members page) are not in the out-of-scope list."
+    },
+    {
+      "text": "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+      "passed": true,
+      "evidence": "Data model tables list every field with Postgres type, nullability and constraints (e.g. 'servings | smallint | yes | CHECK 1–99', 'ingredients | jsonb' with JSON schema). The Endpoints table gives method, path, request and response for every route (e.g. 'PUT /api/recipes/{id} | owner | multipart: recipe (RecipeWrite + version + photoAction)... | 200 Recipe | 401, 403 NOT_OWNER, 404, 409...'), plus a full Recipe JSON example."
+    },
+    {
+      "text": "All written files are in English",
+      "passed": true,
+      "evidence": "overview.md, 001-recipe-app-mvp.md and all 7 ADRs are English. German appears only as quoted UI strings (required: German UI) and stakeholder quotes."
+    },
+    {
+      "text": "Kotlin is used as stated by the stakeholder (at least for the backend) and the choice for each client/frontend is justified against the Kotlin constraint",
+      "passed": true,
+      "evidence": "ADR 0001: 'Kotlin everywhere: Ktor server, Kotlin/JS React web app, shared Kotlin module'. The client choice is weighed against Kotlin options (native Android/Compose, Compose Multiplatform Wasm): 'the only option that serves every device with one client and keeps the whole codebase in Kotlin'. T-LANG-1 Gradle check enforces no JS/TS sources."
+    },
+    {
+      "text": "Frontend, backend and database all run as Docker containers on the Raspberry Pi 5 (e.g. one docker compose file); no external hosted service replaces one of them",
+      "passed": true,
+      "evidence": "ADR 0004 / design 'Deployment and runtime': compose services web (Caddy + static bundle), app (Ktor), db (postgres:16-alpine) on the Pi. Cloudflare/Let's Encrypt only issue the TLS cert: 'Nothing in the app depends on internet access.'"
+    },
+    {
+      "text": "The design explicitly requires linux/arm64 images/builds for the Pi",
+      "passed": true,
+      "evidence": "ADR 0004: 'Every base image must be multi-arch with linux/arm64 ... scripts/deploy.sh fails if an image's architecture isn't arm64'; deploy: 'docker buildx build --platform linux/arm64' (T-ARCH-1)."
+    },
+    {
+      "text": "A memory budget with per-container limits is given, the JVM heap is explicitly capped, and the sum fits in 4 GB with headroom for the OS",
+      "passed": true,
+      "evidence": "ADR 0004 table: web 128 MB, app 896 MB, db 512 MB = 1536 MB, 'leaves ≈ 2.5 GB for OS, Docker, page cache'; JVM flags '-Xms64m -Xmx384m -XX:MaxMetaspaceSize=128m ... -XX:MaxDirectMemorySize=64m'. Resource budget row: 'OS + Docker ~400 MB'."
+    },
+    {
+      "text": "The 10-concurrent-users requirement is verified by a defined load test (tool, scenario, pass threshold)",
+      "passed": true,
+      "evidence": "T-LOAD-1: 'k6 ... 10 VUs × 5 min, each iteration logs in once per VU, then GET list → GET random recipe → GET its photo → sleep 1 s; plus 1 VU doing PUT ... Pass: http_req_failed < 1%, p(95) < 300 ms for GETs, p(95) < 1000 ms for PUT'. T-MEM-1 checks memory during it."
+    },
+    {
+      "text": "Offline reading of previously opened recipes (incl. photo, cooking mode, scaling) has a concrete mechanism (e.g. service worker cache) and failed saves keep the user's input",
+      "passed": true,
+      "evidence": "ADR 0002 + 'Offline behaviour': SW precaches shell, network-first 4 s timeout for /api/recipes/{id} into 'api-v1', cache-first for photos; scaling runs client-side from shared module. R9: editor stays open, draft (incl. resized photo) in localStorage 'draft:<recipeId|new>', restored on reopen. E2E-OFFLINE tests photo, stepper 4→6, cooking mode, draft restore."
+    },
+    {
+      "text": "HTTPS/secure context is provided for the browser clients (needed for service worker and screen wake lock), including how household devices trust it",
+      "passed": true,
+      "evidence": "ADR 0005: Caddy obtains a Let's Encrypt certificate via DNS-01 at Cloudflare, LAN-only A record; 'Trusted by every device with zero setup on phones'; rejects self-signed CA because 'Each device must install and trust a root CA ... fails QE7'. Explicitly tied to SW and Wake Lock needing a secure context."
+    },
+    {
+      "text": "Cooking mode keeps the screen on via a concrete mechanism (e.g. Screen Wake Lock API)",
+      "passed": true,
+      "evidence": "'Wake lock (web/cooking/WakeLock.kt): ... navigator.wakeLock.request(\"screen\"). On visibilitychange to visible, request again ... If the API is missing or rejects, play the bundled 1-second silent nosleep.mp4'. Verified by E2E-COOK and M-1 (5 min on real devices)."
+    },
+    {
+      "text": "The import design is based on the real files in /Users/vicokuras/IdeaProjects/rezepte (handles varying heading levels, ingredients written as headings, numbered-heading steps, Short Ribs -> Hauptgerichte, amounts like '1,5 L')",
+      "passed": true,
+      "evidence": "R10 parser spec is tailored to the real files: heading regex '^#+\\s*(.*)$' (handles '##Zutaten'), INGREDIENTS mode turns headings into ingredients ('# 2 eier'), heading steps '^(\\d+)\\.\\s+(.+)$' for Short Ribs, 'A file directly in --source → Hauptgerichte', unit regex incl. 'L' ('1.5 L hochwertige Rinderbrühe'). Golden table checked against /Users/vicokuras/IdeaProjects/rezepte: totals 8 recipes / 68 ingredients / 19 with amounts / 67 steps, Serviettenknödel step 11 '10 in alufolie einpacken', Pute 7/3/4 are all correct."
+    },
+    {
+      "text": "Scaling rule R5/R6 is specified precisely (formula, only ingredient amounts, one decimal, German decimal comma)",
+      "passed": true,
+      "evidence": "R5/R6: integer formula 'num = milli × chosen, den = servings × 100, tenths = (2·num + den) / (2·den)' (half-up to one decimal); 'Ingredients without an amount, units, names and step texts are never changed'; 'comma decimal separator'; example table (1,5 L 4→6 → 2,3 L; step '0,5 l Wasser' unchanged; servings null → no stepper)."
+    }
+  ],
+  "summary": {
+    "passed": 16,
+    "failed": 0,
+    "total": 16,
+    "pass_rate": 1.0
+  },
+  "notes": "1) Import golden table is verified correct against the real files (68 ingredients, 19 with amounts, 67 steps), a very strong, testable spec. 2) A5 moves amounts to the front on display ('Kartoffeln mehlig (900g)' shown as '900 g Kartoffeln mehlig') and the importer strips bold/merges heading lines: this arguably conflicts with S11 'taken over as written'. The without_skill span approach avoids that. 3) Invented scope beyond requirements: founder role + founder-only invites (A1), password-reset links, members page, backup timer/restore, optimistic locking, silent-video wake-lock fallback. All reasonable, none out-of-scope. 4) Test-plan claim is questionable: E2E-OFFLINE runs on Chromium and WebKit, but Playwright supports service workers well only in Chromium. 5) It adds a hard prerequisite (own domain at Cloudflare) that the final message states as a fact, not a question. It cost 2.3x the time/1.7x the tokens of the baseline (698 s / 147k vs 303 s / 88k)."
+}

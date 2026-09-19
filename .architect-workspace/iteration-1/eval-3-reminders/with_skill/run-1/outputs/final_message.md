@@ -1,0 +1,3 @@
+Das Design für die Erinnerungen steht in `docs/architecture/002-task-reminders.md`, dazu gibt es die ADRs 0005–0007 und ein aktualisiertes `overview.md`.
+Die Push-Nachrichten laufen über OneSignal Web Push, wie gewünscht. Ein Cron-Job in der bestehenden NestJS-API startet um 07:00 Uhr Europe/Berlin und nutzt eine Outbox-Tabelle, damit jeder höchstens eine Nachricht pro Tag bekommt. Verpasste Läufe werden bis 07:59 nachgeholt und danach verworfen. Die bayerischen Feiertage werden selbst berechnet, samt Ostertermin. Beim Antippen öffnet sich die Aufgabe oder die Liste per URL.
+Es gibt keine Konflikte mit den Anforderungen. Im Repo liegen nur die Docs und kein Code von 001, deshalb baut das Design auf `overview.md` auf.
