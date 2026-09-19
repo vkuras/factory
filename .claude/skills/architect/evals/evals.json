@@ -1,0 +1,90 @@
+{
+  "skill_name": "architect",
+  "evals": [
+    {
+      "id": 1,
+      "name": "recipe-mvp-pi",
+      "prompt": "Die Requirements für die Rezept-App sind fertig gegroomt. Mach jetzt die Architektur.",
+      "expected_output": "Full architecture for the recipe MVP: Kotlin, all of FE+BE+DB in Docker on a Raspberry Pi 5 (4 GB), >=10 concurrent users verified, offline reading, cooking mode, import of the real Markdown recipes.",
+      "files": [
+        "seeds/recipe-mvp-pi"
+      ],
+      "assertions": [
+        "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+        "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+        "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+        "Out-of-scope items of the target requirements are not designed or built",
+        "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+        "All written files are in English",
+        "Kotlin is used as stated by the stakeholder (at least for the backend) and the choice for each client/frontend is justified against the Kotlin constraint",
+        "Frontend, backend and database all run as Docker containers on the Raspberry Pi 5 (e.g. one docker compose file); no external hosted service replaces one of them",
+        "The design explicitly requires linux/arm64 images/builds for the Pi",
+        "A memory budget with per-container limits is given, the JVM heap is explicitly capped, and the sum fits in 4 GB with headroom for the OS",
+        "The 10-concurrent-users requirement is verified by a defined load test (tool, scenario, pass threshold)",
+        "Offline reading of previously opened recipes (incl. photo, cooking mode, scaling) has a concrete mechanism (e.g. service worker cache) and failed saves keep the user's input",
+        "HTTPS/secure context is provided for the browser clients (needed for service worker and screen wake lock), including how household devices trust it",
+        "Cooking mode keeps the screen on via a concrete mechanism (e.g. Screen Wake Lock API)",
+        "The import design is based on the real files in /Users/vicokuras/IdeaProjects/rezepte (handles varying heading levels, ingredients written as headings, numbered-heading steps, Short Ribs -> Hauptgerichte, amounts like '1,5 L')",
+        "Scaling rule R5/R6 is specified precisely (formula, only ingredient amounts, one decimal, German decimal comma)",
+        "Design plans a docker-compose stack in which every server-side component (frontend serving, backend, database, workers) is a service, and 'docker compose up -d' starts the whole product",
+        "Every compose service has its image/build, ports, named volumes for persistent data, env/secrets via .env with .env.example, healthcheck, depends_on and restart policy specified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "shopping-list",
+      "prompt": "002 Einkaufsliste ist gegroomt. Entwirf das technische Design dafür.",
+      "expected_output": "Design for the shopping list feature on the existing Ktor/Postgres/React-PWA recipe book on a Pi. Detects the conflict between 'Sync über Firebase' and the Pi self-hosting constraint and resolves it openly.",
+      "files": [
+        "seeds/shopping-list"
+      ],
+      "assertions": [
+        "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+        "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+        "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+        "Out-of-scope items of the target requirements are not designed or built",
+        "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+        "All written files are in English",
+        "Detects the conflict between the stakeholder's 'Sync am besten über Firebase' and the product constraint that FE+BE+DB run on the Pi, and documents it openly (both requirements, resolution, what is lost) instead of silently picking one",
+        "The conflict resolution is flagged for later stakeholder confirmation (e.g. a change request for the groomer) without blocking the design",
+        "Builds on the existing stack (Ktor, PostgreSQL, React PWA, Caddy) without adding a new database or runtime",
+        "Addresses that the Pi is currently reachable only in the home network while the list is used in the supermarket over mobile data, and decides how the phone reaches the backend there",
+        "Live updates between household members use a concrete mechanism (e.g. SSE or WebSocket) including reconnect/resync behaviour",
+        "Offline viewing and ticking: changes are queued locally and replayed; conflicts (e.g. line deleted or shopping finished while offline) have defined outcomes",
+        "Merge rules R1/R2/R2a/R2b are specified precisely (case-insensitive name + same unit, only open recipe lines, quantity-less ingredients, free items never merged)",
+        "Area assignment is specified: household corrections take priority, then a concrete built-in mapping, fallback Sonstiges; corrections stored household-wide",
+        "The memory/capacity budget of the Pi is re-checked after adding the feature (e.g. long-lived connections)",
+        "Design plans a docker-compose stack in which every server-side component (frontend serving, backend, database, workers) is a service, and 'docker compose up -d' starts the whole product",
+        "Every compose service has its image/build, ports, named volumes for persistent data, env/secrets via .env with .env.example, healthcheck, depends_on and restart policy specified"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "reminders",
+      "prompt": "Mach das Design für die Erinnerungen (002).",
+      "expected_output": "Design for task reminders on the existing NestJS/Prisma/Postgres Taskli, using OneSignal, 07:00 Europe/Berlin on Bavarian working days, idempotent daily job.",
+      "files": [
+        "seeds/reminders"
+      ],
+      "assertions": [
+        "Asks no questions: the final message contains no question to the user, no options to choose from and no request to review or approve",
+        "Traceability: every story/acceptance criterion and every business rule of the target requirements document is mapped to a concrete design element",
+        "No open decisions: the design contains no TBD/TODO, no 'either X or Y' left to developers, no unresolved 'consider'/'if needed' choices",
+        "Out-of-scope items of the target requirements are not designed or built",
+        "Data model given with entities, fields and types; API/interfaces given with method, path and request/response shape",
+        "All written files are in English",
+        "Stays on the existing stack (NestJS/TypeScript, Prisma, PostgreSQL, React PWA) and introduces no new language or database",
+        "Uses OneSignal for push as the stakeholder stated, including how devices/users are registered (e.g. external user id = Taskli user id)",
+        "The 07:00 trigger is defined in Europe/Berlin although the server runs in UTC, and DST transitions are handled",
+        "Bavarian holidays are computed per year including Easter-based movable holidays and exclude 15 Aug and 8 Aug",
+        "The daily run is idempotent: a restart or duplicate run never sends a second message to a person on the same day (persisted record)",
+        "Behaviour after a missed 07:00 run (server down) is defined and consistent with R2/R8",
+        "Meister notice is sent once per task, persisted, and can re-trigger after a due-date change (R10)",
+        "'Today', 'tomorrow' and working-day overdue counting are computed in Europe/Berlin on date-only due dates",
+        "Tap targets specified: single task opens that task, multiple opens the employee list or the Meister overview",
+        "Design plans a docker-compose stack in which every server-side component (frontend serving, backend, database, workers) is a service, and 'docker compose up -d' starts the whole product",
+        "Every compose service has its image/build, ports, named volumes for persistent data, env/secrets via .env with .env.example, healthcheck, depends_on and restart policy specified"
+      ]
+    }
+  ]
+}

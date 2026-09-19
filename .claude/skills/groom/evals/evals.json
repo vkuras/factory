@@ -1,0 +1,8 @@
+{
+  "skill_name": "groom",
+  "evals": [
+    {"id": 1, "name": "recipe-mvp", "prompt": "Ich will eine App für meine Rezepte bauen. Ich hab die grad als Markdown Files in nem Git Repo, das nervt. Man soll die mit der Familie teilen können und beim Kochen gut benutzen. Soll in Kotlin gebaut werden. Irgendwann wär auch ein Wochenplan cool.", "expected_output": "MVP grooming via simulated stakeholder (personas/recipe-mvp.md). docs/product.md + docs/requirements/001-*.md capturing hidden facts H1-H8, Wochenplan parked, Kotlin as stakeholder constraint, no tech in requirements.", "files": []},
+    {"id": 2, "name": "shopping-list", "prompt": "Ich brauch ne Einkaufsliste. Ich will aus Rezepten die Zutaten auf ne Liste packen. Vielleicht kann man auch Vorräte abhaken, weiß nicht. Sync am besten über Firebase.", "expected_output": "Feature grooming on existing recipe product via simulated stakeholder (personas/shopping-list.md). 'Vorräte abhaken' correctly understood as unticking at-home items when adding, not pantry management.", "files": ["seeds/shopping-list"]},
+    {"id": 3, "name": "reminders", "prompt": "Wir brauchen Erinnerungen für Aufgaben. Die Leute vergessen ständig ihre Sachen. Am besten per Push, ich würd OneSignal nehmen, das kenn ich. Und am Wochenende soll keiner genervt werden.", "expected_output": "Feature grooming on Taskli via simulated stakeholder (personas/reminders.md). Timing rules, public holidays, escalation to Meister, no opt-out.", "files": ["seeds/reminders"]}
+  ]
+}

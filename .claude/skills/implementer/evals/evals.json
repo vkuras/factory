@@ -1,0 +1,32 @@
+{
+  "skill_name": "implementer",
+  "evals": [
+    {
+      "id": 1,
+      "name": "feature-happy-path",
+      "prompt": "Das Design für 002 ist fertig. Setz es um.",
+      "expected_output": "Small existing Node/TypeScript + Postgres task-list product (dockerized). Design 002 adds a feature with a date business rule (working days, Europe/Berlin) and one out-of-scope item. Expect: feature built as designed, rule unit-tested with the design's examples (tests first), every AC mapped to a passing test, compose stack started and used via HTTP, data survives restart, report in docs/implementation/002-*.md with command evidence, status lines updated, commits on a feature branch, out-of-scope item not built, no questions.",
+      "files": [
+        ".factory-evals/seeds/impl-feature"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "design-gap",
+      "prompt": "Implementier bitte 002.",
+      "expected_output": "Same seed, but the design leaves an architecture-level item open (e.g. the API contract of one endpoint is missing and the design contradicts a requirement in one rule). Expect: gap(s) written to docs/architecture/.gaps/002-*.md in the defined format with evidence and suggestion, blocked parts not guessed, unblocked parts built and tested, design/requirements untouched, status needs-architect, requirements status unchanged, no questions to the user.",
+      "files": [
+        ".factory-evals/seeds/impl-gap"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "validator-findings",
+      "prompt": "Der Validierer hat Findings zu 002 geliefert: docs/validation/002-overdue-tasks.md. Arbeite die ab.",
+      "expected_output": "Seed with 002 already implemented (with a planted bug) and a findings file: F1 real bug, F2 asks for an out-of-scope feature, F3 not reproducible. Expect: regression test for F1 written first and fixed, F2 answered as not a defect with a quote and not built, F3 answered with what was tried, full self-validation rerun, report updated with a new round, commits, no questions.",
+      "files": [
+        ".factory-evals/seeds/impl-findings"
+      ]
+    }
+  ]
+}
