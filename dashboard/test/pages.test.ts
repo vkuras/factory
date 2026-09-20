@@ -75,6 +75,12 @@ describe('the overview page (S1, S2, R11)', () => {
     expect(res.text).not.toMatch(/setInterval|setTimeout|WebSocket|EventSource/);
   });
 
+  it('preloads the font weight only a hidden tab needs, so a tab switch causes no request (QE2)', async () => {
+    const $ = await page('/');
+    expect($('link[rel=preload][as=font]').map((_, el) => $(el).attr('href')).get()).toEqual(['/assets/fonts/ibm-plex-sans-latin-500-normal.woff2']);
+    expect($('link[rel=icon]').attr('href')).toBe('data:,'); // the browser does not ask for /favicon.ico
+  });
+
   it('sends the product CSP and nosniff', async () => {
     const res = await request(t.app).get('/');
     expect(res.headers['content-security-policy']).toBe(
@@ -747,6 +753,8 @@ describe('the repository label (R3, D14, D16, D17)', () => {
     expect(css).toMatch(/\.af-repo\s*\{[^}]*max-width:\s*14ch/);
     expect(css).toMatch(/\.af-repo\s*\{[^}]*text-overflow:\s*ellipsis/);
     expect(css).toMatch(/\.af-repo\s*\{[^}]*white-space:\s*nowrap/);
+    // an inline-block collapses the leading space of " · factory", so the gap after the id is a margin
+    expect(css).toMatch(/\.af-repo\s*\{[^}]*margin-left:\s*4px/);
     expect(css).toMatch(/\.af-repo\s*\{[^}]*font-size:\s*11px[^}]*color:\s*#6E7887|\.af-repo\s*\{[^}]*color:\s*#6E7887[^}]*font-size:\s*11px/);
   });
 

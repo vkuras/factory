@@ -35,6 +35,8 @@ const CSP =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; " +
   "frame-ancestors 'none'; base-uri 'none'";
 
+const OVERVIEW_FONTS = ['/assets/fonts/ibm-plex-sans-latin-500-normal.woff2'];
+
 const localDir = (relative: string): string => fileURLToPath(new URL(relative, import.meta.url));
 
 export function createApp(options: AppOptions): express.Express {
@@ -74,12 +76,13 @@ export function createApp(options: AppOptions): express.Express {
     view: string,
     data: Record<string, unknown>,
     onlineCount: number,
+    preload: string[] = [],
   ): Promise<void> => {
     const options = { views: [viewsDir], cache: true };
     const body = await ejs.renderFile(`${viewsDir}/${view}.ejs`, data, options);
     const html = await ejs.renderFile(
       `${viewsDir}/layout.ejs`,
-      { body, online: onlineIndicator(onlineCount) },
+      { body, online: onlineIndicator(onlineCount), preload },
       options,
     );
     res
@@ -118,10 +121,11 @@ export function createApp(options: AppOptions): express.Express {
   app.get('/', async (req, res) => {
     const model = buildOverview(q, config, now(), parseTab(req.query['tab']));
     if (model.empty) {
-      await renderPage(res, 200, 'empty', {}, model.online.pulsing ? Number.parseInt(model.online.text, 10) || 1 : 0);
+      await renderPage(res, 200, 'empty', {}, onlineNow());
       return;
     }
-    await renderPage(res, 200, 'overview', { m: model }, onlineNow());
+    // The Pipeline tab is the first to need this weight; loading it up front keeps a tab switch free of network.
+    await renderPage(res, 200, 'overview', { m: model }, onlineNow(), OVERVIEW_FONTS);
   });
 
   const notFound = (res: Response): Promise<void> =>

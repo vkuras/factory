@@ -32,4 +32,4 @@ details[open] .af-when-closed { display: none; }
 details:not([open]) .af-when-open { display: none; }
 
 /* The repository label of R3, rendered by the ticketId partial (design deviation D14). */
-.af-repo { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6E7887; display: inline-block; max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.af-repo { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6E7887; display: inline-block; margin-left: 4px; max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }

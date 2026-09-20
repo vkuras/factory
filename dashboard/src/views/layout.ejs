@@ -4,7 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Agent Factory</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="/assets/app.css">
+<% for (const font of preload) { %>
+<link rel="preload" as="font" type="font/woff2" href="<%= font %>" crossorigin>
+<% } %>
 <noscript><style>section[data-panel] { display: block; }</style></noscript>
 <script src="/assets/app.js" defer></script>
 </head>
