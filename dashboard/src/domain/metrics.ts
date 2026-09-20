@@ -4,7 +4,8 @@ import { MS_PER_HOUR } from './format.js';
 import type { Actor, RunLite, TicketRecord } from './types.js';
 
 export interface AgentSpend {
-  tokens: number;
+  /** null when none of the agent's runs reported a token count (a failed Agent call has none). */
+  tokens: number | null;
   timeHours: number;
 }
 
@@ -43,10 +44,10 @@ export function computeMetrics(
   let workingMs = 0;
   const byAgent: Partial<Record<Actor, AgentSpend>> = {};
   for (const r of work) {
-    const spend = (byAgent[r.actor] ??= { tokens: 0, timeHours: 0 });
+    const spend = (byAgent[r.actor] ??= { tokens: null, timeHours: 0 });
     if (r.tokens !== null) {
       tokens = (tokens ?? 0) + r.tokens;
-      spend.tokens += r.tokens;
+      spend.tokens = (spend.tokens ?? 0) + r.tokens;
     }
     if (r.endedAt !== null) {
       workingMs += r.endedAt - r.startedAt;

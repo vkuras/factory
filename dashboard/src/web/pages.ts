@@ -248,22 +248,22 @@ export function buildOverview(q: Queries, cfg: Config, now: number, tab: TabKey)
       wComp: pct(e.metrics.workingTimeHours, maxComp),
     }));
 
-  const spend = new Map<Actor, { tokens: number; time: number }>();
+  const spend = new Map<Actor, { tokens: number | null; time: number }>();
   for (const e of entries) {
-    for (const [agent, s] of Object.entries(e.metrics.byAgent) as [Actor, { tokens: number; timeHours: number }][]) {
-      const total = spend.get(agent) ?? { tokens: 0, time: 0 };
-      total.tokens += s.tokens;
+    for (const [agent, s] of Object.entries(e.metrics.byAgent) as [Actor, { tokens: number | null; timeHours: number }][]) {
+      const total = spend.get(agent) ?? { tokens: null, time: 0 };
+      if (s.tokens !== null) total.tokens = (total.tokens ?? 0) + s.tokens;
       total.time += s.timeHours;
       spend.set(agent, total);
     }
   }
-  const maxSpend = Math.max(0, ...[...spend.values()].map((s) => s.tokens));
+  const maxSpend = Math.max(0, ...[...spend.values()].map((s) => s.tokens ?? 0));
   const agentSpend = barRows(
     AGENTS.filter((a) => spend.has(a)).map((a) => ({
       label: AG[a].label,
       color: AG[a].color,
       value: `${fmtTok(spend.get(a)!.tokens)} · ${fmtH(spend.get(a)!.time)}`,
-      amount: spend.get(a)!.tokens,
+      amount: spend.get(a)!.tokens ?? 0,
     })),
     maxSpend,
   );
@@ -461,13 +461,13 @@ export function buildDetail(
   });
 
   const tokenAgents = LANE_ORDER.filter((a) => metrics.byAgent[a]);
-  const maxTok = Math.max(0, ...tokenAgents.map((a) => metrics.byAgent[a]!.tokens));
+  const maxTok = Math.max(0, ...tokenAgents.map((a) => metrics.byAgent[a]!.tokens ?? 0));
   const tokenBars = barRows(
     tokenAgents.map((a) => ({
       label: AG[a].label,
       color: AG[a].color,
       value: fmtTok(metrics.byAgent[a]!.tokens),
-      amount: metrics.byAgent[a]!.tokens,
+      amount: metrics.byAgent[a]!.tokens ?? 0,
     })),
     maxTok,
   );

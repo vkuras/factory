@@ -54,7 +54,7 @@ describe('ticket metrics', () => {
     const runs = [run('groom', 0, 1, 1000), run('architect', 1, 1, null), run('human', 2, 0, 0)];
     const m = computeMetrics(ticket(), runs, 10 * H);
     expect(m.tokens).toBe(1000);
-    expect(m.byAgent.architect).toEqual({ tokens: 0, timeHours: 1 });
+    expect(m.byAgent.architect).toEqual({ tokens: null, timeHours: 1 });
   });
 
   it('reports unknown tokens when no run knows its count', () => {

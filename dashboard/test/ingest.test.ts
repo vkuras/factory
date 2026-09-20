@@ -270,6 +270,10 @@ describe('a failed Agent call (T-HOOK-4, T-HOOK-5)', () => {
     expect(detail('div[title^="Implementer"]').attr('style')).toContain('border:1px solid #FF6B6B');
     expect(detail('details.af-log').text()).toContain("Agent type 'no-such-agent-xyz' not found.");
     expect(detail('details.af-log summary').text()).toContain('—'); // no token count
+    const perAgent = detail('div').filter((_, el) => detail(el).children().first().text().trim() === 'Tokens per agent').first();
+    expect(perAgent.text().replace(/\s+/g, ' ')).toContain('Implementer —'); // unknown, not 0
+    const tokensTile = detail('div[style*="repeat(3,minmax(110px"] > div').filter((_, el) => detail(el).text().includes('tokens')).text().replace(/\s+/g, ' ').trim();
+    expect(tokensTile).toBe('tokens —');
   });
 
   it('T-HOOK-4: a failure for an Agent call that was never reported as a start is dropped and logged', async () => {
