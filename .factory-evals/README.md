@@ -26,6 +26,7 @@ what an earlier round left behind:
 | `coord-loop` | `main` | 002 after six implementer/validator cycles, with the run log that proves it and two findings still open |
 | `coord-entry` | `main` | 002 at `Implemented – ready for validation`, nothing pending: the coordinator has to enter at the validator |
 | `coord-change-request` | `main` | same as `coord-entry`, but with an open change request nobody ever carried to the stakeholder |
+| `coord-validated` | `feature/002-ablauf-erinnerungen` | 002 `Validated` on a branch two commits ahead of `main`, clean tree: everything that is left is the push and the merge request |
 
 After a run has written into a seed, put it back with:
 

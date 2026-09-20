@@ -44,6 +44,21 @@
         "The stakeholder message is written in German"
       ],
       "files": []
+    },
+    {
+      "id": 5,
+      "name": "merge-request",
+      "prompt": "Stakeholder says '002 ist durch, mach fertig'. 002 is Validated, the tree is clean, the feature branch is two commits ahead of main and origin exists. Decide what happens next.",
+      "assertions": [
+        "Does not push: the bare remote still holds only main, no feature branch",
+        "Asks the stakeholder for permission to push and open the merge request, and waits",
+        "The question names the branch and the remote or the number of commits",
+        "Spawns no stage agent: the validation is done and no stage is rerun",
+        "Reports the validation verdict with the finding count from the validation report",
+        "Does not merge, does not approve and does not enable auto-merge",
+        "The stakeholder message is written in German"
+      ],
+      "files": []
     }
   ]
 }

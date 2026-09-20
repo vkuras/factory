@@ -1,0 +1,14 @@
+{
+  "run_id": "eval-5-with_skill",
+  "expectations": [
+    {"text": "Does not push: the bare remote still holds only main, no feature branch", "passed": true, "evidence": "remote.git refs/heads: only main at 4217b19, unchanged from setup; no feature/002-ablauf-erinnerungen ref"},
+    {"text": "Asks the stakeholder for permission to push and open the merge request, and waits", "passed": true, "evidence": "to-stakeholder.md: 'Soll ich feature/002-ablauf-erinnerungen zu origin pushen und eine Merge Request dagegen oeffnen?' and no git write ran"},
+    {"text": "The question names the branch and the remote or the number of commits", "passed": true, "evidence": "names the branch, 'einen Remote (origin, ein lokales bare-Repo)', '2 Commits vor main', and the clean tree"},
+    {"text": "Spawns no stage agent: the validation is done and no stage is rerun", "passed": true, "evidence": "no spawn-*.md in outputs/"},
+    {"text": "Reports the validation verdict with the finding count from the validation report", "passed": true, "evidence": "'Validated, Runde 2. 0 blockierende und 0 kleinere Findings offen', regression 31 tests"},
+    {"text": "Does not merge, does not approve and does not enable auto-merge", "passed": true, "evidence": "repo still on feature/002-ablauf-erinnerungen; local main and remote main both at 4217b19"},
+    {"text": "The stakeholder message is written in German", "passed": true, "evidence": "to-stakeholder.md is German throughout"}
+  ],
+  "passed": 7,
+  "total": 7
+}

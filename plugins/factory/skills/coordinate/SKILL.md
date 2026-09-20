@@ -1,6 +1,6 @@
 ---
 name: coordinate
-description: Runs the whole software factory pipeline end to end and is the stakeholder's only channel into it. It spawns the groom, architect, implementer and validator agents, routes every handover by the status they report, brings their open questions, requirement conflicts and escalations back to the stakeholder, and stops for help when two stages have bounced the same work six times. Use this whenever the user wants a product or a feature actually built rather than one stage run — "bau mir X", "lass die Factory laufen", "koordinier das", "fahr 002 durch bis validated", "run the pipeline", "orchestrate the agents", "mach weiter mit dem Ticket" — and also when they come back with answers a previous coordination round handed to them, even if they never say "coordinate". Do not use it to run a single stage yourself: that is the groom, architect, implementer or validator skill.
+description: Runs the whole software factory pipeline end to end and is the stakeholder's only channel into it. It spawns the groom, architect, implementer and validator agents, routes every handover by the status they report, pushes the branch and opens the merge request once everything is validated, brings their open questions, requirement conflicts and escalations back to the stakeholder, and stops for help when two stages have bounced the same work six times. Use this whenever the user wants a product or a feature actually built rather than one stage run — "bau mir X", "lass die Factory laufen", "koordinier das", "fahr 002 durch bis validated", "run the pipeline", "orchestrate the agents", "mach weiter mit dem Ticket", "mach die MR auf" — and also when they come back with answers a previous coordination round handed to them, even if they never say "coordinate". Do not use it to run a single stage yourself: that is the groom, architect, implementer or validator skill.
 ---
 
 # Coordinate
@@ -27,7 +27,7 @@ You run in a conversation with the stakeholder, so you can ask. Use that.
 - **Route by status, not by impression.** Every agent ends with a `STATUS:` line. That line decides what happens next, not your reading of the summary.
 - **Batch the interruptions.** The stakeholder wants to be involved in the thinking and not in the paperwork. Collect what needs deciding and ask it in one round, at most four questions.
 - **Keep them posted.** Stages take a long time. After each one, one or two lines: what ran, what came back, what runs next.
-- **Finish what you started.** A run ends at `Validated`, or at a question only the stakeholder can answer. Not at "the architect is done, shall I continue?".
+- **Finish what you started.** A run ends at `Validated` plus the merge request, or at a question only the stakeholder can answer. Not at "the architect is done, shall I continue?".
 
 ## Workflow
 
@@ -132,14 +132,65 @@ When it trips, don't route again. Bring the stakeholder the pair, how many round
 
 ### 7. Finish
 
-Report in the stakeholder's language: what was built, the branch, the validation verdict with the number of findings, where the product and its documents are, and anything still open. Never push or merge — that stays the stakeholder's call.
+Report in the stakeholder's language: what was built, the branch, the validation verdict with the number of findings, where the product and its documents are, and anything still open.
+
+### 8. Push and open the merge request
+
+Only for a document the validator returned as `Validated`. One with open findings, an open change request or an open gap doesn't get a merge request, however close it looks — the merge request is the claim that this is done.
+
+Check `git remote -v` first. A repo with no remote has nowhere to push, and that is not a failure — say so in one line, name the branch, and the run ends there.
+
+Pushing is the first thing in the whole run that leaves this machine and that other people see, and it can't be taken back once it's on the remote. So it's the stakeholder's call, and you ask for it after the report, in one plain question: the branch, the remote, how many commits, and whether to push and open the merge request. Wait for a clear yes. "Sieht gut aus" about the report is agreement with the report, not permission to publish it.
+
+Once they say yes:
+
+1. `git status` — the tree has to be clean. Uncommitted work means a stage didn't finish what it started. Find out which, and let that stage finish it. Don't commit it yourself.
+2. `git push -u origin feature/NNN-<slug>`.
+3. Open the merge request against the default branch with whatever the remote uses: `gh pr create` for GitHub, `glab mr create` for GitLab. If neither is installed or signed in, the push is still done — give the stakeholder the compare URL the push printed, with the title and body ready to paste.
+
+Title: `NNN: <the requirements document's title>`.
+
+The body is assembled from what the run already produced, not written fresh. You weren't the one who built this, so every line in it comes from an artifact:
+
+```markdown
+Built by the software factory: groomer → architect → implementer → validator. No person reviewed this on the way.
+
+## Stages
+
+<the run log table from docs/.factory/run-NNN.md>
+
+## Validation
+
+<the verdict line from docs/validation/NNN-<slug>.md, with the findings by severity and the regression result>
+
+## Documents
+
+- Requirements: docs/requirements/NNN-<slug>.md
+- Design: docs/architecture/NNN-<slug>.md
+- Implementation report: docs/implementation/NNN-<slug>.md
+- Validation report: docs/validation/NNN-<slug>.md
+
+## Still open
+
+<waived findings, parked items, self-validation the environment couldn't run — or "nothing">
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+The first line is the point of the merge request. Everything in this branch was written, reviewed and signed off by agents, and the reviewer is the first person to look at it — they need to know that before they read a green validation report.
+
+If you catch yourself describing the feature in your own words, link the requirements document instead. A reviewer who trusts your summary is reviewing you, not the product.
+
+Never merge, never approve, and never turn on auto-merge. The merge request exists so that a person looks at what four agents built without one.
 
 ## Language
 
 Two different rules, and mixing them up is a real failure:
 
 - **Files you write into the repo** — the run log, commit messages, the task messages you hand to agents — follow the project's own language rule, usually set in its CLAUDE.md. That rule exists so the artifacts stay consistent for whoever reads them next.
-- **What you say to the stakeholder** — questions, progress lines, escalations, the final report — is conversation, not a repo artifact, and goes in *their* language. A project rule about how files are written does not reach it, and you don't translate a question into a language the stakeholder didn't ask in just because the repo is written that way.
+- **What you say to the stakeholder** — questions, progress lines, escalations, the final report, the question about pushing — is conversation, not a repo artifact, and goes in *their* language. A project rule about how files are written does not reach it, and you don't translate a question into a language the stakeholder didn't ask in just because the repo is written that way.
+
+The merge request belongs to the first rule: it is read by whoever reviews the repo, so it follows the project's language.
 
 When you quote the stakeholder's answer into a task message, keep their sentence as they wrote it and add your translation beside it if the repo language differs. The groomer works from their exact words, so a smoothed-out translation costs exactly what a paraphrase costs.
 
@@ -147,7 +198,8 @@ When you quote the stakeholder's answer into a task message, keep their sentence
 
 - The architect does not commit, by design. You commit its output: `docs(NNN): architecture`.
 - The groomer, implementer and validator commit their own work. Leave it alone.
-- Everything happens on `feature/NNN-<slug>`. Never push, never merge, never rewrite history.
+- Everything happens on `feature/NNN-<slug>`, for every stage. Never rewrite history, never switch branches mid-run.
+- You push exactly once, at the end, and only after the stakeholder said yes (see step 8). Never merge.
 
 ## Never
 
@@ -155,3 +207,4 @@ When you quote the stakeholder's answer into a task message, keep their sentence
 - Never write requirements, design documents, product code or tests. If something is missing, it is missing from a stage, and that stage runs again.
 - Never rerun an agent that returned `nothing-to-do` hoping for a different answer. The statuses disagree; show them to the stakeholder.
 - Never report a document as done while a change request or a gap is still open.
+- Never push and never open a merge request without the stakeholder's explicit yes in this conversation, and never merge one.
