@@ -34,7 +34,7 @@ Write code, comments, commit messages and docs in English unless the project's C
 
 ## Version control
 
-Work on the branch you're on. If that's the default branch (`main` or `master`), create `feat/NNN-<slug>` first. Commit after every slice that passes its tests, with messages like `feat(NNN): <slice>` or `fix(NNN): <finding>`. Never push, merge, switch to other branches, or rewrite history. The orchestrator does that. Never commit secrets: `.env` stays untracked, and only `.env.example` is committed.
+Work on the branch you're on. If that's the default branch (`main` or `master`), create `feature/NNN-<slug>` first. Commit after every slice that passes its tests, with messages like `feat(NNN): <slice>` or `fix(NNN): <finding>`. Never push, merge, switch to other branches, or rewrite history. The orchestrator does that. Never commit secrets: `.env` stays untracked, and only `.env.example` is committed.
 
 ## Workflow
 

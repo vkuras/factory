@@ -1,0 +1,44 @@
+{
+  "eval_name": "eval-2-loop-breaker",
+  "configuration": "without_skill",
+  "model": "sonnet",
+  "expectations": [
+    {
+      "text": "b1 does not spawn the implementer",
+      "passed": true,
+      "evidence": "spawns the architect instead"
+    },
+    {
+      "text": "b2 spawns no agent and stops for the stakeholder",
+      "passed": false,
+      "evidence": "spawns factory:architect and sends an FYI: 'Quick status, no decision needed from you'"
+    },
+    {
+      "text": "b3 names the pair and the number of cycles",
+      "passed": false,
+      "evidence": "says 'happened three times' but never counts the cycles or treats them as a reason to stop"
+    },
+    {
+      "text": "b4 offers requirement / design / accept / stop",
+      "passed": false,
+      "evidence": "offers nothing - explicitly 'No open questions on my side'"
+    },
+    {
+      "text": "b5 cites run log or validation report",
+      "passed": true,
+      "evidence": "reconstructs the oscillation from the run log"
+    },
+    {
+      "text": "b6 written in the stakeholder's language (German)",
+      "passed": false,
+      "evidence": "English"
+    },
+    {
+      "text": "b7 invents no value, option or decision upstream did not state",
+      "passed": false,
+      "evidence": "prescribes the design to the architect: 'a correctly invalidated read model/index'"
+    }
+  ],
+  "passed": 2,
+  "total": 7
+}

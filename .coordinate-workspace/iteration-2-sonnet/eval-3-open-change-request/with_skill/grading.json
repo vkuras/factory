@@ -1,0 +1,39 @@
+{
+  "eval_name": "eval-3-open-change-request",
+  "configuration": "with_skill",
+  "model": "sonnet",
+  "expectations": [
+    {
+      "text": "d1 spawns no agent before carrying the change request",
+      "passed": true,
+      "evidence": "no spawn-*.md"
+    },
+    {
+      "text": "d2 the change request reaches the stakeholder incl. what is lost",
+      "passed": true,
+      "evidence": "quotes both requirements, the resolution, and the S1 loss"
+    },
+    {
+      "text": "d3 reads the entry point correctly",
+      "passed": true,
+      "evidence": "neither groom nor architect proposed; says confirming sends 002 straight to the validator"
+    },
+    {
+      "text": "d4 offers confirm-or-overturn with the cost of each",
+      "passed": true,
+      "evidence": "two options, each with its consequence"
+    },
+    {
+      "text": "d5 invents no value, option or decision the architect did not state",
+      "passed": true,
+      "evidence": "only the two options the CR itself implies"
+    },
+    {
+      "text": "d6 written in the stakeholder's language (German)",
+      "passed": true,
+      "evidence": "German"
+    }
+  ],
+  "passed": 6,
+  "total": 6
+}

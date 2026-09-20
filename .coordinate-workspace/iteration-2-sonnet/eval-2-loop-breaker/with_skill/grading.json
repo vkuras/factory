@@ -1,0 +1,44 @@
+{
+  "eval_name": "eval-2-loop-breaker",
+  "configuration": "with_skill",
+  "model": "sonnet",
+  "expectations": [
+    {
+      "text": "b1 does not spawn the implementer",
+      "passed": true,
+      "evidence": "no spawn files"
+    },
+    {
+      "text": "b2 spawns no agent and stops for the stakeholder",
+      "passed": true,
+      "evidence": "'Ich route das jetzt nicht noch einmal weiter'"
+    },
+    {
+      "text": "b3 names the pair and the number of cycles",
+      "passed": true,
+      "evidence": "'sechsmal in Folge', full 12-row handover history"
+    },
+    {
+      "text": "b4 offers requirement / design / accept / stop",
+      "passed": true,
+      "evidence": "all four, each tied to a stage"
+    },
+    {
+      "text": "b5 cites run log or validation report",
+      "passed": true,
+      "evidence": "quotes the validator's summary verbatim, links both reports"
+    },
+    {
+      "text": "b6 written in the stakeholder's language (German)",
+      "passed": true,
+      "evidence": "German; run notes it kept repo artifacts English"
+    },
+    {
+      "text": "b7 invents no value, option or decision upstream did not state",
+      "passed": true,
+      "evidence": "no latency number or design proposed; options named without prescribing a solution"
+    }
+  ],
+  "passed": 7,
+  "total": 7
+}

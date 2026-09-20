@@ -1,0 +1,5 @@
+- Entry point read from the requirements document, not from the stakeholder's wording: docs/requirements/002-ablauf-erinnerungen.md carries "Implemented – ready for validation", so the next stage is the validator, not a rerun of groom/architect/implementer.
+- Checked for blockers first: no docs/requirements/.change-requests/ and no docs/architecture/.gaps/ exist in the repo, so no stakeholder decision is pending before the stage runs.
+- Spawned exactly one agent (factory:validator, in the background), with the requirements number plus a pointer to the implementation report and the 001 regression scope. Nothing needed deciding, so the stakeholder only gets a short status line — no questions asked, no requirement invented.
+- Normally I would also create the branch feature/002-ablauf-erinnerungen and append a run-log row to docs/.factory/run-002.md; the sandbox rules forbid modifying the fixture repo, so both are recorded here instead.
+- The run continues after the validator's STATUS: validated = done, changes-requested = implementer with the findings file, needs-architect/needs-groomer/escalated = route or carry to the stakeholder accordingly.

@@ -18,6 +18,13 @@ for bundle in "$here"/bundles/*.bundle; do
   target="$here/seeds/$name"
   rm -rf "$target"
   git clone --quiet "$bundle" "$target"
+  # A clone checks out HEAD only, so every other branch would be lost with the
+  # origin. Some seeds need them: a merge request needs its target branch.
+  for branch in $(git -C "$target" for-each-ref --format='%(refname:lstrip=3)' 'refs/remotes/origin/*'); do
+    [ "$branch" = "HEAD" ] && continue
+    git -C "$target" show-ref --quiet --verify "refs/heads/$branch" || \
+      git -C "$target" branch --quiet "$branch" "origin/$branch"
+  done
   git -C "$target" remote remove origin
   echo "$name -> $(git -C "$target" rev-parse --abbrev-ref HEAD) @ $(git -C "$target" rev-parse --short HEAD)"
 done

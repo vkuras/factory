@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "entry-point",
+  "prompt": "Stakeholder says 'fahr 002 durch bis validated'. Document 002 has status 'Implemented - ready for validation'.",
+  "assertions": [
+    {"id": "c1", "text": "The first spawned agent is factory:validator"},
+    {"id": "c2", "text": "Neither factory:groom nor factory:architect is spawned"},
+    {"id": "c3", "text": "Exactly one agent is spawned in this step"},
+    {"id": "c4", "text": "The task message names the absolute product repo path and requirements document 002"},
+    {"id": "c5", "text": "Does not block on a question to the stakeholder; any stakeholder message is a progress note, not a request for input"}
+  ]
+}
