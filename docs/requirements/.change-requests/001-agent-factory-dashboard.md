@@ -2,7 +2,8 @@
 
 - Raised by: architect, 2026-09-20
 - Design: docs/architecture/001-agent-factory-dashboard.md §Requirement conflicts, ADR-0006
-- Status: Open – resolved in the design, waiting for the stakeholder to confirm or overturn
+- Status: Answered – CR1 overturned by the stakeholder on 2026-09-20, groomed into requirements 001
+  (D14). The design must be revised.
 
 ## CR1 – Two repositories both produce a ticket `001`
 
@@ -53,3 +54,18 @@ the repetition.
 2. **Overturn by pulling "a repository indicator on a ticket" out of Later.** The data model
    already holds the repository, so this is a small, purely visual change — one extra label on the
    card and in the table. It needs a grooming round, because it changes what R3 and D2 say.
+
+## Stakeholder answer (2026-09-20)
+
+Option 2, verbatim: "Kippen: Repo-Anzeige aus Later holen".
+
+Groomed into `docs/requirements/001-agent-factory-dashboard.md`: R3 rewritten, D2 superseded by
+D14, the Later entry removed, and the repository added to the acceptance criteria of S1, S3, S4 and
+S5. The internal identity `(repository, number)` from ADR-0006 stands; what changes is that the
+repository is now shown, everywhere a ticket is shown, always. The requirements document is back to
+`Groomed – ready for architecture`.
+
+In the same round the stakeholder said: "Der coordinator wird in der zukunft abgeschaltet und durch
+shell script ersetzt ich will mich nicht auf den verlassen." That became R13 and D15: reporting
+must not depend on the coordinator. It affects the design's hook mechanism, not what the dashboard
+shows.

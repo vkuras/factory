@@ -45,10 +45,12 @@ Two things, in this order:
 
 - **Factory** — the pipeline of four agent stages plus the coordinator that routes between them.
 - **Agent** — one of groom, architect, implementer, validator.
-- **Coordinator** — the component that runs the pipeline and is the only channel between the
-  agents and the operator.
-- **Ticket** — one requirements document and everything that happened to it. Its id is the
-  document's `NNN` number.
+- **Coordinator** — the component that runs the pipeline today and is the only channel between the
+  agents and the operator. It is temporary: the operator intends to switch it off and drive the
+  factory with a shell script instead, so nothing may depend on it being there.
+- **Ticket** — one requirements document and everything that happened to it. It is identified by
+  the repository it lives in together with the document's `NNN` number, because every repository
+  numbers its documents from `001`.
 - **Agent run** — one execution of one agent on one ticket. A ticket usually has several.
 - **Loop** — every run of an agent on a ticket beyond its first one.
 - **Intervention** — a point where the operator themselves acted on a ticket.
@@ -58,4 +60,4 @@ Two things, in this order:
 
 | # | Title | Type | Status |
 |---|---|---|---|
-| 001 | Agent Factory Dashboard | MVP | Designed |
+| 001 | Agent Factory Dashboard | MVP | Groomed (re-groomed after CR1; design to be revised) |
