@@ -1,8 +1,8 @@
 mrs und project erstellung
-Set models
-Orchestrator skill
 Orchestrator script
 FE to monitor
+aufsetzen auf raspberry pi
+readme schreiben
 
 
 deploy
@@ -10,7 +10,7 @@ deploy
 work:
 architect nur java + goality gate + stack knowledge + how much resources he requests
 implementer stack knowledge + gitlab
-
+Jira ticket
 validator against staging but load test locally
 
 
