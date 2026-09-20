@@ -1,7 +1,7 @@
 # 001 – Agent Factory Dashboard
 
 - Type: MVP
-- Status: Groomed – ready for architecture
+- Status: Designed – ready for implementation
 - Date: 2026-09-20
 - Product context: docs/product.md
 

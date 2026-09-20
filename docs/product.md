@@ -58,4 +58,4 @@ Two things, in this order:
 
 | # | Title | Type | Status |
 |---|---|---|---|
-| 001 | Agent Factory Dashboard | MVP | Groomed – ready for architecture |
+| 001 | Agent Factory Dashboard | MVP | Designed |
