@@ -1,3 +1,4 @@
+import * as cheerio from 'cheerio';
 import { readFileSync } from 'node:fs';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -230,6 +231,118 @@ describe('run-finish', () => {
   });
 });
 
+// T-HOOK-4, T-HOOK-5: the failed Agent call (gap G1), driven with the captured payloads.
+describe('a failed Agent call (T-HOOK-4, T-HOOK-5)', () => {
+  const failure = (): Record<string, unknown> => JSON.parse(fixture('post-tool-use-failure.json')) as Record<string, unknown>;
+  const started = { ...base, session_id: 'S-fail', tool_use_id: 'toolu_fail' };
+
+  it('T-HOOK-4: the failure finishes the run PreToolUse started: failed, ended, no tokens, the error string as output', async () => {
+    const pre = fixture('pre-tool-use.json');
+    await post(t, { path: '/api/hook/run-start', meta: { ...started, event: 'run-start', agent: 'groom', ts: T0, req_status: 'In grooming' }, body: pre });
+    expect(runs()).toMatchObject([{ ended_at: null, result: null }]);
+    expect(t.db.prepare(`SELECT count(*) AS n FROM run WHERE ended_at IS NULL AND result IS NULL`).get()).toEqual({ n: 1 });
+
+    const payload = failure();
+    const res = await finishRun(t, { ...started, ts: T0 + 2000, req_status: 'In grooming' }, payload);
+    expect(res.status).toBe(204);
+    expect(runs()).toMatchObject([
+      { result: 'failed', ended_at: T0 + 2000, tokens: null, output: payload['error'], agent_status: null, summary: expect.stringMatching(/^Agent type 'no-such-agent-xyz' not found/) },
+    ]);
+    // it is no longer an agent online
+    expect(t.db.prepare(`SELECT count(*) AS n FROM run WHERE ended_at IS NULL AND result IS NULL`).get()).toEqual({ n: 0 });
+    expect(rows(t, 'SELECT count(*) AS n FROM hook_cursor')).toEqual([{ n: 0 }]);
+  });
+
+  it('T-HOOK-4: the ticket then appears in Attention under R1 rule 3 and in the "agent run failed" row of S5.6', async () => {
+    await post(t, { path: '/api/hook/run-start', meta: { ...started, event: 'run-start', agent: 'implementer', ts: T0 - 3 * H, req_status: 'Designed – ready for implementation' }, body: '{}' });
+    await finishRun(t, { ...started, ts: T0 - 2 * H, req_status: 'Designed – ready for implementation' }, failure());
+    const home = cheerio.load((await request(t.app).get('/')).text);
+    const card = home('section[data-panel=attention] a.af-h-attn');
+    expect(card).toHaveLength(1);
+    expect(card.text()).toContain('agent run failed');
+    expect(card.text()).toContain('An agent run aborted before it finished.');
+    const analytics = cheerio.load((await request(t.app).get('/?tab=analytics')).text);
+    const panel = analytics('div').filter((_, el) => analytics(el).children().first().text().trim() === 'Where tickets bounce back').first();
+    const row = panel.children('div').slice(1).map((_, el) => analytics(el).children().first().text().replace(/\s+/g, ' ').trim()).get().find((r) => r.startsWith('agent run failed'));
+    expect(row).toBe('agent run failed 1x');
+    // and the detail page marks the block and shows the error text as the run's output
+    const detail = cheerio.load((await request(t.app).get('/ticket/001')).text);
+    expect(detail('div[title^="Implementer"]').attr('style')).toContain('border:1px solid #FF6B6B');
+    expect(detail('details.af-log').text()).toContain("Agent type 'no-such-agent-xyz' not found.");
+    expect(detail('details.af-log summary').text()).toContain('—'); // no token count
+  });
+
+  it('T-HOOK-4: a failure for an Agent call that was never reported as a start is dropped and logged', async () => {
+    const res = await finishRun(t, { ...base, session_id: 'nobody', tool_use_id: 'toolu_none', ts: T0 }, failure());
+    expect(res.status).toBe(204);
+    expect(runs()).toHaveLength(0);
+    expect(t.logs.find((l) => l['event'] === 'report_drop')).toMatchObject({ reason: 'finish without a start' });
+  });
+
+  const halfMessage = { last_assistant_message: 'I started to read the design and then' };
+
+  it('T-HOOK-5: failure, then SubagentStop: one run, failed, one ended_at (a SubagentStop has no tool_use_id and no open run is left to match)', async () => {
+    await startRun(t, { ...started, agent: 'implementer', ts: T0 }, '{}');
+    await finishRun(t, { ...started, ts: T0 + 1000 }, failure());
+    const once = runs();
+    await finishRun(t, { ...started, tool_use_id: undefined, ts: T0 + 9000, cum_tokens: 4321 }, halfMessage);
+    expect(runs()).toEqual(once);
+    expect(runs()).toHaveLength(1);
+    expect(runs()[0]).toMatchObject({ result: 'failed', ended_at: T0 + 1000, tokens: null });
+    expect(t.logs.find((l) => l['event'] === 'report_drop')).toMatchObject({ reason: 'finish without a start' });
+    expect(rows(t, 'SELECT count(*) AS n FROM hook_cursor')).toEqual([{ n: 0 }]);
+  });
+
+  it('T-HOOK-5: failure, then a PostToolUse with the same tool_use_id: fills only what is still NULL', async () => {
+    await startRun(t, { ...started, agent: 'implementer', ts: T0 }, '{}');
+    await finishRun(t, { ...started, ts: T0 + 1000 }, failure());
+    await finishRun(t, { ...started, ts: T0 + 9000 }, { tool_response: { content: [{ type: 'text', text: 'STATUS: designed' }], totalTokens: 900 } });
+    expect(runs()).toHaveLength(1);
+    expect(runs()[0]).toMatchObject({ result: 'failed', ended_at: T0 + 1000, tokens: 900, agent_status: 'designed' });
+  });
+
+  it('T-HOOK-5: SubagentStop with a half message (unreported), then the failure upgrades it to failed', async () => {
+    await startRun(t, { ...started, agent: 'implementer', ts: T0 }, '{}');
+    await finishRun(t, { ...started, tool_use_id: undefined, ts: T0 + 1000 }, halfMessage);
+    expect(runs()[0]).toMatchObject({ result: 'unreported', ended_at: T0 + 1000, output: halfMessage.last_assistant_message });
+    await finishRun(t, { ...started, ts: T0 + 5000 }, failure());
+    expect(runs()).toHaveLength(1);
+    expect(runs()[0]).toMatchObject({ result: 'failed', ended_at: T0 + 1000, output: halfMessage.last_assistant_message });
+  });
+
+  it('T-HOOK-5: a failure after a finish that parsed STATUS: designed changes nothing (the agent\'s own word stands)', async () => {
+    await startRun(t, { ...started, agent: 'architect', ts: T0 }, '{}');
+    await finishRun(t, { ...started, tool_use_id: undefined, ts: T0 + 1000 }, { last_assistant_message: 'STATUS: designed\nSUMMARY: done' });
+    const before = runs();
+    await finishRun(t, { ...started, ts: T0 + 5000 }, failure());
+    expect(runs()).toEqual(before);
+    expect(runs()[0]).toMatchObject({ result: 'designed', agent_status: 'designed' });
+  });
+
+  it('T-HOOK-5: the same failure delivered twice changes nothing', async () => {
+    await startRun(t, { ...started, agent: 'implementer', ts: T0 }, '{}');
+    await finishRun(t, { ...started, ts: T0 + 1000 }, failure());
+    const once = runs();
+    await finishRun(t, { ...started, ts: T0 + 7000 }, failure());
+    expect(runs()).toEqual(once.map((r) => ({ ...r })));
+  });
+
+  it('T-HOOK-5: a run that ended as unreported via the PostToolUse path is upgraded by an error flag inside tool_response too', async () => {
+    await startRun(t, { ...started, agent: 'implementer', ts: T0 }, '{}');
+    await finishRun(t, { ...started, ts: T0 + 1000 }, { tool_response: { content: [{ type: 'text', text: 'prose without a status' }] } });
+    expect(runs()[0]!.result).toBe('unreported');
+    await finishRun(t, { ...started, ts: T0 + 2000 }, { tool_response: { is_error: true } });
+    expect(runs()[0]).toMatchObject({ result: 'failed', ended_at: T0 + 1000 });
+  });
+
+  it('T-HOOK-5: a run the sweeper had abandoned is closed by the failure like by any finish', async () => {
+    await startRun(t, { ...started, agent: 'implementer', ts: T0 - 20 * H }, '{}');
+    t.db.prepare(`UPDATE run SET result = 'abandoned'`).run();
+    await finishRun(t, { ...started, ts: T0 }, failure());
+    expect(runs()[0]).toMatchObject({ result: 'failed', ended_at: T0 });
+  });
+});
+
 // T-HOOK-3
 describe('the token delta (T-HOOK-3, ADR-0004)', () => {
   it('two consecutive runs in one shared transcript are charged their own share', async () => {
@@ -260,10 +373,44 @@ describe('the token delta (T-HOOK-3, ADR-0004)', () => {
     expect(runs().map((r) => r.tokens)).toEqual([1000, 0, null]);
   });
 
-  it('the tool payload\'s own usage wins over the delta', async () => {
+  it('the delta leads: it wins over a tool_response.usage block in the same body (ADR-0004)', async () => {
     await startRun(t, { ...base, agent: 'groom', ts: T0 });
-    await finishRun(t, { ...base, ts: T0 + H, cum_tokens: 9999 }, { tool_response: { content: [{ type: 'text', text: 'STATUS: groomed' }], usage: { input_tokens: 1, output_tokens: 2, cache_creation_input_tokens: 3, cache_read_input_tokens: 4 } } });
-    expect(runs()[0]!.tokens).toBe(10);
+    const usage = { input_tokens: 1, output_tokens: 2, cache_creation_input_tokens: 3, cache_read_input_tokens: 4 };
+    await finishRun(t, { ...base, ts: T0 + H, cum_tokens: 9999 }, { tool_response: { content: [{ type: 'text', text: 'STATUS: groomed' }], usage, totalTokens: 77 } });
+    expect(runs()[0]!.tokens).toBe(9999);
+  });
+
+  it('...and usage, then totalTokens, then total_tokens are the fallback for a body with no counter behind it', async () => {
+    const usage = { input_tokens: 1, output_tokens: 2, cache_creation_input_tokens: 3, cache_read_input_tokens: 4 };
+    for (const [i, response] of [
+      [1, { usage, totalTokens: 77 }],
+      [2, { totalTokens: 77 }],
+      [3, { total_tokens: 55 }],
+      [4, {}],
+    ] as const) {
+      const meta = { ...base, session_id: `S${i}` };
+      await startRun(t, { ...meta, agent: 'groom', ts: T0 + i * H });
+      await finishRun(t, { ...meta, ts: T0 + i * H + 1000 }, { tool_response: { content: [{ type: 'text', text: 'STATUS: groomed' }], ...response } });
+    }
+    expect(runs().map((r) => r.tokens)).toEqual([10, 77, 55, null]);
+  });
+
+  it('an ignored payload leaves hook_cursor untouched, so the real finish is charged the whole interval', async () => {
+    const shared = { session_id: 'S1', transcript_path: '/tmp/shared.jsonl' };
+    await startRun(t, { ...base, ...shared, agent: 'architect', ts: T0, tool_use_id: 'tu1' });
+    // a background acknowledgement that (wrongly, but possibly) carries a counter is ignored...
+    const ack = JSON.parse(fixture('post-tool-use-background-ack.json')) as unknown;
+    await finishRun(t, { ...base, ...shared, ts: T0 + 100, tool_use_id: 'tu1', cum_tokens: 40_000 }, ack);
+    expect(rows(t, 'SELECT count(*) AS n FROM hook_cursor')).toEqual([{ n: 0 }]);
+    // ...so the SubagentStop that really ends the run gets its whole share
+    await finishRun(t, { ...base, ...shared, ts: T0 + H, cum_tokens: 55_000 }, { last_assistant_message: 'STATUS: designed' });
+    expect(runs()).toMatchObject([{ result: 'designed', tokens: 55_000 }]);
+    expect(rows(t, 'SELECT cum_tokens FROM hook_cursor')).toEqual([{ cum_tokens: 55_000 }]);
+  });
+
+  it('a dropped finish never touches the cursor either', async () => {
+    await finishRun(t, { ...base, ts: T0, session_id: 'S9', transcript_path: '/tmp/x.jsonl', cum_tokens: 1234 }, output('STATUS: designed'));
+    expect(rows(t, 'SELECT count(*) AS n FROM hook_cursor')).toEqual([{ n: 0 }]);
   });
 });
 

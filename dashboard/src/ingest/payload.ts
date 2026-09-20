@@ -157,7 +157,10 @@ export function extract(
   }
   if (payload['is_error']) errorFlag = true;
   if (typeof response === 'string' && response.startsWith('Error:')) errorFlag = true;
-  if (typeof payload['error'] === 'string' && payload['error'] !== '') errorFlag = true;
+  // A failed Agent call (PostToolUseFailure) carries a top-level `error` string and no tool_response.
+  const errorText =
+    typeof payload['error'] === 'string' && payload['error'].trim() !== '' ? payload['error'] : null;
+  if (errorText !== null) errorFlag = true;
 
   let output: string | null = null;
   if (!acknowledgement) {
@@ -171,12 +174,17 @@ export function extract(
       const last = payload['last_assistant_message'];
       output = nonEmpty(typeof last === 'string' ? last : null);
     }
-    if (output === null) {
+    // With no tool_response and the error flag set, the agent produced nothing and the transcript's
+    // last assistant entry belongs to the calling session: those steps are skipped.
+    const failedCall = errorFlag && response === undefined;
+    if (output === null && !failedCall) {
       output =
         origin === 'main'
           ? lastAssistantText(transcript, false)
           : (lastAssistantText(transcript, true) ?? lastAssistantText(transcript, 'any'));
     }
+    // The harness's own error text is the only text such a run produced (design, assumption 19).
+    if (output === null && errorText !== null) output = errorText;
   }
 
   let usageTokens: number | null = null;

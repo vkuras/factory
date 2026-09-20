@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 # npm would otherwise start `node-gyp rebuild` for better-sqlite3 (it has a binding.gyp) and fail
 # for want of a compiler; the prebuilt binary is what T-ARCH-1 requires to be loaded.
-RUN npm ci --ignore-scripts --foreground-scripts
+RUN npm ci --ignore-scripts
 COPY tsconfig.json tsconfig.build.json ./
 COPY scripts ./scripts
 COPY src ./src

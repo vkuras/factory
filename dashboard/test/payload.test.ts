@@ -54,10 +54,33 @@ describe('extraction from real hook payloads (T-HOOK-1)', () => {
     expect(ex.output).toBe('STATUS: nothing-to-do\nSUMMARY: capture test fg');
   });
 
-  it('a failed Agent call (PostToolUseFailure) sets the error flag and has no output', () => {
-    const ex = extract(payloadOf('post-tool-use-failure.json'), [], 'subagent');
+  it('a failed Agent call (PostToolUseFailure): the error flag comes from the top-level error string, which is also the output', () => {
+    const payload = payloadOf('post-tool-use-failure.json');
+    const ex = extract(payload, [], 'subagent');
     expect(ex.errorFlag).toBe(true);
-    expect(ex.output).toBeNull();
+    expect(ex.acknowledgement).toBe(false);
+    expect(ex.output).toBe(payload['error']);
+    expect(ex.output).toMatch(/^Agent type 'no-such-agent-xyz' not found\./);
+    expect(ex.usageTokens).toBeNull();
+  });
+
+  it('a failed Agent call never takes its output from the transcript: that entry is the calling session\'s message', () => {
+    const payload = payloadOf('post-tool-use-failure.json');
+    const session = transcriptOf('main-session.transcript.jsonl');
+    expect(extract(payload, session, 'subagent').output).toBe(payload['error']);
+    expect(extract(payload, session, 'main').output).toBe(payload['error']);
+    // ...whereas a body that has a tool_response and an error flag still may
+    expect(extract({ tool_response: { is_error: true } }, session, 'main').output).toBe(
+      'STATUS: designed\nSUMMARY: capture main session',
+    );
+  });
+
+  it('an empty or non-string top-level error is no error', () => {
+    for (const error of ['', '   ', 5, null, {}]) {
+      const ex = extract({ error } as Record<string, unknown>, [], 'subagent');
+      expect(ex.errorFlag).toBe(false);
+      expect(ex.output).toBeNull();
+    }
   });
 
   it('a Stop of a main-session run: the last non-sidechain assistant message', () => {

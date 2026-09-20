@@ -202,6 +202,10 @@ export function createQueries(db: Database) {
          status_after = @statusAfter, updated_at = @now
        WHERE id = @id`,
     ),
+    upgradeToFailed: db.prepare(
+      `UPDATE run SET result = 'failed', updated_at = @now
+       WHERE id = @id AND (result IS NULL OR result = 'unreported')`,
+    ),
     fillRun: db.prepare(
       `UPDATE run SET
          tokens = coalesce(tokens, @tokens),
@@ -346,6 +350,9 @@ export function createQueries(db: Database) {
     },
     fillRun(p: { id: string; agentStatus: string | null; tokens: number | null; output: string | null; truncated: boolean; summary: string | null; statusAfter: string | null; now: number }): void {
       stmt.fillRun.run({ ...p, truncated: p.truncated ? 1 : 0 });
+    },
+    upgradeResultToFailed(id: string, now: number): void {
+      stmt.upgradeToFailed.run({ id, now });
     },
     latestFinishedAgentRunId: (key: string, number: string): string | null =>
       stmt.latestFinishedAgentRun.get(key, number)?.id ?? null,

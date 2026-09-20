@@ -683,6 +683,37 @@ describe('the repository label (R3, D14, D16, D17)', () => {
     }
   });
 
+  it('G2: the label is capped and carries the full key as its title in all five places a ticket is rendered', async () => {
+    await seedFactory(t);
+    await reportRun(t, { project: 'github.com/acme/a-very-long-repository-name', ticket: '600', title: 'Long name ticket', agent: 'groom', startedAt: T0 - 3 * H, endedAt: T0 - 2 * H, statusBefore: S.GROOMING, statusAfter: S.BLOCKED_REQ });
+    const key = 'github.com/acme/a-very-long-repository-name';
+    const inAttention = cheerio.load((await request(t.app).get('/')).text);
+    const places: [string, cheerio.Cheerio<never>][] = [
+      ['attention card', inAttention('a.af-h-attn').filter((_, el) => inAttention(el).find('.af-id').text() === '600') as never],
+      ['pipeline card', cheerio.load((await request(t.app).get('/?tab=pipeline')).text)('a.af-h-pcard') as never],
+      ['analytics row', cheerio.load((await request(t.app).get('/?tab=analytics')).text)('a.af-h-row') as never],
+    ];
+    for (const [name, els] of places) {
+      const labelled = els.filter((_, el) => cheerio.load(cheerio.load(el as never).html() ?? '')('.af-repo').attr('title') === key);
+      expect(labelled.length, name).toBeGreaterThan(0);
+    }
+    // a calm chip and the detail head, checked the same way
+    await reportRun(t, { project: 'github.com/acme/a-very-long-repository-name', ticket: '601', title: 'Calm long name', agent: 'groom', startedAt: T0 - 2 * H, endedAt: T0 - H, statusBefore: S.GROOMING, statusAfter: S.GROOMED });
+    const chips = cheerio.load((await request(t.app).get('/')).text)('a.af-h-chip');
+    const chip = chips.filter((_, el) => cheerio.load(el as never)('.af-id').text() === '601');
+    expect(chip.length).toBe(1);
+    expect(cheerio.load(chip.html() ?? '')('.af-repo').attr('title')).toBe(key);
+    const detail = cheerio.load((await request(t.app).get(`/ticket/${encodeURIComponent(key)}/601`)).text);
+    expect(detail('.af-repo').attr('title')).toBe(key);
+    expect(detail('.af-repo').text()).toContain('a-very-long-repository-name');
+    // one rule for all five: the partial is the only place that renders it
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const views = new URL('../src/views/', import.meta.url).pathname;
+    const users = readdirSync(views).filter((f) => f.endsWith('.ejs') && readFileSync(views + f, 'utf8').includes('af-repo'));
+    expect(users).toEqual([]);
+    expect(readFileSync(views + 'partials/ticketId.ejs', 'utf8')).toContain('af-repo');
+  });
+
   it('S1.6 / S3.4: two tickets 001 are two cards, each with its own repository, and each link is canonical', async () => {
     await reportRun(t, { project: REPO_A, ticket: '001', title: 'Factory ticket', agent: 'groom', startedAt: T0 - 5 * H, endedAt: T0 - 4 * H, statusBefore: S.GROOMING, statusAfter: S.BLOCKED_REQ });
     await reportRun(t, { project: REPO_B, ticket: '001', title: 'Shop ticket', agent: 'groom', startedAt: T0 - 3 * H, endedAt: T0 - 2 * H, statusBefore: S.GROOMING, statusAfter: S.BLOCKED_REQ });

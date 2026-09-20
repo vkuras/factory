@@ -80,8 +80,9 @@ run counts as abandoned) and `FACTORY_INGEST_TOKEN` (a bearer token the reports 
 
 ### Point a machine at it
 
-The plugin ships the hooks that report. A machine reports when it has a file
-`~/.factory/dashboard.env`:
+The plugin ships the seven hooks that report (`PreToolUse`, `PostToolUse`, `PostToolUseFailure`,
+`SubagentStop`, `UserPromptSubmit`, `Stop`, `SessionEnd`; `claude plugin details factory` lists them).
+A machine reports when it has a file `~/.factory/dashboard.env`:
 
 ```
 FACTORY_DASHBOARD_URL=http://pi.local:8787

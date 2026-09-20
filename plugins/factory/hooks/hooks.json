@@ -10,6 +10,11 @@
         "hooks": [ { "type": "command", "timeout": 15,
                      "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-finish" } ] }
     ],
+    "PostToolUseFailure": [
+      { "matcher": "Agent|Task",
+        "hooks": [ { "type": "command", "timeout": 15,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-failed" } ] }
+    ],
     "SubagentStop": [
       { "hooks": [ { "type": "command", "timeout": 15,
                      "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-finish" } ] }

@@ -172,12 +172,12 @@ export function handleRunFinish(d: IngestDeps, input: FinishInput): FinishOutcom
   else if (status !== null) result = status;
   else result = 'unreported';
 
+  // ADR-0004: the transcript delta leads. `tool_response.usage` describes only the agent's last API
+  // response, so it is the fallback for a body with no counter behind it.
   let tokens = usageTokens;
-  if (tokens === null && meta.cumTokens !== null) {
+  if (meta.cumTokens !== null) {
     const cursor = d.q.getCursor(meta.sessionId ?? '', meta.transcriptPath ?? '');
     tokens = Math.max(0, meta.cumTokens - cursor);
-  }
-  if (meta.cumTokens !== null) {
     d.q.upsertCursor(meta.sessionId ?? '', meta.transcriptPath ?? '', meta.cumTokens, d.now());
   }
 
@@ -204,6 +204,11 @@ export function handleRunFinish(d: IngestDeps, input: FinishInput): FinishOutcom
   } else {
     // Already finished: only the fields that are still NULL are filled; ended_at and result
     // are never overwritten, which makes a doubled delivery harmless in any order.
+    // One narrow upgrade: an error flag is a statement that the run ended badly, `unreported` only
+    // the absence of one. An agent's own STATUS is never overwritten (R6).
+    if (errorFlag && (run.result === null || run.result === 'unreported')) {
+      d.q.upgradeResultToFailed(run.id, now);
+    }
     d.q.fillRun({
       id: run.id,
       agentStatus: status,

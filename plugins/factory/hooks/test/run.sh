@@ -101,6 +101,7 @@ fixture() {
       -e "s|\"agent_transcript_path\":\"[^\"]*agent-a6f76355b46027ac5.jsonl\"|\"agent_transcript_path\":\"$FIX/subagent-background.transcript.jsonl\"|" \
       -e "s|\"transcript_path\":\"[^\"]*0fff8401[^\"]*\"|\"transcript_path\":\"$FIX/main-session.transcript.jsonl\"|" \
       -e "s|\"subagent_type\":\"general-purpose\"|\"subagent_type\":\"${2:-factory:architect}\"|" \
+      -e "s|\"subagent_type\":\"no-such-agent-xyz\"|\"subagent_type\":\"${2:-factory:architect}\"|" \
       -e "s|\"agent_type\":\"general-purpose\"|\"agent_type\":\"${2:-factory:architect}\"|" \
       "$FIX/$1" >"$out"
   printf '%s' "$out"
@@ -303,6 +304,68 @@ start_fake
 new_env
 FACTORY_TRANSCRIPT_TAIL_BYTES=2000 run run-finish <"$(fixture subagent-stop-foreground.json)"
 check "FACTORY_TRANSCRIPT_TAIL_BYTES bounds the tail" "yes" "$([ "$(jget 0 body | wc -c | tr -d ' ')" -lt 4200 ] && echo yes || echo no)"
+
+# ================================================================= T-HOOK-6: run-failed
+printf '\n== T-HOOK-6: run-failed (PostToolUseFailure)\n'
+FAIL_SESSION=0d3f6939-5f66-4909-a6a0-f9407ab33b38
+start_fake
+new_env
+run run-failed <"$(fixture post-tool-use-failure.json factory:groom)"
+check "a failed Agent call of a factory agent: one report" "1" "$(nreq)"
+check "  it goes to the finish endpoint" "/api/hook/run-finish" "$(jget 0 path)"
+check "  as a run-finish event of the subagent hook" "run-finish/subagent-hook/subagent" "$(jget 0 meta.event)/$(jget 0 meta.source)/$(jget 0 meta.origin)"
+check "  the ticket comes from the payload's requirements path" "001" "$(jget 0 meta.ticket)"
+check "  tool_use_id for matching the start" "toolu_0139khKtMU9LNre8Mv8XzFds" "$(jget 0 meta.tool_use_id)"
+check "  the meta carries no token counter and no transcript" "none/none" "$(jget 0 meta.cum_tokens | grep . || echo none)/$(jget 0 meta.transcript_path | grep . || echo none)"
+check "  the body is the payload alone, unchanged" "$(cat "$(fixture post-tool-use-failure.json factory:groom)")" "$(jget 0 body)"
+check "  no separator, no transcript tail" "no" "$(jget 0 body | grep -q -- '---8<---' && echo yes || echo no)"
+check "  no state file is written (it is not a start)" "0" "$(find "$STATE" -name '*.state' 2>/dev/null | wc -l | tr -d ' ')"
+
+start_fake
+new_env
+sed 's|"subagent_type":"[^"]*"|"subagent_type":"no-such-agent-xyz"|' "$(fixture post-tool-use-failure.json)" >"$WORK/helper-failure.json"
+run run-failed <"$WORK/helper-failure.json"
+check "a failed Agent call of a subagent_type that is not a factory agent reports nothing" "0" "$(nreq)"
+
+start_fake
+new_env
+mkdir -p "$STATE"
+printf 'MODE=observe\nAGENT=groom\nTICKET=002\nREPO=%s\nPROJECT=p\nSTARTED=1\n' "$REPO" >"$STATE/$FAIL_SESSION.state"
+sed 's|docs/requirements/001|docs/somewhere/else|' "$(fixture post-tool-use-failure.json factory:groom)" >"$WORK/no-ticket-failure.json"
+run run-failed <"$WORK/no-ticket-failure.json"
+check "without a requirements path in the payload the ticket is the session state file's" "002" "$(jget 0 meta.ticket)"
+rm -f "$STATE/$FAIL_SESSION.state"
+run run-failed <"$WORK/no-ticket-failure.json"
+check "  and without either, nothing is sent" "1" "$(nreq)"
+
+# The transcript is never opened: a named pipe with no writer blocks any open() forever.
+start_fake
+new_env
+FIFO="$WORK/session-transcript.fifo"
+rm -f "$FIFO"
+mkfifo "$FIFO"
+sed "s|\"transcript_path\":\"[^\"]*\"|\"transcript_path\":\"$FIFO\"|" "$(fixture post-tool-use-failure.json factory:groom)" >"$WORK/fifo-failure.json"
+( sh "$REPORT" run-failed <"$WORK/fifo-failure.json" >/dev/null 2>&1; echo finished >"$WORK/fifo-done" ) &
+i=0
+while [ ! -e "$WORK/fifo-done" ] && [ $i -lt 60 ]; do sleep 0.1; i=$((i + 1)); done
+if [ -e "$WORK/fifo-done" ]; then pass "run-failed never opens the transcript (a pipe with no writer did not block it)"; else fail "run-failed never opens the transcript" "still blocked after 6 s"; pkill -f "report.sh run-failed" 2>/dev/null; : >"$FIFO" 2>/dev/null; fi
+check "  and it still reported" "1" "$(nreq)"
+rm -f "$FIFO" "$WORK/fifo-done"
+
+# The same failure as an ordinary finish would attach the session transcript: run-finish does read it.
+start_fake
+new_env
+run run-failed <"$(sed 's|"cwd":"[^"]*"|"cwd":"/nonexistent"|' "$(fixture post-tool-use-failure.json factory:groom)" >"$WORK/cwd-failure.json"; printf '%s' "$WORK/cwd-failure.json")"
+check "a failure whose cwd has no requirements document still reports (title and status stay empty)" "1/" "$(nreq)/$(jget 0 meta.title)"
+
+exit_and_output "run-failed with a malformed payload" sh -c "printf 'not json {{{' | sh '$REPORT' run-failed"
+exit_and_output "run-failed with an empty stdin" sh "$REPORT" run-failed </dev/null
+exit_and_output "run-failed against a closed port" env FACTORY_DASHBOARD_URL=http://127.0.0.1:1 sh -c "sh '$REPORT' run-failed < '$(fixture post-tool-use-failure.json factory:groom)'"
+exit_and_output "run-failed with no configuration" env -u FACTORY_DASHBOARD_URL HOME="$H" sh "$REPORT" run-failed </dev/null
+start_fake
+new_env
+sh "$REPORT" run-failed --ticket 001 --repo "$REPO" </dev/null
+check "run-failed as a CLI call does nothing (a driver states a failure with run-finish --result failed)" "0" "$(nreq)"
 
 # ================================================================= T-DRV-2: the decision table of the prompt hook
 printf '\n== T-DRV-2: the prompt hook decision table (D18, S6.9)\n'

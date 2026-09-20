@@ -18,7 +18,7 @@ field name, no usage counter and no message text.
 | `subagent-stop-foreground.json` | `SubagentStop` (foreground agent) | `last_assistant_message`, `agent_transcript_path`, `agent_type`, no `tool_use_id`; fires **before** the `PostToolUse` |
 | `subagent-stop-background.json` | `SubagentStop` (background agent) | the same for an agent that ran in the background |
 | `subagent-*.transcript.jsonl` | the agent's own transcript | every entry `isSidechain: true`; one API response is split over several entries that repeat one `usage` block |
-| `post-tool-use-failure.json` | `PostToolUseFailure` (Agent) | a failed Agent call arrives here with a top-level `error` string, **not** as `PostToolUse` |
+| `post-tool-use-failure.json` | `PostToolUseFailure` (Agent) | a failed Agent call arrives here with a top-level `error` string and no `tool_response`, **not** as `PostToolUse`; the source of T-HOOK-1, T-HOOK-4, T-HOOK-5 and T-HOOK-6 (design gap G1) |
 | `user-prompt-submit-driver.json` | `UserPromptSubmit` | `prompt`, run with `FACTORY_DRIVER` set |
 | `user-prompt-submit-task-notification.json` | `UserPromptSubmit` | a `<task-notification>` the harness injects when a background agent ends: not typed by the operator |
 | `stop-main.json` | `Stop` | `last_assistant_message` of the main agent |

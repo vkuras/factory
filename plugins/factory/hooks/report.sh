@@ -4,6 +4,7 @@
 # Hook mode (arguments: the event only, the Claude Code hook payload on stdin):
 #   run-start       PreToolUse(Agent|Task)   a subagent stage starts
 #   run-finish      PostToolUse, SubagentStop  a subagent stage ends
+#   run-failed      PostToolUseFailure       an Agent call failed: the same finish, payload only (no transcript, no tokens)
 #   prompt          UserPromptSubmit         a driven stage starts in a session, or the operator intervenes
 #   session-finish  Stop                     a driven main-session stage ends
 #   session-end     SessionEnd               closes a driven run that never finished, removes the state file
@@ -82,7 +83,7 @@ TAIL_BYTES=${FACTORY_TRANSCRIPT_TAIL_BYTES:-262144}
 case $TAIL_BYTES in *[!0-9]* | '') TAIL_BYTES=262144 ;; esac
 
 case $EVENT in
-  run-start | run-finish | prompt | session-finish | session-end | intervention) ;;
+  run-start | run-finish | run-failed | prompt | session-finish | session-end | intervention) ;;
   *) exit 0 ;;
 esac
 
@@ -240,6 +241,14 @@ case $EVENT in
     ACTION=finish
     META_EVENT=run-finish
     ;;
+  run-failed)
+    # A failed Agent call produced nothing: the transcript is never read, no token counter is sent
+    # and the session's own tokens are never charged to the run (design, step 4c).
+    # It exists for the hook only: a CLI driver states a failure with `run-finish --result failed`.
+    [ "$HOOK_MODE" = 1 ] || exit 0
+    ACTION=failed
+    META_EVENT=run-finish
+    ;;
   intervention)
     ACTION=intervention
     META_EVENT=intervention
@@ -330,6 +339,11 @@ if [ "$ACTION" = intervention ] && [ "$HOOK_MODE" = 1 ]; then
   [ -z "$TICKET" ] && [ -n "$STATE_FILE" ] && TICKET=$(state_get TICKET)
 fi
 [ -z "$TICKET" ] && TICKET=$FROM_PAYLOAD
+# A failed Agent call still carries the coordinator's `Requirements:` line in its tool input; the
+# MODE=observe state file of the same session is the net under it.
+if [ -z "$TICKET" ] && [ "$ACTION" = failed ] && [ -n "$STATE_FILE" ]; then
+  TICKET=$(state_get TICKET)
+fi
 if [ -z "$TICKET" ] && [ "$EVENT" = prompt ] && [ "$ACTION" = start ]; then
   TICKET=$(printf ' %s ' "$PROMPT_SEARCH" | grep -oE '(^|[^0-9A-Za-z])[0-9]{3}([^0-9A-Za-z]|$)' | head -1 | grep -oE '[0-9]{3}')
 fi
@@ -397,7 +411,7 @@ if [ "$HOOK_MODE" = 0 ] && [ "$ACTION" != start ]; then
 fi
 
 # Finish hooks of subagents only report factory agents.
-if [ "$HOOK_MODE" = 1 ] && [ "$EVENT" = run-finish ]; then
+if [ "$HOOK_MODE" = 1 ] && { [ "$EVENT" = run-finish ] || [ "$EVENT" = run-failed ]; }; then
   _named=$(printf '%s' "$PAYLOAD" | grep -oE "\"(subagent_type|agent_type)\"[ ]*:[ ]*\"[^\"]*\"" | head -1 | sed 's/.*:[ ]*"//; s/"$//')
   case $_named in
     groom | architect | implementer | validator | factory:groom | factory:architect | factory:implementer | factory:validator) ;;
@@ -459,7 +473,7 @@ fi
 BODY_KIND=none
 case $ACTION in
   start) [ "$HOOK_MODE" = 1 ] && BODY_KIND=payload ;;
-  finish | session-end) [ "$HOOK_MODE" = 1 ] && BODY_KIND=payload ;;
+  finish | failed | session-end) [ "$HOOK_MODE" = 1 ] && BODY_KIND=payload ;;
 esac
 
 case $ACTION in
@@ -497,7 +511,7 @@ TMP=$(mktemp "${TMPDIR:-/tmp}/factory-report.XXXXXX") || exit 0
 
 case $ACTION in
   start) URL_PATH=/api/hook/run-start; MAX_TIME=2 ;;
-  finish | session-end) URL_PATH=/api/hook/run-finish; MAX_TIME=5 ;;
+  finish | failed | session-end) URL_PATH=/api/hook/run-finish; MAX_TIME=5 ;;
   intervention) URL_PATH=/api/intervention; MAX_TIME=2 ;;
 esac
 

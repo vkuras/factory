@@ -36,6 +36,23 @@ describe('every runtime, image and library is the newest stable one and pinned e
     }
   });
 
+  it('installs and prunes with --ignore-scripts, so better-sqlite3 never starts node-gyp (ADR-0001)', () => {
+    const dockerfile = read(join(dashboard, 'Dockerfile'));
+    expect(dockerfile).toMatch(/npm ci --ignore-scripts/);
+    expect(dockerfile).toMatch(/npm prune --omit=dev --ignore-scripts/);
+    expect(dockerfile).not.toMatch(/npm ci [^\n]*--foreground-scripts/);
+  });
+
+  it('registers seven hooks in hooks/hooks.json and none in the plugin manifest', () => {
+    const hooks = JSON.parse(read(join(repo, 'plugins/factory/hooks/hooks.json'))) as { hooks: Record<string, { matcher?: string; hooks: { command: string; timeout: number }[] }[]> };
+    expect(Object.keys(hooks.hooks)).toEqual(['PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'SubagentStop', 'UserPromptSubmit', 'Stop', 'SessionEnd']);
+    const command = (event: string): string => hooks.hooks[event]![0]!.hooks[0]!.command;
+    expect(command('PostToolUseFailure')).toContain('report.sh" run-failed');
+    expect(hooks.hooks['PostToolUseFailure']![0]).toMatchObject({ matcher: 'Agent|Task', hooks: [{ timeout: 15 }] });
+    const manifest = JSON.parse(read(join(repo, 'plugins/factory/.claude-plugin/plugin.json'))) as Record<string, unknown>;
+    expect(manifest).not.toHaveProperty('hooks');
+  });
+
   it('has exactly three production dependencies', () => {
     expect(Object.keys(pkg.dependencies).sort()).toEqual(['better-sqlite3', 'ejs', 'express']);
   });
