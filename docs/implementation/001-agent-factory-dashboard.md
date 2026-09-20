@@ -2,13 +2,33 @@
 
 - Requirements: docs/requirements/001-agent-factory-dashboard.md
 - Design: docs/architecture/001-agent-factory-dashboard.md
-- Status: Needs architect (one gap, G1; everything else built and self-validated)
-- Branch: feature/001-agent-factory-dashboard, commits 95c95af..(the commit that adds this report)
+- Status: Ready for validation
+- Branch: feature/001-agent-factory-dashboard, commits 95c95af..de36c51, plus the commit that adds this report
 - Date: 2026-09-20
-- Round: 1
+- Round: 2 (round 1 ended in `needs-architect` with gaps G1 and G2; the architect resolved both in design revision 3)
 
-The requirements status line stays `Designed – ready for implementation` and the index in
-`docs/product.md` stays `Designed`, because a gap is open (see "Open gaps").
+The requirements status line is `Implemented – ready for validation` and `docs/product.md` lists 001 as
+`Implemented`. No gap is open.
+
+## Round 2: what changed since round 1
+
+The architect's delta (design revision 3, commit 267d083), built in 7569274 and de36c51:
+
+| Delta | Built |
+|---|---|
+| Seventh hook `PostToolUseFailure` (`Agent\|Task`, timeout 15) calling `report.sh run-failed` | `plugins/factory/hooks/hooks.json`; `report.sh` accepts `run-failed` |
+| `run-failed` sends the payload alone: no transcript read, no `cum_tokens`, no `transcript_path` in the meta; ticket from the payload or from the session state file | `report.sh` (action `failed`); a named pipe with no writer proves the transcript is never opened |
+| The top-level `error` string is the error flag and, with no `tool_response`, the run's output verbatim; the transcript steps of the output resolution are skipped in that case | `dashboard/src/ingest/payload.ts` |
+| A later delivery with the error flag set upgrades `unreported` or `NULL` to `failed`, never an agent's own `STATUS`; `ended_at` and the other fields keep the fill-only-NULL rule | `ingest/handlers.ts`, `db/queries.ts upgradeResultToFailed` |
+| Token resolution leads with the transcript delta (`cum_tokens` minus `hook_cursor`); `tool_response.usage`, `totalTokens`, `total_tokens` are the fallback | `ingest/handlers.ts` |
+| An ignored or dropped payload writes no `hook_cursor` row | `ingest/handlers.ts` (the cursor write is after the ignore and drop returns) |
+| `.af-repo` is `max-width: 14ch` with ellipsis and `title` in all five places | already built in round 1; now tested in all five places and shown to be rendered only by the one partial |
+| `plugin.json` has no `hooks` key; the Dockerfile uses `npm ci --ignore-scripts` | already so; the Dockerfile no longer adds `--foreground-scripts`; tests pin both |
+| T-HOOK-1 (failure fixture), T-HOOK-3 (delta wins, ignored payload leaves the cursor), T-HOOK-4, T-HOOK-5, T-HOOK-6 | `payload.test`, `ingest.test`, `plugins/factory/hooks/test/run.sh` |
+
+One change beyond the delta, from looking at the failed run in the browser: a per-agent token sum with no known
+count showed `0` in `Tokens per agent` while the ticket tile showed `—`. It now shows `—`
+(`domain/metrics.ts`, `web/pages.ts`; design: "`NULL` renders as `—`", "`NULL` values are skipped, not counted as 0").
 
 ## What was built
 
@@ -24,10 +44,7 @@ the domain rules, so they were committed together.
 | 5 Analytics tab | four trend cards, per-ticket table, per-agent spend, five bounce rows | same |
 | 6 Operations | sweeper, JSON request log, log caps in compose, stack tests (perf, memory, arm64, deploy), README section incl. the driver contract, the coordinate skill's two lines | `src/jobs/`, `test/stack/`, `README.md`, `plugins/factory/skills/coordinate/SKILL.md` |
 
-Not done: the failed-Agent-call path of the reporter (G1, blocked on the architect). The seventh hook is one
-`hooks.json` entry; the dashboard side already handles its payload.
-
-`tests/acceptance/` does not exist and was not touched.
+Everything in the design's build order is built. `tests/acceptance/` does not exist and was not touched.
 
 ## How to run
 
@@ -61,7 +78,7 @@ Test names are `file::describe > it`; "shell" is `plugins/factory/hooks/test/run
 | S2.1, S2.2, R7 | `domain/rules.ts onlineIndicator`, `queries.countOnline` | pages.test > T-INT-A7 (2), stale-run test; rules.test::R7 wording | Passed |
 | S3.1–S3.4 | `views/pipeline.ejs`, `domain/rules.ts stageOf` | pages.test::Pipeline tab (6); rules.test::R2 | Passed |
 | S4.1 | `views/detail.ejs`, `web/pages.ts buildDetail` | pages.test > T-INT-D1 (+ loops tile colour) | Passed |
-| S4.2 | swimlanes in `buildDetail` | pages.test > T-INT-D2 (3), running and abandoned runs | Passed (`failed` from the Agent-tool error path: G1) |
+| S4.2 | swimlanes in `buildDetail`; `PostToolUseFailure` hook, `run-failed`, error-flag path | pages.test > T-INT-D2 (3), running and abandoned runs; ingest.test > T-HOOK-4, T-HOOK-5; shell::T-HOOK-6; live failed Agent call | Passed |
 | S4.3 | run log | pages.test > T-INT-D3 (2) | Passed |
 | S4.4, R5, R6 | `ingest/payload.ts`, `outputLines`, `<details>` | payload.test::output handling (T-UNIT-OUT-1); pages.test > T-INT-D4 (3) | Passed |
 | S4.5, R4 | `actor = 'human'` runs | pages.test > T-INT-D5 (4); ingest.test > T-DRV-4 (5) | Passed |
@@ -71,14 +88,15 @@ Test names are `file::describe > it`; "shell" is `plugins/factory/hooks/test/run
 | S5.3 | `weekBuckets`, `periodLine` | trends.test::naming the period; pages.test > T-INT-N3 | Passed |
 | S5.4 | table in `analytics.ejs` | pages.test > T-INT-N4 (2) | Passed |
 | S5.5 | agent spend | pages.test > T-INT-N5 | Passed |
-| S5.6 | five bounce rows | pages.test > T-INT-N6 | Passed (the `agent run failed` count includes Agent-tool errors only after G1) |
-| S6.1, S6.2 | `ingest/*`, hooks, `report.sh` | payload.test (T-HOOK-1); ingest.test::run-start, run-finish, T-DRV-1, T-DRV-5; shell::subagent hooks, main-session finish; live runs below | Passed |
+| S5.6 | five bounce rows | pages.test > T-INT-N6; ingest.test > T-HOOK-4 (the row counts a real failure) | Passed |
+| S6.1, S6.2 | `ingest/*`, seven hooks, `report.sh` | payload.test (T-HOOK-1, incl. the failure fixture); ingest.test::run-start, run-finish, T-HOOK-3, T-HOOK-4, T-HOOK-5, T-DRV-1, T-DRV-5; shell::subagent hooks, T-HOOK-6, main-session finish; live runs below | Passed |
 | S6.3, S6.4 | verbatim storage; hooks write nothing to stdout | payload.test::output handling; ingest.test::stores the output verbatim; shell::T-R9-1 (no output on any path); live T-HOOK-2 | Passed |
 | S6.5 | prompt hook, CLI intervention, merge rule | shell::T-DRV-2, T-DRV-3; ingest.test > T-DRV-4; live intervention | Passed |
-| S6.6 | plugin hooks and CLI, no line in the coordinate skill | shell (T-DRV-1…3 halves); ingest.test::a driver that is not the coordinator; live main-session run | Passed |
+| S6.6 | seven plugin hooks and CLI, no line in the coordinate skill | shell (T-DRV-1…3 halves); ingest.test::a driver that is not the coordinator; live main-session run | Passed |
 | S6.7 | `report.sh exit 0` everywhere | shell::T-R9-1, T-R9-2, T-R9-3 | Passed |
 | S6.8 | project key derivation | shell::T-CFG-1; ingest.test::two repositories | Passed |
 | S6.9 | prompt hook decision table | shell::T-DRV-2 | Passed |
+| R1 rule 3 | `attentionOf`, fed by `failed` runs from a real failure | rules.test rule 3; ingest.test > T-HOOK-4 | Passed |
 | S7.1–S7.3, R1 rules 5 and 7 | `config.ts`, `rules.ts` | config.test (12); rules.test rules 5/7; pages.test S7.1, S7.2; stack T-DEPLOY-1 (defaults) | Passed |
 | R2 | `stageOf` | rules.test::R2 | Passed |
 | R3 | `domain/repository.ts` | repository.test (T-REPO-1, 8); pages.test::repository label (10) | Passed |
@@ -98,11 +116,11 @@ Test names are `file::describe > it`; "shell" is `plugins/factory/hooks/test/run
 | SC5, SC6 | ADR-0003, ADR-0008 | shell::T-DRV-*; live runs | Passed |
 | SC7 | design kept as EJS | pages.test > T-UI-1; screenshots compared with the design by eye | Passed |
 | SC8 | no backup | pages.test > T-DATA-1 | Passed |
-| SC9 | exact pins | deps.test > T-DEP-1 (7 tests) | Passed |
+| SC9 | exact pins | deps.test > T-DEP-1 (9 tests: pins, lockfile, Dockerfile, compose, shellcheck, `--ignore-scripts`, seven hooks) | Passed |
 | LTA1–LTA10 | ADR-0003, 0004, 0008, 0001, 0002 | as their requirement rows | Passed |
 | D4, D5, D6 | 26 buckets; no `synced`; no step kinds | trends.test; pages.test > T-UI-1 | Passed |
 | D13 | loops | metrics.test (7) | Passed |
-| D14, D16, D17 | repository label | pages.test::repository label; Chrome measurement | Passed (chip truncation: G2) |
+| D14, D16, D17 | repository label, 14 ch cap and full-key title in all five places | pages.test::repository label (incl. the five-places test); Chrome measurement | Passed |
 | D15, D18 | driver independence, hand-started runs unreported | shell::T-DRV-2 | Passed |
 | Out of scope: any action from the dashboard | no write route, no form | ingest.test > T-INT-9; pages.test > T-UI-1 | Passed |
 | Out of scope: the dashboard changing the factory | no outbound connection | pages.test (no host in any page); the service has no client code | Passed |
@@ -114,19 +132,19 @@ Test names are `file::describe > it`; "shell" is `plugins/factory/hooks/test/run
 
 ## Self-validation
 
-Run against a fresh `git clone` of the branch at 4703efa (plus the checks that need a running stack on
-the stack below). Project names of my own: `selfcheck-001`, `dash-stack-<pid>`.
+Round 2 was run against a fresh `git clone` of the branch at de36c51, the whole procedure again (the round 1
+numbers are kept where they were not affected). Project names of my own: `selfcheck-001`, `dash-stack-<pid>`.
 
 | # | Check | Command | Result | Evidence |
 |---|---|---|---|---|
-| 1 | Build and static | clone: `npm ci`, `tsc --noEmit`, `rm -rf dist && npm run build`; `docker compose build`; `claude plugin validate plugins/factory --strict`; `lint.sh` | Passed | typecheck clean, build emits `dist/` with 7 fonts; shellcheck v0.11.0 clean on `report.sh`, `run.sh`, `lint.sh`; plugin validation passed |
-| 2 | Tests | Node 26.9.0 container: `npx vitest run`; `run.sh --slow`; `npm run test:stack` | Passed | 272 passed, 0 failed, 0 skipped (before my work: no tests); shell 115 passed, 0 failed; stack 7 passed |
+| 1 | Build and static | clone: `npm ci`, `tsc --noEmit`, `rm -rf dist && npm run build`; `docker compose build`; `claude plugin validate plugins/factory --strict`; `lint.sh` | Passed | typecheck clean, build emits `dist/` with 6 font files; shellcheck v0.11.0 clean on `report.sh`, `run.sh`, `lint.sh`; plugin validation passed; `claude plugin details factory` lists 7 hooks and the debug log says `Registered 7 hooks` |
+| 2 | Tests | Node 26.9.0 container: `npx vitest run`; `run.sh --slow`; `npm run test:stack` | Passed | 290 passed, 0 failed, 0 skipped (before my work: no tests); shell 135 passed, 0 failed (macOS `sh`, `--slow` included); stack 7 passed |
 | 3 | Traceability | table above | Passed | every row names a test that ran green |
 | 4 | Real stack starts | `docker compose up -d` from `.env.example` only | Passed | healthy after 5.3 s (limit 60 s); logs: 0 lines matching error/stack/exception; migration `001_init.sql` applied on the empty database; there was no earlier schema to migrate from |
 | 5 | Use it like a user | see below | Passed | see below |
-| 6 | Data survives | `docker compose restart`; `down` then `up -d` (no `-v`) | Passed | healthz `tickets:32, openRuns:3` before, after restart and after down/up; also after three image rebuilds |
-| 7 | Hard constraints | `npm run test:stack` | Passed | T-PERF-1 p95 90 ms (limit 300), T-PERF-2 p95 34 ms (limit 200), T-RES-1 peak 96 MiB of 256, OOMKilled false, restarts 0; T-ARCH-1 `linux/arm64` build with `--no-cache`: no `node-gyp`/compiler in the log, the container loads `better-sqlite3/prebuilds/linux-arm64.node`, no `gcc g++ make python3` in the image |
-| 8 | Own diff review | `git diff c49506b..HEAD` | Passed | no debug output, TODO, commented-out code or secrets (`.env` untracked; the zip and `todo` not committed); one scope note: the Dockerfile passes `--ignore-scripts` to `npm ci` and `npm prune` (see choices) |
+| 6 | Data survives | `docker compose restart`; `down` then `up -d` (no `-v`) | Passed | round 1: healthz `tickets:32, openRuns:3` before, after restart and after down/up; round 2: stack test T-DEPLOY-1 (down without `-v`, then up: the ticket is still there) |
+| 7 | Hard constraints | `npm run test:stack` | Passed | T-PERF-1 p95 85 ms (limit 300), T-PERF-2 p95 40 ms (limit 200), T-RES-1 peak 92 MiB of 256, OOMKilled false, restarts 0; T-ARCH-1 `linux/arm64` build with `--no-cache`: no `node-gyp`/compiler in the log, the container loads `better-sqlite3/prebuilds/linux-arm64.node`, no `gcc g++ make python3` in the image |
+| 8 | Own diff review | `git diff c49506b..HEAD` | Passed | no debug output, TODO, commented-out code or secrets (`.env` untracked; the zip and `todo` not committed); one addition beyond the delta, named above (per-agent tokens `—`) |
 | 9 | Tear down | `docker compose -p selfcheck-001 down -v`, volume and image removed | Done | no leftover containers or volumes |
 
 ### 5. Use it like a user
@@ -147,11 +165,20 @@ Token 401 and "ignored without a token": ingest.test (curl against a token-less 
 | Two-turn session in one process (`--input-format stream-json`): turn 1 spawns a `validator` subagent, turn 2 is typed by the operator | turn 1 was not an intervention; turn 2 is one intervention with the text verbatim (quotes, tab, newline, ✓); state file gone after the session |
 | T-HOOK-2: the same prompt with the dashboard reachable, unreachable (closed port) and reporting off | the model's tool call, the tool result (modulo agent id, duration, tokens) and the final answer `done` are identical in all three; the unreachable run left three lines in the reporter's log and finished normally |
 | CLI against the container: `report.sh intervention`, `run-start`, `run-finish --result --output-file` | all exit 0; the intervention text, and the file body as run output, are on the ticket |
+| **Round 2, a real failed Agent call** (`Agent` with `subagent_type factory:groom` and `isolation: worktree`, started from a directory that is not a git repository, hooks from `--settings`): the harness answered `Cannot create agent worktree: not in a git repository …` | `PreToolUse` reported the start, `PostToolUseFailure` reported the failure through `run-failed`: one run, `groom`, `failed`, `ended_at` set, tokens `—`, output = the error string verbatim (line 01 and the Final output box), swimlane block bordered `rgb(255, 107, 107)` with `#FF9B9B` text, `no agents running` in the header, and the ticket on the Attention tab as `agent run failed` / `check`. Before the hook existed this run stayed open |
+| Round 2, main-session run again with the final reporter (`FACTORY_DRIVER`, `Factory-Run: architect 001`) | one run, `architect`, `designed`, output verbatim, 31 k tokens |
 
-Stand-in agents: the real factory agents would have run a whole stage each, so the runs used `--agents` with a
-prompt that answers two lines. The hooks and the payloads are the same; what was not exercised is a real
-groom/architect/implementer/validator stage and the coordinate skill itself. (Once the first prompt also
-selected `factory:groom`, the real agent, which only read files; `git status` showed nothing changed.)
+Stand-in agents (round 1): the real factory agents would have run a whole stage each, so those runs used
+`--agents` with a prompt that answers two lines (their outputs, `live test A`, are not what a real agent writes).
+The hooks and the payloads are the same; what was not exercised is a real groom/architect/implementer/validator
+stage and the coordinate skill itself. Twice a bare `subagent_type groom` resolved to the real `factory:groom`
+(round 1 once, round 2 once, seen from `agent_type` in the payload); it only read files and answered
+`nothing-to-do`, and `git status` showed nothing changed.
+
+The plugin marketplace on this machine is a directory source (`/Users/vicokuras/IdeaProjects/factory`), so the
+installed `factory` plugin now loads the working copy's `hooks/hooks.json` as well: with `--settings` hooks and
+the plugin both active, every report arrived twice, which the dashboard absorbs (one run). Reporting stays off on
+this machine until `FACTORY_DASHBOARD_URL` is set.
 
 **UI** in Chrome 153 headless (DevTools protocol), against 16 seeded tickets in one repository, then 31 in two. Numbers read
 from the page, not from the CSS:
@@ -174,9 +201,10 @@ from the page, not from the CSS:
 | Repository label (R3), 2 repositories, 3 tabs | on every ticket; 11 px Plex Mono `#6E7887`; one row; 14 ch cap | 31 of 31 tickets labelled on Attention, Pipeline and Analytics; `11px`, `rgb(110, 120, 135)`, one row, `max-width: 92.4px`, `text-overflow: ellipsis`; `title` = the full key; every link canonical; `/ticket/101` answered 302 to the canonical URL of the newest 101; the label is not on the page with one repository (pages.test) |
 | 404 | dark page with a way back | "That ticket is not here. ← back to the overview" |
 
-Screenshots were looked at (Attention, Detail, Analytics, two repositories). Two defects came out of them and
-were fixed and tested before hand-over: a first switch to Pipeline fetched a font (now preloaded), and the
-label sat against the id (` · factory` lost its space in an inline-block; now a 4 px margin).
+Screenshots were looked at (Attention, Detail, Analytics, two repositories, and in round 2 the detail page of the
+failed run). Three defects came out of them and were fixed and tested: a first switch to Pipeline fetched a font
+(now preloaded), the label sat against the id (` · factory` lost its space in an inline-block; now a 4 px margin),
+and `Tokens per agent` showed `0` for a run with no token count (now `—`).
 
 ### Not run
 
@@ -187,7 +215,14 @@ label sat against the id (` · factory` lost its space in an inline-block; now a
   `--memory=256m` applied, `linux/arm64` image. The CPU of a Pi 4/5 is slower than this Mac's, so the latency
   margin (90 ms against 300 ms) is a Mac number; the memory number does not depend on it.
 - **Previous-schema migration**: there is no previous schema (design, Migration from the current state).
-- **Fail-mid-run of a real subagent** (rate limit, crash): could not be provoked cheaply; see G1.
+- **A subagent that dies mid-run** (rate limit, crash): could not be provoked cheaply. The dashboard accepts
+  either finish (`SubagentStop` with a half message, `PostToolUseFailure`) in any order (T-HOOK-5); which one a
+  given Claude Code version fires is not known from here.
+- **The full suite run back to back many times**: a run opens about 2 200 short-lived TCP connections
+  (supertest, one per request); more than about 7 runs within 30 s exhaust the ephemeral port range through
+  `TIME_WAIT` (measured: 2 179 sockets after one run; 2 of 25 consecutive container runs, and 2 of 6 on the host,
+  failed with `Cannot read properties of null (reading 'port')` or a timeout). One run, or runs a minute apart, is
+  reliable: 15 single runs in a row before that, and every run in the procedure above, passed.
 
 ## Implementation choices
 
@@ -200,11 +235,9 @@ label sat against the id (` · factory` lost its space in an inline-block; now a
   says `npm ci --foreground-scripts`, which starts the failing build.
 - The builder also deletes the other platforms' prebuilds and the C++ sources from the final `node_modules`
   (image size only).
-- **Hooks manifest key**: the design says to add `"hooks": "./hooks/hooks.json"` to `plugin.json` and to fall
-  back if the installed Claude Code rejects it. It does: 2.1.278 loads `hooks/hooks.json` by itself and reports
-  `Duplicate hooks file detected … hook-load-failed` for the manifest key. The key is removed; the six hooks
-  register (`claude plugin details factory` lists them; debug log: `Registered 6 hooks`). `claude plugin
-  validate` passes with and without the key, so it does not catch this.
+- **Hooks manifest key** (design revision 3 now says the same): 2.1.278 loads `hooks/hooks.json` by itself and
+  reports `Duplicate hooks file detected … hook-load-failed` for a manifest key. No key; the seven hooks register.
+  `claude plugin validate` passes with and without the key, so it does not catch this.
 - **Payload facts the design did not have** (all from captures, all in `test/fixtures/hooks/README.md`): a
   subagent runs in the background by default, and then `PostToolUse` is an `async_launched` acknowledgement;
   `SubagentStop` fires before `PostToolUse` for a foreground agent and carries `last_assistant_message` and
@@ -212,9 +245,7 @@ label sat against the id (` · factory` lost its space in an inline-block; now a
   `tool_response`). A `<task-notification>` that the harness injects when a background agent ends arrives as a
   `UserPromptSubmit`; the prompt hook ignores it, so it is never an intervention.
 - **`tool_response.usage`/`totalTokens` is the last API response only** (34 098 against 55 345 for the whole
-  agent in one capture). The design's order (usage first) is kept. In practice `SubagentStop`, which carries the
-  transcript sum, arrives first and `PostToolUse` only fills what is still `NULL`; if the order ever flipped,
-  tokens would be under-counted. Architect: worth a line in ADR-0004.
+  agent in one capture); ADR-0004 now leads with the transcript delta, which is what is built.
 - **Token counting** takes the last `usage` block per `requestId`: one API response is written as several
   transcript lines that repeat its usage (the first with a partial output count).
 - Ticket detection in hook mode also reads `Product repo: <path>` (the coordinate skill's first line) to find
@@ -227,23 +258,36 @@ label sat against the id (` · factory` lost its space in an inline-block; now a
 - `supertest` ships no types and `@types/supertest` is not in the design's list; `test/types-supertest.d.ts`
   declares what the tests call, likewise `src/types/vendor.d.ts` for `better-sqlite3` and `ejs`. No dependency
   was added.
+- **`run-failed` and non-factory Agent calls.** The reporter's existing filter (only `subagent_type`
+  `groom|architect|implementer|validator`, with or without `factory:`) also applies to `run-failed`, so a failing
+  helper subagent sends nothing. The design lets the dashboard drop such a failure ("finds no run"); it would only
+  do so when no run of the ticket is open, because the dashboard's third matching rule is "the newest open run for
+  `(project, number)`", which a helper's failure could otherwise finish as `failed` while a factory run of the same
+  ticket is in flight. Nothing is stored either way (T-HOOK-4 tests the dashboard side, shell::T-HOOK-6 the filter).
+- **`run-failed` as a CLI call is a no-op**: a driver states a failure with `run-finish --result failed`.
+- **Failure first, then `SubagentStop`**: the second delivery has no `tool_use_id`, and the matching rules only
+  consider open runs, so it is dropped and logged (`report_drop`); the run is already `failed` and closed. The
+  design's T-HOOK-5 is met (one run, `failed`, one `ended_at`); what the late delivery would have filled (tokens)
+  stays `NULL`. Claude Code did not fire a `SubagentStop` after a failed call in any capture.
 - The stack tests seed 3 010 runs through the ingest endpoints (so the seed is also a load test of ingest).
 - **G2** (chip truncation) is built per §R3; see the gaps file.
 
 ## Tests changed
 
-None. No test existed before this work.
+Two tests written in round 1 encoded what design revision 3 replaced; both are changed, not weakened:
+
+- `payload.test`: "a failed Agent call (PostToolUseFailure) sets the error flag and has no output" became "…the
+  error flag comes from the top-level error string, which is also the output" (design: the `error` string is the
+  output), plus two new tests (no transcript output for a failed call; an empty or non-string `error` is no error).
+- `ingest.test`: "the tool payload's own usage wins over the delta" became "the delta leads: it wins over a
+  tool_response.usage block" (ADR-0004), plus a test of the fallback order.
+- `metrics.test`: an agent whose runs have no token count now has `tokens: null`, not `0` (the `—` fix above).
 
 ## Open gaps
 
-`docs/architecture/.gaps/001-agent-factory-dashboard.md`:
-
-- **G1 – a failed Agent call arrives as `PostToolUseFailure`**, which none of the six hooks listens to. Blocks
-  the `failed` marking of a run that ends as an Agent-tool error (S4.2), the `agent run failed` bounce row
-  (S5.6) and R1 rule 3 for that case. Everything else is built; a `STATUS: failed` run works.
-- **G2 – the design says two things about the label in a chip** (14-character ellipsis versus "never
-  truncated"). Blocks nothing; §R3's reading is built.
+None. `docs/architecture/.gaps/001-agent-factory-dashboard.md` holds G1 and G2, both marked resolved by the
+architect and built as answered.
 
 ## Validator findings
 
-None yet (round 1).
+None yet (round 1 of validation).

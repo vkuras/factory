@@ -63,4 +63,4 @@ Two things, in this order:
 
 | # | Title | Type | Status |
 |---|---|---|---|
-| 001 | Agent Factory Dashboard | MVP | Designed |
+| 001 | Agent Factory Dashboard | MVP | Implemented |
