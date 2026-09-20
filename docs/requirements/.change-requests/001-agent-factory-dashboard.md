@@ -62,10 +62,23 @@ Option 2, verbatim: "Kippen: Repo-Anzeige aus Later holen".
 Groomed into `docs/requirements/001-agent-factory-dashboard.md`: R3 rewritten, D2 superseded by
 D14, the Later entry removed, and the repository added to the acceptance criteria of S1, S3, S4 and
 S5. The internal identity `(repository, number)` from ADR-0006 stands; what changes is that the
-repository is now shown, everywhere a ticket is shown, always. The requirements document is back to
-`Groomed – ready for architecture`.
+repository is now shown on screen.
+
+Two points of that pass were the groomer's own and were put back to the stakeholder in a follow-up
+round; both are now answered and groomed into the same document (D16, D17):
+
+- Where the label belongs: "Überall, wo ein Ticket vorkommt" — everywhere a ticket appears, as the
+  groomer had assumed (D16).
+- When it is shown: "Erst ab dem zweiten Repo" — **not** always, as the groomer had assumed. While
+  only one repository has ever reported, no label is shown; from the first ticket of a second
+  repository it appears on every ticket everywhere, including tickets stored earlier, and it stays
+  from then on (D17). The design must follow this, not the earlier "always".
+
+The requirements document is `Groomed – ready for architecture`.
 
 In the same round the stakeholder said: "Der coordinator wird in der zukunft abgeschaltet und durch
 shell script ersetzt ich will mich nicht auf den verlassen." That became R13 and D15: reporting
 must not depend on the coordinator. It affects the design's hook mechanism, not what the dashboard
-shows.
+shows. In the follow-up round the stakeholder limited its reach: agents the operator starts by hand
+in a chat (for example `/architect`) do **not** have to reach the dashboard — "nein" (D18). R13
+covers whatever drives the pipeline, today's coordinator or its shell-script replacement.

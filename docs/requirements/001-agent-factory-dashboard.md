@@ -2,7 +2,8 @@
 
 - Type: MVP
 - Status: Groomed – ready for architecture
-- Date: 2026-09-20 (change-request pass: CR1 and the coordinator's future, same day)
+- Date: 2026-09-20 (change-request passes: CR1 and the coordinator's future, then the
+  stakeholder's answers to the open points of that pass, all the same day)
 - Product context: docs/product.md
 
 ## Summary
@@ -17,8 +18,8 @@ shows — every action stays in Claude Code.
 
 The visual design is fixed and supplied by the stakeholder as `Agent Factory Dashboard.dc.html`
 plus `support.js`. It is the specification for layout, structure and wording of the three tabs and
-the detail view. Four deviations from it are recorded in this document (D4, D5, D6, D14) and win
-over the design file where they conflict.
+the detail view. Four deviations from it are recorded in this document (D4, D5, D6, and D14 as
+refined by D16 and D17) and win over the design file where they conflict.
 
 ## Users and roles
 
@@ -35,8 +36,8 @@ searching for it.
 Acceptance criteria:
 - Given tickets exist, when I open the dashboard, then it opens on the Attention tab (R11).
 - Given a ticket meets an attention rule (R1), when I look at the Attention tab, then it appears
-  in the list with its id, the repository it comes from (R3), its title, the reason it is there, a
-  one-sentence explanation of that reason, and its severity.
+  in the list with its id, the repository it comes from whenever R3 shows the repository, its
+  title, the reason it is there, a one-sentence explanation of that reason, and its severity.
 - Given several tickets need me, when I look at the list, then they are ordered by the severity of
   their reason as R1 defines it, and within the same severity the one untouched longest comes
   first.
@@ -45,9 +46,15 @@ Acceptance criteria:
   have intervened on it.
 - Given tickets exist that meet no attention rule, when I look at the Attention tab, then they are
   listed separately and compactly below as tickets running on their own, with their count, each
-  with the repository it comes from (R3).
+  with the repository it comes from whenever R3 shows the repository.
 - Given two tickets from different repositories have the same number, when I look at the Attention
   tab, then I can tell from the repository shown on each which is which, without opening them.
+- Given every ticket the dashboard has ever received comes from one and the same repository, when
+  I look at any tab or at a ticket's detail view, then no repository is shown anywhere (R3).
+- Given only one repository had ever reported and a ticket from a second repository is now
+  reported, when I load the dashboard again, then every ticket shows the repository it comes from,
+  on every tab and in the detail view, including the tickets that were stored before the second
+  repository reported, and no ticket and no part of its history is lost or changed (R3).
 - Given no ticket meets an attention rule, when I look at the Attention tab, then it tells me
   nothing needs me rather than showing an empty list.
 - Given no ticket exists at all, when I open the dashboard, then it tells me there is nothing yet
@@ -72,7 +79,7 @@ Acceptance criteria:
 - Given tickets exist, when I open the Pipeline tab, then I see four columns — Grooming, Design,
   Implementation, Verification — each with its ticket count.
 - Given a ticket is in a stage, when I look at that column, then its card shows the id, the
-  repository it comes from (R3), the title,
+  repository it comes from whenever R3 shows the repository, the title,
   the current status, the number of loops, how long the ticket has been alive, the tokens it has
   consumed and how many times I have intervened.
 - Given a ticket has a status, when it is placed in a column, then the placement follows R2.
@@ -86,7 +93,8 @@ understand why it is where it is.
 
 Acceptance criteria:
 - Given I click a ticket anywhere in the dashboard, when the detail view opens, then it shows the
-  id, the repository it comes from (R3), the title, the current status, the agent status, and six
+  id, the repository it comes from whenever R3 shows the repository, the title, the current
+  status, the agent status, and six
   figures: how long the ticket has been alive, total agent working time, loops, my interventions, tokens and number of agent runs.
 - Given a ticket has agent runs, when I look at the detail view, then I see a time axis with one
   lane per agent and one lane for me, each run drawn at its position and length, and a run that
@@ -116,8 +124,9 @@ Acceptance criteria:
 - Given less than six months of history exists, when I look at a trend, then it covers only the
   period that has data and names that period (R8).
 - Given tickets exist, when I open the Analytics tab, then I also see one row per ticket over its
-  lifetime with the repository it comes from (R3), my interventions, loops, lead time, agent
-  working time and tokens, ordered so the tickets that cost me most come first.
+  lifetime with the repository it comes from whenever R3 shows the repository, my interventions,
+  loops, lead time, agent working time and tokens, ordered so the tickets that cost me most come
+  first.
 - Given agent runs exist, when I open the Analytics tab, then I see how many tokens and how much
   time each of the four agents has consumed in total.
 - Given agent runs exist, when I open the Analytics tab, then I see how often tickets were handed
@@ -126,7 +135,7 @@ Acceptance criteria:
 ### S6 – The factory reports what it does
 
 As the operator, I want every agent run and every intervention of mine to be reported, no matter
-what drives the factory, so that the dashboard has something to show.
+what drives the pipeline, so that the dashboard has something to show.
 
 Acceptance criteria:
 - Given an agent begins a run on a ticket, when it starts, then the dashboard knows that run is in
@@ -144,8 +153,12 @@ Acceptance criteria:
 - Given the dashboard cannot be reached, when an agent reports, then the agent run continues and
   finishes normally, and that part of the history is simply missing (R9).
 - Given agents run in a repository other than the one the dashboard is installed from, when they
-  report, then their tickets appear in the same dashboard, each with the repository it comes from
+  report, then their tickets appear in the same dashboard, kept apart from tickets of the same
+  number in another repository, and from then on every ticket shows the repository it comes from
   (R3, R10).
+- Given I start an agent by hand in a Claude Code chat, when it finishes, then nothing about that
+  run reaches the dashboard, and the result it left in the requirements document is picked up by
+  the next reported run (D18, Out of scope).
 
 ### S7 – Set when a ticket should bother me
 
@@ -192,12 +205,28 @@ Severity orders the list: blocking, then check, then review, then answer.
 
 **R3 – A ticket's identity.** A ticket is identified by the repository it comes from together with
 the `NNN` number of its requirements document. The same number in two repositories is two
-different tickets with two separate histories. Wherever the dashboard shows a ticket, it shows the
-repository next to the number, so the operator can tell two tickets with the same number apart
-without reading the title. The repository is shown as its name; how that name is determined is a
-technical question and already settled (see "Left to architecture"). The indicator is always
-shown, also while every ticket comes from the same repository. The operator never types a
-repository anywhere.
+different tickets with two separate histories, always, independently of what is shown on screen.
+
+Whether the repository is shown depends on how many repositories the dashboard has heard from
+(D17):
+
+- While every ticket the dashboard has ever received comes from one and the same repository, the
+  repository is shown nowhere. There is nothing to tell apart, and the number and title are enough.
+- From the moment a ticket from a second repository is reported, the repository is shown wherever
+  a ticket appears (D16): on attention cards, on the compact "running on their own" chips, on
+  pipeline cards, in the per-ticket analytics row and in the detail view's head. It is shown on
+  every ticket, including the tickets of the first repository and including the tickets that were
+  stored before the second repository reported.
+- Once a second repository has reported, the repository keeps being shown, also if only one
+  repository is active again. The older tickets stay in the history (R8) and still have to be told
+  apart.
+- The dashboard is a snapshot (R12), so the change becomes visible the next time the page is
+  loaded.
+- Nothing is lost or rewritten when the repository starts being shown: every ticket already
+  reported, and its whole history, stays exactly as it is. Only the display changes.
+
+The repository is shown as its name; how that name is determined is a technical question and
+already settled (see "Left to architecture"). The operator never types a repository anywhere.
 
 **R4 – The operator is part of the history.** An intervention by the operator is recorded on the
 ticket whoever or whatever drives the pipeline at the time (R13), like an agent run: it appears in
@@ -227,9 +256,11 @@ else can run the factory against their own dashboard elsewhere.
 
 **R13 – Reporting does not depend on the coordinator.** The stakeholder intends to switch the
 coordinator off and drive the factory with a shell script instead, and does not want to depend on
-the coordinator. Whatever drives the pipeline — today's coordinator, a shell script, or an agent
-started by hand — every agent run and every intervention of the operator must still reach the
-dashboard. A requirement is never met by "the coordinator does it" alone.
+the coordinator. Whatever drives the pipeline — today's coordinator or the shell script that
+replaces it — every agent run and every intervention of the operator must still reach the
+dashboard. A requirement is never met by "the coordinator does it" alone. Runs that nothing drives,
+because the operator typed them into a Claude Code chat themselves, are deliberately not covered
+(D18, Out of scope).
 
 **R12 – The page is a snapshot.** The page shows the state it had when it was loaded. It does not
 refresh itself and shows no indication of how old the data is. The operator reloads to see more.
@@ -258,7 +289,8 @@ refresh itself and shows no indication of how old the data is. The operator relo
 - S6 The factory reports what it does — including the changes to the factory that this requires,
   without the reporting depending on the coordinator (R13)
 - S7 Set when a ticket should bother me
-- A repository indicator on every ticket (R3, D14)
+- A repository indicator on every ticket, shown everywhere a ticket appears, from the moment a
+  second repository reports (R3, D14, D16, D17)
 
 ### Later
 
@@ -272,6 +304,11 @@ refresh itself and shows no indication of how old the data is. The operator relo
 - Login, accounts, roles, permissions.
 - Cost in a currency. Tokens only.
 - A light mode or a phone layout.
+- Agent runs the operator starts by hand in a Claude Code chat, for example by typing
+  `/architect`, with neither the coordinator nor a shell script driving them. Such a run does not
+  reach the dashboard, so it is missing from the ticket's history; the result it leaves in the
+  requirements document is picked up by the next reported run (D18).
+- A repository indicator while only one repository has ever reported (D17).
 
 ## Decisions
 
@@ -313,11 +350,9 @@ refresh itself and shows no indication of how old the data is. The operator relo
   superseded; the Later entry is gone; S1, S3, S4 and S5 show the repository wherever they show a
   ticket. The supplied design file has no such element, so this is a fourth deviation from it and
   wins over the file, like D4, D5 and D6.
-  - Two points the stakeholder did not state and the groomer decided, both taken from the wording
-    of the parked item ("a repository indicator on *a ticket*"): the indicator appears everywhere a
-    ticket is shown — attention cards, the compact "running on their own" chips, pipeline cards,
-    the per-ticket analytics row and the detail head — not only on the card and in the table; and
-    it is shown always, not only once a second repository reports.
+  - Two points the stakeholder had not stated at the time and the groomer decided were put back to
+    the stakeholder and are now answered: where the indicator appears (D16, confirmed) and when it
+    is shown (D17, overturned).
 - **D15 – Nothing in the requirements depends on the coordinator existing.** Stakeholder: "Der
   coordinator wird in der zukunft abgeschaltet und durch shell script ersetzt ich will mich nicht
   auf den verlassen." This is both a wording change and a constraint. Wording: R4 and S6 no longer
@@ -326,6 +361,38 @@ refresh itself and shows no indication of how old the data is. The operator relo
   sentence is recorded under "Stakeholder technical constraints", because how reporting survives
   the coordinator's replacement is the architect's decision. Nothing about *what* the dashboard
   shows changed.
+
+### Decisions on the open points of that pass (2026-09-20)
+
+The pass above carried three points the stakeholder had not stated. They were put to the
+stakeholder and answered:
+
+- **D16 – The repository is shown everywhere a ticket appears.** Asked: where should the
+  repository label be, since the groomer chose everywhere while CR1 named only the card and the
+  table. Stakeholder: "Überall, wo ein Ticket vorkommt". This confirms the groomer's decision, so
+  nothing changed: attention cards, the compact "running on their own" chips, pipeline cards, the
+  per-ticket analytics row and the detail view's head all show it (R3).
+- **D17 – The repository is shown only once a second repository has reported.** Asked: always, or
+  only from the second repository on, since the groomer chose always. Stakeholder: "Erst ab dem
+  zweiten Repo". This overturns the groomer's decision. R3 now describes three situations: while
+  only one repository has ever reported nothing is shown; from the first ticket of a second
+  repository the label appears on every ticket everywhere, also on tickets stored earlier; and it
+  stays once it has appeared. S1 carries the two acceptance criteria for the switch, and S1, S3,
+  S4, S5 and S6 now say "whenever R3 shows the repository" instead of showing it unconditionally.
+  Three consequences follow from rules the stakeholder already set and were decided by the groomer
+  rather than asked again: the label appears on the next page load, because the page is a snapshot
+  (R12); it does not disappear again when only one repository is active, because the older tickets
+  stay in the history forever (R8) and would otherwise become ambiguous; and no ticket or history
+  is lost or changed by the switch, because only the display changes.
+- **D18 – Agents started by hand are out of scope.** Asked: must an agent the operator starts
+  themselves in a chat, for example `/architect`, also reach the dashboard, since the groomer had
+  put that into R13 while the stakeholder's sentence named only the shell script. The stakeholder
+  first replied "das raff ich nicht fuer das mehr aus"; after a plainer explanation — that such a
+  run would be missing from the dashboard's history, and that its result in the requirements
+  document is picked up by the next reported run — the answer was "nein". So R13 covers whatever
+  drives the pipeline (today's coordinator, or its future shell-script replacement) and no longer
+  says "or an agent started by hand"; hand-started runs are listed under Out of scope with that
+  consequence spelled out.
 
 ## Stakeholder technical constraints
 
@@ -362,11 +429,14 @@ illustrative only.
   actually produced. Today a subagent's output only surfaces when it finishes.
 - **How the dashboard knows a run is in progress.** The product need is S2 and R7.
 - **How interventions get reported.** The product need is R4 and R13: an intervention must be
-  recorded whatever drives the factory, including after the coordinator is replaced by a shell
-  script.
+  recorded whatever drives the pipeline, including after the coordinator is replaced by a shell
+  script. Runs and interventions in a chat the operator drives themselves are out of scope (D18).
 - **How reporting survives the coordinator being switched off.** The product need is R13. The
   existing design hangs reporting on Claude Code hooks and the coordinator's rounds; whether that
   still holds for a shell-script-driven factory is the architect's call.
+- **How the dashboard knows whether more than one repository has ever reported (R3, D17).** The
+  product need is that the label is absent while there is only one repository and present on every
+  ticket from the moment a second one reports, without anything being lost in the switch.
 - **What name a repository is shown under (R3).** The product need is that the operator recognises
   the project at a glance and never has to type it. The design already derives a project key per
   repository (ADR-0006: the `owner/repo` of the `origin` remote, else the directory name,
@@ -430,3 +500,6 @@ None.
 | L30 | Architecture approval before the implementer applies to this run only (confirmed) | Process instruction; not a product requirement |
 | L31 | "Kippen: Repo-Anzeige aus Later holen" (answer to CR1) | R3, D14, S1, S3, S4, S5, In scope; removes the Later entry and supersedes D2 |
 | L32 | "Der coordinator wird in der zukunft abgeschaltet und durch shell script ersetzt ich will mich nicht auf den verlassen." | R13, D15, R4, S6, Stakeholder technical constraints, Left to architecture, docs/product.md glossary |
+| L33 | "Überall, wo ein Ticket vorkommt" (where the repository label belongs) | R3, D16 — confirms the groomer's decision, nothing changed |
+| L34 | "Erst ab dem zweiten Repo" (when the label is shown) | R3, D17, S1, S3, S4, S5, S6, In scope, Out of scope, Left to architecture — overturns the groomer's "always" |
+| L35 | "nein" (must a hand-started agent, e.g. `/architect` in a chat, reach the dashboard?), after "das raff ich nicht fuer das mehr aus" and a plainer explanation | R13, D18, S6, Out of scope, Left to architecture |
