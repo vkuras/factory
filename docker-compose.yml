@@ -1,0 +1,32 @@
+# The whole product is one service and one volume: `docker compose up -d`.
+services:
+  dashboard:
+    build: ./dashboard
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_BIND:-0.0.0.0}:${DASHBOARD_PORT:-8787}:8787"
+    environment:
+      TZ: "${TZ:-Europe/Berlin}"
+      LOOP_THRESHOLD: "${LOOP_THRESHOLD:-3}"
+      IDLE_HOURS: "${IDLE_HOURS:-24}"
+      RUN_STALE_HOURS: "${RUN_STALE_HOURS:-12}"
+      FACTORY_INGEST_TOKEN: "${FACTORY_INGEST_TOKEN:-}"
+      DASHBOARD_BIND: "${DASHBOARD_BIND:-0.0.0.0}"
+    volumes:
+      - dashboard-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8787/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    mem_limit: 256m
+    cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  dashboard-data:

@@ -1,0 +1,146 @@
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <a href="/?tab=<%= m.from %>" class="af-h-back" style="appearance:none;cursor:pointer;background:#171B21;border:1px solid #2C343F;border-radius:8px;padding:11px 18px;display:flex;align-items:center;gap:10px;width:fit-content;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9EE84B">
+      <span style="font-size:16px;line-height:1">←</span>
+      <span>back to <%= m.from %></span>
+    </a>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#8A94A3"><%- include('partials/ticketId', { c: m.card }) %></span>
+          <span style="font-size:22px;font-weight:600;letter-spacing:-.01em"><%= m.card.title %></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 9px;border-radius:5px;background:<%= m.statusBg %>;color:<%= m.statusColor %>"><%= m.card.statusText %></span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6E7887">agent status · <span style="color:<%= m.ownerColor %>"><%= m.agentStatus %></span></span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(110px,1fr));gap:10px">
+<% for (const t of m.metrics) { %>
+        <div style="background:#12151A;border:1px solid #1E242C;border-radius:9px;padding:11px 13px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#6E7887"><%= t.label %></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;color:<%= t.color %>"><%= t.value %></div>
+        </div>
+<% } %>
+      </div>
+    </div>
+
+    <div style="background:#0E1115;border:1px solid #1E242C;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6E7887">Route · swimlanes over time</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4B5360"><%= m.spanLabel %></span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+<% for (const l of m.lanes) { %>
+        <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:<%= l.color %>;text-align:right"><%= l.label %></div>
+          <div style="position:relative;height:30px;background:#12151A;border:1px solid #191E25;border-radius:6px">
+<% for (const b of l.blocks) { %>
+            <div title="<%= b.title %>" style="position:absolute;top:3px;bottom:3px;left:<%= b.left %>;width:<%= b.width %>;border-radius:4px;background:<%= b.background %>;border:1px solid <%= b.border %>;display:flex;align-items:center;padding:0 7px;overflow:hidden">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:<%= b.color %>;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= b.label %></span>
+            </div>
+<% } %>
+          </div>
+        </div>
+<% } %>
+        <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px">
+          <div></div>
+          <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#4B5360;padding-top:4px">
+<% for (const t of m.ticks) { %>
+            <span><%= t %></span>
+<% } %>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:6px;border-top:1px solid #191E25">
+<% for (const g of m.legend) { %>
+        <div style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6E7887">
+          <span style="width:10px;height:10px;border-radius:3px;background:<%= g.color %>"></span>
+          <span><%= g.label %></span>
+        </div>
+<% } %>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6E7887">Agent output log</div>
+<% for (const e of m.log) { %>
+        <details class="af-log af-h-log" style="cursor:pointer;background:#12151A;border:1px solid #1E242C;border-left:3px solid <%= e.color %>;border-radius:9px;padding:13px 16px">
+          <summary style="list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:<%= e.color %>;letter-spacing:.06em"><%= e.agentLabel %></span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:<%= e.statusBg %>;color:<%= e.color %>"><%= e.result %></span>
+              <span style="flex:1"></span>
+              <span title="<%= e.timeTitle %>" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5D6673"><%= e.timeLabel %> · <%= e.durLabel %> · <%= e.tokensLabel %></span>
+            </div>
+            <div class="af-when-closed" style="font-size:13px;color:#BCC5D1;text-wrap:pretty"><%= e.summary %></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+<% if (e.transition !== null) { %>
+              <span class="af-when-closed" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6E7887">→ <%= e.transition %></span>
+<% } %>
+              <span style="flex:1"></span>
+              <span class="af-when-closed" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:<%= e.color %>">show full run ▼</span>
+              <span class="af-when-open" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:<%= e.color %>">hide full run ▲</span>
+            </div>
+          </summary>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid #1E242C;cursor:auto">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6E7887"><%= e.runMeta %></div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+<% for (const s of e.steps) { %>
+              <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:baseline">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3F4854"><%= s.n %></span>
+                <span style="font-size:12.5px;color:#A6B0BE;text-wrap:pretty;white-space:pre-wrap"><%= s.text %></span>
+              </div>
+<% } %>
+            </div>
+            <div style="background:#0D1014;border:1px solid #1E242C;border-radius:7px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6E7887"><%= e.finalLabel %></div>
+              <div style="font-size:13px;color:#DCE2EA;text-wrap:pretty"><%= e.summary %></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:<%= e.color %>"><%= e.verdict %></div>
+            </div>
+          </div>
+        </details>
+<% } %>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#12151A;border:1px solid #1E242C;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6E7887">Tokens per agent</div>
+<% for (const a of m.tokenBars) { %>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px">
+              <span style="color:<%= a.color %>"><%= a.label %></span>
+              <span style="color:#8A94A3"><%= a.value %></span>
+            </div>
+            <div style="height:7px;border-radius:4px;background:#191E25;overflow:hidden">
+              <div style="height:100%;border-radius:4px;background:<%= a.color %>;width:<%= a.width %>"></div>
+            </div>
+          </div>
+<% } %>
+        </div>
+        <div style="background:#12151A;border:1px solid #1E242C;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6E7887">Your involvement</div>
+<% if (m.humanLog.length === 0) { %>
+          <div style="font-size:12px;color:#6E7887">No interventions yet.</div>
+<% } %>
+<% for (const h of m.humanLog) { %>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="width:6px;height:6px;border-radius:50%;background:#FF7AB6;margin-top:6px;flex:none"></span>
+            <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+              <div style="font-size:12px;color:#C6CEDA;white-space:pre-wrap;overflow-wrap:anywhere"><%= h.text %></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5D6673"><%= h.timeLabel %></div>
+            </div>
+          </div>
+<% } %>
+        </div>
+        <div style="background:#12151A;border:1px solid #1E242C;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:8px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6E7887">Status trail</div>
+<% for (const s of m.trail) { %>
+          <div style="display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px">
+            <span style="width:5px;height:5px;border-radius:50%;background:<%= s.color %>;flex:none"></span>
+            <span style="color:#A6B0BE;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= s.label %></span>
+          </div>
+<% } %>
+        </div>
+      </div>
+    </div>
+  </div>
