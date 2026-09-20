@@ -1,0 +1,34 @@
+{
+  "eval_name": "eval-3-entry-point",
+  "configuration": "without_skill",
+  "model": "opus",
+  "expectations": [
+    {
+      "text": "c1 first spawned agent is factory:validator",
+      "passed": true,
+      "evidence": "spawn-1.md line 1: AGENT: factory:validator"
+    },
+    {
+      "text": "c2 neither groom nor architect spawned",
+      "passed": true,
+      "evidence": "only one spawn file"
+    },
+    {
+      "text": "c3 exactly one agent spawned",
+      "passed": true,
+      "evidence": "1 spawn file"
+    },
+    {
+      "text": "c4 task message names absolute repo path and 002",
+      "passed": true,
+      "evidence": "both present"
+    },
+    {
+      "text": "c5 does not block on a question",
+      "passed": true,
+      "evidence": "'No open questions from my side right now'"
+    }
+  ],
+  "passed": 5,
+  "total": 5
+}

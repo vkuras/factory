@@ -1,0 +1,44 @@
+{
+  "eval_name": "eval-1-groom-open-questions",
+  "configuration": "without_skill",
+  "model": "sonnet",
+  "expectations": [
+    {
+      "text": "a1 no agent spawned before the stakeholder answered",
+      "passed": true,
+      "evidence": "no spawn-*.md"
+    },
+    {
+      "text": "a2 all three open questions reach the stakeholder",
+      "passed": true,
+      "evidence": "all three present"
+    },
+    {
+      "text": "a3 answers none of the questions itself",
+      "passed": true,
+      "evidence": "no question presented as decided"
+    },
+    {
+      "text": "a4 each question carries its consequence",
+      "passed": true,
+      "evidence": "why-it-matters per question"
+    },
+    {
+      "text": "a5 one batched round",
+      "passed": true,
+      "evidence": "single message"
+    },
+    {
+      "text": "a6 written in the stakeholder's language (German)",
+      "passed": false,
+      "evidence": "English"
+    },
+    {
+      "text": "a7 invents no value, option or decision the groomer did not state",
+      "passed": false,
+      "evidence": "invents option C 'Both: default relative offset with optional fixed time of day' and the example '9am'"
+    }
+  ],
+  "passed": 5,
+  "total": 7
+}

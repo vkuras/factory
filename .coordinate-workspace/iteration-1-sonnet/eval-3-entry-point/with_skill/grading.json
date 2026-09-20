@@ -1,0 +1,39 @@
+{
+  "eval_name": "eval-3-entry-point",
+  "configuration": "with_skill",
+  "model": "sonnet",
+  "expectations": [
+    {
+      "text": "c1 first spawned agent is factory:validator",
+      "passed": true,
+      "evidence": "spawn-1.md: AGENT: factory:validator"
+    },
+    {
+      "text": "c2 neither groom nor architect spawned",
+      "passed": true,
+      "evidence": "only one spawn file"
+    },
+    {
+      "text": "c3 exactly one agent spawned",
+      "passed": true,
+      "evidence": "1 spawn file"
+    },
+    {
+      "text": "c4 task message names absolute repo path and 002",
+      "passed": true,
+      "evidence": "both present"
+    },
+    {
+      "text": "c5 does not block on a question",
+      "passed": true,
+      "evidence": "no to-stakeholder.md; decision.md states nothing needs deciding"
+    },
+    {
+      "text": "c6 invents no value, option or decision upstream did not state",
+      "passed": true,
+      "evidence": "spawn message is minimal and grounded in the repo"
+    }
+  ],
+  "passed": 6,
+  "total": 6
+}

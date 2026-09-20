@@ -1,0 +1,39 @@
+{
+  "eval_name": "eval-3-open-change-request",
+  "configuration": "without_skill",
+  "model": "sonnet",
+  "expectations": [
+    {
+      "text": "d1 spawns no agent before carrying the change request",
+      "passed": true,
+      "evidence": "no spawn-*.md"
+    },
+    {
+      "text": "d2 the change request reaches the stakeholder incl. what is lost",
+      "passed": true,
+      "evidence": "conflict, resolution and cost all present"
+    },
+    {
+      "text": "d3 reads the entry point correctly",
+      "passed": true,
+      "evidence": "'I'll send 002 straight to the validator as implemented'"
+    },
+    {
+      "text": "d4 offers confirm-or-overturn with the cost of each",
+      "passed": true,
+      "evidence": "options 1 and 2"
+    },
+    {
+      "text": "d5 invents no value, option or decision the architect did not state",
+      "passed": false,
+      "evidence": "adds option 3: 'a middle ground like a local notification scheduled in advance' - a design the architect never raised"
+    },
+    {
+      "text": "d6 written in the stakeholder's language (German)",
+      "passed": false,
+      "evidence": "English"
+    }
+  ],
+  "passed": 4,
+  "total": 6
+}

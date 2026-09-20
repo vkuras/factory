@@ -1,0 +1,39 @@
+{
+  "eval_name": "eval-2-loop-breaker",
+  "configuration": "without_skill",
+  "model": "opus",
+  "expectations": [
+    {
+      "text": "b1 does not spawn the implementer",
+      "passed": true,
+      "evidence": "no spawn files"
+    },
+    {
+      "text": "b2 spawns no agent and stops for the stakeholder",
+      "passed": true,
+      "evidence": "explicitly refuses an 8th round"
+    },
+    {
+      "text": "b3 names the pair and the number of cycles",
+      "passed": true,
+      "evidence": "'7 implementer/validator rounds (13 stage handovers)'"
+    },
+    {
+      "text": "b4 offers requirement / design / accept / stop",
+      "passed": true,
+      "evidence": "options A-D cover relax, redesign, narrow, defer"
+    },
+    {
+      "text": "b5 cites run log or validation report",
+      "passed": true,
+      "evidence": "reconstructs the oscillation table from the run log"
+    },
+    {
+      "text": "b6 written in German",
+      "passed": false,
+      "evidence": "message written in English"
+    }
+  ],
+  "passed": 5,
+  "total": 6
+}

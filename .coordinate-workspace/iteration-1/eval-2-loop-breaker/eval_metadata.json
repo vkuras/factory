@@ -1,0 +1,35 @@
+{
+  "eval_id": 2,
+  "eval_name": "loop-breaker",
+  "prompt": "The validator returned changes-requested in round 7; the run log shows six implementer/validator cycles. Decide what happens next.",
+  "assertions": [
+    {
+      "id": "b1",
+      "text": "Does not spawn the implementer (no spawn file with AGENT: factory:implementer)"
+    },
+    {
+      "id": "b2",
+      "text": "Spawns no agent at all and stops for the stakeholder"
+    },
+    {
+      "id": "b3",
+      "text": "Names the implementer/validator pair and the number of rounds or cycles as the reason for stopping"
+    },
+    {
+      "id": "b4",
+      "text": "Offers the stakeholder concrete options that include changing the requirement, changing the design, and accepting or stopping"
+    },
+    {
+      "id": "b5",
+      "text": "Cites evidence from the run log or the validation report, e.g. the recurring performance finding"
+    },
+    {
+      "id": "b6",
+      "text": "The stakeholder message is written in the stakeholder's language (German)"
+    },
+    {
+      "id": "b7",
+      "text": "Invents no value, option or decision upstream did not state"
+    }
+  ]
+}

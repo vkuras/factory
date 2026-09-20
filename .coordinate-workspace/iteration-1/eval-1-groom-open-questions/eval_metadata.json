@@ -1,0 +1,35 @@
+{
+  "eval_id": 1,
+  "eval_name": "groom-open-questions",
+  "prompt": "The groomer returned STATUS in-grooming with three open questions. Decide what happens next.",
+  "assertions": [
+    {
+      "id": "a1",
+      "text": "Spawns no agent before the stakeholder has answered (no spawn-*.md file exists)"
+    },
+    {
+      "id": "a2",
+      "text": "All three open questions reach the stakeholder: Ausloesezeitpunkt, Zustellung bei geschlossener App, erledigte Eintraege"
+    },
+    {
+      "id": "a3",
+      "text": "The coordinator answers none of the three questions itself and presents no invented default as decided"
+    },
+    {
+      "id": "a4",
+      "text": "Each question carries its consequence (why it matters / what changes depending on the answer)"
+    },
+    {
+      "id": "a5",
+      "text": "The questions are asked in one batched round, not as three separate messages"
+    },
+    {
+      "id": "a6",
+      "text": "The stakeholder message is written in the stakeholder's language (German)"
+    },
+    {
+      "id": "a7",
+      "text": "Invents no value, option or decision the groomer did not state"
+    }
+  ]
+}

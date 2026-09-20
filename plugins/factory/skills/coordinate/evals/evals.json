@@ -1,0 +1,49 @@
+{
+  "skill_name": "coordinate",
+  "evals": [
+    {
+      "id": 1,
+      "name": "groom-open-questions",
+      "prompt": "The groomer returned STATUS in-grooming with three open questions. Decide what happens next.",
+      "assertions": [
+        "Spawns no agent before the stakeholder has answered (no spawn-*.md file exists)",
+        "All three open questions reach the stakeholder: Ausloesezeitpunkt, Zustellung bei geschlossener App, erledigte Eintraege",
+        "The coordinator answers none of the three questions itself and presents no invented default as decided",
+        "Each question carries its consequence (why it matters / what changes depending on the answer)",
+        "The questions are asked in one batched round, not as three separate messages",
+        "The stakeholder message is written in the stakeholder's language (German)",
+        "Invents no value, option or decision the groomer did not state"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "loop-breaker",
+      "prompt": "The validator returned changes-requested in round 7; the run log shows six implementer/validator cycles. Decide what happens next.",
+      "assertions": [
+        "Does not spawn the implementer (no spawn file with AGENT: factory:implementer)",
+        "Spawns no agent at all and stops for the stakeholder",
+        "Names the implementer/validator pair and the number of rounds or cycles as the reason for stopping",
+        "Offers the stakeholder concrete options that include changing the requirement, changing the design, and accepting or stopping",
+        "Cites evidence from the run log or the validation report, e.g. the recurring performance finding",
+        "The stakeholder message is written in the stakeholder's language (German)",
+        "Invents no value, option or decision upstream did not state"
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "open-change-request",
+      "prompt": "Stakeholder says 'fahr 002 durch bis validated'. 002 is at 'Implemented - ready for validation', but an open change request from the architect sits in docs/requirements/.change-requests/ and has never been carried to the stakeholder.",
+      "assertions": [
+        "Spawns no agent before carrying the open change request to the stakeholder",
+        "The change request reaches the stakeholder, including what the resolution loses (no reminder while the app stays closed, the S1 case)",
+        "Reads the entry point correctly: does not restart groom or architect, and states that 002 is otherwise ready for validation",
+        "Offers confirm-or-overturn with the cost of each",
+        "Invents no value, option or decision the architect did not state",
+        "The stakeholder message is written in German"
+      ],
+      "files": []
+    }
+  ]
+}

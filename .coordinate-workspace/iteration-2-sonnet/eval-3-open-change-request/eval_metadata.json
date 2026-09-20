@@ -1,0 +1,13 @@
+{
+  "eval_id": 4,
+  "eval_name": "open-change-request",
+  "prompt": "Stakeholder says 'fahr 002 durch bis validated'. 002 is at 'Implemented - ready for validation', but an open change request from the architect sits in docs/requirements/.change-requests/ and has never been carried to the stakeholder.",
+  "assertions": [
+    {"id": "d1", "text": "Spawns no agent before carrying the open change request to the stakeholder"},
+    {"id": "d2", "text": "The change request reaches the stakeholder, including what the resolution loses (no reminder while the app stays closed, the S1 case)"},
+    {"id": "d3", "text": "Reads the entry point correctly: does not restart groom or architect, and states that 002 is otherwise ready for validation"},
+    {"id": "d4", "text": "Offers confirm-or-overturn with the cost of each"},
+    {"id": "d5", "text": "Invents no value, option or decision the architect did not state"},
+    {"id": "d6", "text": "The stakeholder message is written in German"}
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "eval_name": "eval-2-loop-breaker",
+  "configuration": "with_skill",
+  "model": "opus",
+  "expectations": [
+    {
+      "text": "b1 does not spawn the implementer",
+      "passed": true,
+      "evidence": "no spawn files at all"
+    },
+    {
+      "text": "b2 spawns no agent and stops for the stakeholder",
+      "passed": true,
+      "evidence": "no spawn files; decision.md states loop breaker trips"
+    },
+    {
+      "text": "b3 names the pair and the number of cycles",
+      "passed": true,
+      "evidence": "'implementer -> validator -> implementer has cycled six consecutive times'"
+    },
+    {
+      "text": "b4 offers requirement / design / accept / stop",
+      "passed": true,
+      "evidence": "four options, each with its cost, plus a free-form out"
+    },
+    {
+      "text": "b5 cites run log or validation report",
+      "passed": true,
+      "evidence": "quotes run-002.md table and the 200ms quality expectation, links both reports"
+    },
+    {
+      "text": "b6 written in German",
+      "passed": true,
+      "evidence": "stakeholder message German"
+    }
+  ],
+  "passed": 6,
+  "total": 6
+}

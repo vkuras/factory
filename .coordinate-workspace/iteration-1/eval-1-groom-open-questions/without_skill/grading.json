@@ -1,0 +1,39 @@
+{
+  "eval_name": "eval-1-groom-open-questions",
+  "configuration": "without_skill",
+  "model": "opus",
+  "expectations": [
+    {
+      "text": "a1 no agent spawned before the stakeholder answered",
+      "passed": true,
+      "evidence": "no spawn-*.md in outputs"
+    },
+    {
+      "text": "a2 all three open questions reach the stakeholder",
+      "passed": true,
+      "evidence": "all three present"
+    },
+    {
+      "text": "a3 answers none of the questions itself",
+      "passed": true,
+      "evidence": "no question presented as decided"
+    },
+    {
+      "text": "a4 each question carries its consequence",
+      "passed": true,
+      "evidence": "why it matters / what changes per question"
+    },
+    {
+      "text": "a5 one batched round",
+      "passed": true,
+      "evidence": "single message"
+    },
+    {
+      "text": "a6 written in German",
+      "passed": false,
+      "evidence": "message written in English, citing the repo CLAUDE.md file-language rule"
+    }
+  ],
+  "passed": 5,
+  "total": 6
+}
