@@ -1,0 +1,164 @@
+diff --git a/docs/implementation/002-due-dates.md b/docs/implementation/002-due-dates.md
+index caaca7a..58dc506 100644
+--- a/docs/implementation/002-due-dates.md
++++ b/docs/implementation/002-due-dates.md
+@@ -4,14 +4,15 @@
+ - Design: docs/architecture/002-due-dates.md
+ - Status: Ready for validation
+ - Branch: feature/002-due-dates, commits 9c1d2e3..7b8a9f0
+-- Date: 2026-09-18
+-- Round: 1
++- Date: 2026-09-20
++- Round: 2
+ 
+ ## What was built
+-1. **Dates module**: `src/dates.js` with `today()` in Europe/Berlin, `validateDueDate()` (R5) and `dueState()` (R4). The comparison in `dueState()` is strict, so a task whose day is today is `due-today` and not `overdue`. Unit tests in `test/dates.test.js` cover both sides of that boundary.
++1. **Dates module**: `src/dates.js` with `today()` in Europe/Berlin, `validateDueDate()` (R5) and `dueState()` (R4). The comparison in `dueState()` is strict, so a task whose day is today is `due-today` and not `overdue` (round 1 shipped this the wrong way round; see F1 below). Unit tests in `test/dates.test.js` cover both sides of that boundary.
+ 2. **API**: `POST` and `PATCH /api/tasks` take an optional `dueDate`; `GET /api/tasks` adds `dueState` to every task and honours the `X-Today` header of ADR-0002.
+ 3. **List order**: `store.list()` keeps the open/done grouping of 001 S3.2 and orders by due date inside each group, undated tasks last (S6.5).
+ 4. **UI**: a native date input in the add form and a marking per row ("Overdue 2026-09-18", "Due today 2026-09-19", or the plain day), red and bold when overdue. Title and marking are 20 px on a phone viewport (QE5).
++5. **Durable writes** (round 2, F3): `store.flush()` now writes atomically (temp file, fsync, rename, fsync directory) instead of a single `writeFileSync`, so a field written right before a restart cannot come back empty.
+ 
+ ## How to run
+ ```
+@@ -61,6 +62,11 @@ curl -H 'X-Today: 2026-09-19' http://localhost:8080/api/tasks
+ | 10 | Out of scope | `POST` with `"repeat":"weekly"` | Passed: the field is ignored and not stored | response has no `repeat` |
+ | 11 | R2 restart | `docker compose down && docker compose up -d` | Passed: due dates survived | |
+ | 12 | QE2 memory | `docker stats --no-stream` | Passed: 43 MiB / 256 MiB | |
++| 13 (round 2) | Unit tests after F1/F3 fixes | `npm test` | Passed: 21 passed, 0 failed, 0 skipped | |
++| 14 (round 2) | Full acceptance suite (001 + 002) | `tests/acceptance/run.sh` | Passed: 11 + 13 = 24 passed, 0 failed | includes F1's regression test S6.2 |
++| 15 (round 2) | F1 boundary | `curl -H 'X-Today: 2026-09-19'` on a task due 2026-09-19 | Passed | `"dueState":"due-today"` |
++| 16 (round 2) | F3 restart under concurrency | 3 tasks with due dates created concurrently, then `docker compose restart` | Passed: all 3 due dates intact | |
++| 17 (round 2) | QE2 memory (unchanged) | `docker stats --no-stream` | Passed: 19 MiB / 256 MiB | |
+ 
+ ### Not run
+ None.
+@@ -73,10 +79,12 @@ None.
+ None. `test/store.test.js` gained a test that the done/open grouping survives the new due-date order.
+ 
+ ## Open gaps
+-None.
++- F2 (round 1) was not built: it asks for a proactive notification about overdue tasks, which requirements 002 explicitly places out of scope, consistent with 001's validated "no mail or push code, no outbound calls". This needs a requirements decision, not an implementation guess, before any notification mechanism is designed or built.
+ 
+ ## Validator findings
+ ### Round 1
+ | Finding | Classification | Answer | Evidence |
+ |---|---|---|---|
+-| – | – | Not validated yet | |
++| F1 – a task due today is shown as overdue | implementation | Fixed. `dueState()` compared with `dueDate <= reference` first, so the equal (today) case fell into `overdue` and the later `dueDate === reference` check was unreachable dead code. Reordered to check equality first. The regression unit test `test/dates.test.js::"R4 marks a task due today as overdue"` had encoded the same bug and was corrected to assert `due-today`. | `npm test` (21 passed); acceptance test "S6.2 marks a task due today as due today and not as overdue" now passes |
++| F2 – nobody is told when a task becomes overdue | requirements conflict | Not implemented. Requirements 002, section "Scope > Out of scope", explicitly excludes "Reminders, notifications or e-mails about tasks that are due or late", and 001's validation confirmed "no mail or push code, no outbound calls" as in-scope-conformant. Building a proactive notification channel (mail, push, or a background job) would reverse a decision the stakeholder already made deliberately, and would add a third-party dependency (e.g. SMTP) the project's conventions rule out ("no third-party runtime dependencies"). S6 as written (S6.1–S6.5) is fully met by the in-list marking, which is what was built and is covered by acceptance tests. Recommendation: send this back to requirements grooming so the stakeholder can decide, with L1 in hand, whether the scope decision should change — the implementer should not make that product call unilaterally. | docs/requirements/002-due-dates.md "Out of scope"; docs/validation/001-task-list.md "Out of scope: notifications" |
++| F3 – a task loses its due date after a restart | implementation | Fixed defensively. `TaskStore.flush()` used a single `writeFileSync` straight to `tasks.json`, which neither guarantees the write reaches disk (no fsync) nor protects against a restart landing mid-write. Rewrote `flush()` to write to a temp file, `fsync` its contents, `renameSync` it over the real file (atomic on the same filesystem), and `fsync` the containing directory so the rename itself is durable. This removes the window the validator's symptom points at ("the write of the day had not reached the file before the restart"). Added `test/store.test.js::"F3 keeps a due date across a reload and leaves no leftover temp file"`. Manually verified: 3 tasks with due dates created concurrently, `docker compose restart`, all 3 due dates intact afterwards. | `npm test` (21 passed); manual restart check on the running stack |
+diff --git a/src/dates.js b/src/dates.js
+index ca86c18..0a66852 100644
+--- a/src/dates.js
++++ b/src/dates.js
+@@ -27,10 +27,11 @@ export function validateDueDate(raw) {
+   return { dueDate: raw };
+ }
+ 
+-// R4: a task is overdue once its due date has passed.
++// R4: a task is overdue once its due date has passed. A task due today is
++// not overdue yet: the comparison against "overdue" must be strict.
+ export function dueState(dueDate, reference = today()) {
+   if (!dueDate) return 'none';
+-  if (dueDate <= reference) return 'overdue';
+   if (dueDate === reference) return 'due-today';
++  if (dueDate < reference) return 'overdue';
+   return 'upcoming';
+ }
+diff --git a/src/store.js b/src/store.js
+index 5f66125..c67ae58 100644
+--- a/src/store.js
++++ b/src/store.js
+@@ -1,5 +1,14 @@
+-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+-import { join } from 'node:path';
++import {
++  mkdirSync,
++  readFileSync,
++  writeFileSync,
++  existsSync,
++  renameSync,
++  openSync,
++  fsyncSync,
++  closeSync,
++} from 'node:fs';
++import { join, dirname } from 'node:path';
+ 
+ // The task list is small enough to keep in memory and flush to a single JSON
+ // file on every change. That keeps the stack to one container (see ADR-001).
+@@ -13,8 +22,32 @@ export class TaskStore {
+     this.nextId = this.tasks.reduce((max, t) => Math.max(max, t.id), 0) + 1;
+   }
+ 
++  // Write the whole file as a durable, atomic operation: write to a temp
++  // file next to it, fsync that file's contents to disk, then rename it
++  // over the real file (rename is atomic on the same filesystem). Without
++  // this, a restart could catch the file mid-write, or catch it written
++  // but not yet flushed from the OS cache to disk, and a field set right
++  // before the restart (e.g. a due date, F3) could come back empty even
++  // though the request had already been answered with 200/201.
+   flush() {
+-    writeFileSync(this.file, JSON.stringify(this.tasks, null, 2));
++    const tmp = `${this.file}.tmp`;
++    const data = JSON.stringify(this.tasks, null, 2);
++    const fd = openSync(tmp, 'w');
++    try {
++      writeFileSync(fd, data);
++      fsyncSync(fd);
++    } finally {
++      closeSync(fd);
++    }
++    renameSync(tmp, this.file);
++    // Persist the rename itself: fsync the directory entry so the new
++    // name is durable even if the process is killed right after this.
++    const dirFd = openSync(dirname(this.file), 'r');
++    try {
++      fsyncSync(dirFd);
++    } finally {
++      closeSync(dirFd);
++    }
+   }
+ 
+   list() {
+diff --git a/test/dates.test.js b/test/dates.test.js
+index f64a6c0..dcee913 100644
+--- a/test/dates.test.js
++++ b/test/dates.test.js
+@@ -23,8 +23,8 @@ test('R4 marks a task due yesterday as overdue', () => {
+   assert.equal(dueState('2026-09-18', '2026-09-19'), 'overdue');
+ });
+ 
+-test('R4 marks a task due today as overdue', () => {
+-  assert.equal(dueState('2026-09-19', '2026-09-19'), 'overdue');
++test('R4 marks a task due today as due today, not overdue', () => {
++  assert.equal(dueState('2026-09-19', '2026-09-19'), 'due-today');
+ });
+ 
+ test('R4 marks a task due tomorrow as upcoming', () => {
+diff --git a/test/store.test.js b/test/store.test.js
+index c462c66..134cce0 100644
+--- a/test/store.test.js
++++ b/test/store.test.js
+@@ -1,6 +1,6 @@
+ import { test } from 'node:test';
+ import assert from 'node:assert/strict';
+-import { mkdtempSync } from 'node:fs';
++import { mkdtempSync, existsSync, readFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { TaskStore } from '../src/store.js';
+@@ -55,3 +55,13 @@ test('R2 reloads the tasks from disk', () => {
+   const reopened = new TaskStore(store.file.replace('/tasks.json', ''));
+   assert.deepEqual(reopened.list().map((t) => t.title), ['persisted']);
+ });
++
++test('F3 keeps a due date across a reload and leaves no leftover temp file', () => {
++  const store = freshStore();
++  const task = store.add({ title: 'has a date', dueDate: '2026-09-30' });
++  store.update(task.id, { dueDate: '2026-10-05' });
++  assert.equal(existsSync(`${store.file}.tmp`), false);
++  assert.equal(JSON.parse(readFileSync(store.file, 'utf8'))[0].dueDate, '2026-10-05');
++  const reopened = new TaskStore(store.file.replace('/tasks.json', ''));
++  assert.equal(reopened.get(task.id).dueDate, '2026-10-05');
++});

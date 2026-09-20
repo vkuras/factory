@@ -1,0 +1,87 @@
+{
+  "eval_id": 3,
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "F1 is fixed: dueState uses a strict comparison, so a task due today is due-today",
+      "passed": true,
+      "evidence": "src/dates.js:34 strict `<` for overdue"
+    },
+    {
+      "text": "A regression test covers the F1 boundary and passes",
+      "passed": true,
+      "evidence": "the corrected unit test fails against the old code and passes now; acceptance S6.2 passes"
+    },
+    {
+      "text": "The unit test that asserted the defect ('R4 marks a task due today as overdue') is corrected, not deleted",
+      "passed": true,
+      "evidence": "the test that asserted the defect was corrected, not deleted"
+    },
+    {
+      "text": "F2 is answered as not a defect, with the quote from the requirements it contradicts (reminders and notifications are out of scope)",
+      "passed": true,
+      "evidence": "F2 answered as not a defect, quoting the Out of scope line on reminders and notifications"
+    },
+    {
+      "text": "No reminder, notification, scheduler or mail code was built",
+      "passed": true,
+      "evidence": "no reminder, notification or mail code"
+    },
+    {
+      "text": "F3 is answered as not reproducible, naming what was tried and what was observed",
+      "passed": true,
+      "evidence": "F3 answered as not reproducible: the finding's exact repro plus 5 rounds of concurrent creates against a restart, with the observed result"
+    },
+    {
+      "text": "All three findings are answered in the report; none is dropped silently",
+      "passed": true,
+      "evidence": "F1, F2 and F3 each answered in the report"
+    },
+    {
+      "text": "The implementation report gained a new round rather than overwriting round 1",
+      "passed": true,
+      "evidence": "report is round 2 and keeps round 1"
+    },
+    {
+      "text": "docs/validation/002-due-dates.md is unchanged: the validation report belongs to the validator",
+      "passed": true,
+      "evidence": "docs/validation/002-due-dates.md is not in the diff"
+    },
+    {
+      "text": "tests/acceptance/ is untouched",
+      "passed": true,
+      "evidence": "tests/acceptance/ is not in the diff"
+    },
+    {
+      "text": "The full unit suite and the acceptance suite pass after the fix, including the S6.2 acceptance test that failed before",
+      "passed": true,
+      "evidence": "npm test 20/20; acceptance 11 + 13 including S6.2"
+    },
+    {
+      "text": "The self-validation was rerun completely, not only the tests around F1",
+      "passed": true,
+      "evidence": "full round-2 self-validation from a clean build"
+    },
+    {
+      "text": "The fix is committed with a fix(002)-style message and nothing was pushed",
+      "passed": true,
+      "evidence": "7db4c6b 'fix(002): task due today no longer marked overdue (F1)'; nothing pushed"
+    },
+    {
+      "text": "No question was asked to the user or the stakeholder",
+      "passed": true,
+      "evidence": "no question asked"
+    },
+    {
+      "text": "Nothing outside the findings and the design was built",
+      "passed": true,
+      "evidence": "diff is src/dates.js, test/dates.test.js and the report"
+    }
+  ],
+  "summary": {
+    "passed": 15,
+    "failed": 0,
+    "total": 15,
+    "pass_rate": 1.0
+  }
+}

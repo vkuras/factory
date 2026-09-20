@@ -1,0 +1,10 @@
+f80b11b docs(002): implementation report, mark requirement ready for validation
+b0bddd4 fix(002): stop the title column collapsing on a phone row
+a248cec feat(002): due date UI, marking and per-row editing
+9895038 feat(002): dueDate on the API, GET decorates with dueState
+0ca0d3d feat(002): dates.js with today(), validateDueDate() and dueState()
+d276ada docs(002): design for due dates and overdue tasks
+e23b849 feat(001): task list MVP
+---
+---
+feat/002-due-dates

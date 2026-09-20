@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Taskboard</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Taskboard</h1>
+      <form id="new-task">
+        <input id="title" name="title" type="text" placeholder="What needs doing?" autocomplete="off" />
+        <button type="submit">Add task</button>
+      </form>
+      <p id="error" class="error" hidden></p>
+      <div class="filters">
+        <label><input type="checkbox" id="open-only" /> Open only</label>
+      </div>
+      <ul id="tasks"></ul>
+      <p id="empty" class="empty" hidden>No tasks yet.</p>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

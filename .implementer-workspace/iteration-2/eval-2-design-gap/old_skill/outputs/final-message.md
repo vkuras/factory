@@ -1,0 +1,3 @@
+Status: needs-architect. Built S6 (open-only filter) fully, tested and self-validated. S5 (text search) is blocked: the design's match algorithm (`title.startsWith(q)`, case-sensitive) contradicts R4 and its own worked examples ("Buy Milk".startsWith("milk") is false), so I filed G1 in docs/architecture/.gaps/002-find-a-task.md instead of guessing.
+
+Self-validation (project tb-i2-e2-os, port 8132): unit tests 13/13 passed (0 skipped, was 10), Docker build/start healthy in ~2s, 001 regression suite 11/11 passed, restart confirmed data survives, memory 17 MiB/256 MiB. Report: docs/implementation/002-find-a-task.md. Requirements status left unchanged (still "Designed – ready for implementation") per the gap workflow.

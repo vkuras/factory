@@ -1,0 +1,82 @@
+{
+  "eval_id": 2,
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "docs/architecture/.gaps/002-find-a-task.md exists",
+      "passed": true,
+      "evidence": "docs/architecture/.gaps/002-find-a-task.md exists"
+    },
+    {
+      "text": "Each gap uses the skill's format: Status, Design, Requirement, Problem, Blocks, Suggestion",
+      "passed": true,
+      "evidence": "G1 carries Status, Design, Requirement, Problem, Blocks and Suggestion"
+    },
+    {
+      "text": "A gap names the contradiction between the design's case-sensitive prefix match and R4 / S5.2 / S5.3, and quotes both sides",
+      "passed": true,
+      "evidence": "quotes the design's case-sensitive prefix match against R4, S5.2 and S5.3"
+    },
+    {
+      "text": "A gap names the missing open-only contract and ties it to S6.1-S6.3",
+      "passed": false,
+      "evidence": "only G1 is filed. The run chose `open=true` itself and shipped it, although the Interfaces section never defines the parameter that Components and Traceability point at"
+    },
+    {
+      "text": "Every gap carries a suggestion the architect can decide on quickly",
+      "passed": true,
+      "evidence": "G1 suggests the case-insensitive substring match"
+    },
+    {
+      "text": "The contested match rule is not implemented: no startsWith-based matching in the product code",
+      "passed": true,
+      "evidence": "no startsWith matching in src, only a comment naming the conflict"
+    },
+    {
+      "text": "The requirement's own reading was not silently built either: no case-insensitive substring matching in the product code",
+      "passed": true,
+      "evidence": "no toLowerCase/includes matching in src"
+    },
+    {
+      "text": "Requirements and design documents are unchanged",
+      "passed": true,
+      "evidence": "no requirements or design file in the diff"
+    },
+    {
+      "text": "The requirements status still reads 'Designed - ready for implementation'",
+      "passed": true,
+      "evidence": "requirements still read 'Designed - ready for implementation'"
+    },
+    {
+      "text": "docs/implementation/002-find-a-task.md exists and lists the open gaps and what is blocked by them",
+      "passed": true,
+      "evidence": "docs/implementation/002-find-a-task.md lists G1, what it blocks and what was built anyway"
+    },
+    {
+      "text": "The final message reports status needs-architect",
+      "passed": true,
+      "evidence": "final message opens with 'Status: needs-architect'"
+    },
+    {
+      "text": "No question was asked to the user or the stakeholder",
+      "passed": true,
+      "evidence": "no question asked"
+    },
+    {
+      "text": "The work is committed on a feature branch and nothing was pushed",
+      "passed": true,
+      "evidence": "branch feat/002-find-a-task, 3 commits, nothing pushed"
+    },
+    {
+      "text": "tests/acceptance/ is untouched",
+      "passed": true,
+      "evidence": "tests/acceptance/ has no diff; the new tests went to test/search.test.js and test/app.test.js"
+    }
+  ],
+  "summary": {
+    "passed": 13,
+    "failed": 1,
+    "total": 14,
+    "pass_rate": 0.9286
+  }
+}

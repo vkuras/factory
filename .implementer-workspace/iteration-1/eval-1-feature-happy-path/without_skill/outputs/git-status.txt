@@ -1,0 +1,21 @@
+=== git log --oneline ===
+d276ada docs(002): design for due dates and overdue tasks
+e23b849 feat(001): task list MVP
+
+=== git status --short ===
+ M docs/architecture/002-due-dates.md
+ M docs/requirements/002-due-dates.md
+ M public/app.js
+ M public/index.html
+ M public/style.css
+ M src/app.js
+ M src/store.js
+ M test/store.test.js
+ M tests/acceptance/helpers.js
+?? docs/implementation/002-due-dates.md
+?? src/dates.js
+?? test/dates.test.js
+?? tests/acceptance/002-due-dates/
+
+=== git branch --show-current ===
+main

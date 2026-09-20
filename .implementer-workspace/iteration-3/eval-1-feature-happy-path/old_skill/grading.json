@@ -1,0 +1,107 @@
+{
+  "eval_id": 1,
+  "configuration": "old_skill",
+  "expectations": [
+    {
+      "text": "Work happens on a feature branch for 002, not on main",
+      "passed": true,
+      "evidence": "branch feat/002-due-dates, 5 commits"
+    },
+    {
+      "text": "A date module implements the R4 boundary with a strict comparison: a task due today is due-today, not overdue",
+      "passed": true,
+      "evidence": "src/dates.js:53 strict `<` for overdue"
+    },
+    {
+      "text": "Unit tests cover both sides of the R4 boundary (yesterday overdue, today not overdue)",
+      "passed": true,
+      "evidence": "test/dates.test.js covers both sides of the boundary"
+    },
+    {
+      "text": "R5 is enforced: a malformed date and a non-existent day such as 2026-02-30 are rejected with a message about the date",
+      "passed": true,
+      "evidence": "rejects a malformed day and 2026-02-30"
+    },
+    {
+      "text": "POST accepts an optional dueDate and PATCH can set a day on a task that had none (S5.1-S5.3)",
+      "passed": true,
+      "evidence": "POST takes an optional dueDate, PATCH sets one; S5.3 through the API rather than a row control, with the design's component table as the reason"
+    },
+    {
+      "text": "GET /api/tasks returns a dueState for every task (S6.1-S6.4)",
+      "passed": true,
+      "evidence": "GET decorates every task with dueState"
+    },
+    {
+      "text": "The list order keeps done tasks below open ones and orders by day inside each group, undated last (S6.5 plus 001 S3.2)",
+      "passed": true,
+      "evidence": "store.list() sorts on done first, then due date"
+    },
+    {
+      "text": "The overdue marking carries a word, not only a colour (QE6)",
+      "passed": true,
+      "evidence": "the row reads 'Overdue 2026-09-18'"
+    },
+    {
+      "text": "Title and marking are at least 20 px on a phone viewport (QE5)",
+      "passed": true,
+      "evidence": "measured at 375x812: title and marking 20px, title column 302px wide. This run also found and fixed the vertical-text break during its own validation"
+    },
+    {
+      "text": "The add form stays one line of inputs and one button (QE7)",
+      "passed": true,
+      "evidence": "measured at 375x812: form is one row, no horizontal scroll"
+    },
+    {
+      "text": "Recurring tasks are not built: no repeat field, no repeat UI, no stored repeat value",
+      "passed": true,
+      "evidence": "no repeat/recurring in src or public"
+    },
+    {
+      "text": "No reminders, notifications or outbound mail were built",
+      "passed": true,
+      "evidence": "no reminder or notification code"
+    },
+    {
+      "text": "docs/implementation/002-due-dates.md exists and its claims carry command evidence (commands and their observed output, not assertions of success)",
+      "passed": true,
+      "evidence": "self-validation table with 9 command rows and their output"
+    },
+    {
+      "text": "The requirements status is set to 'Implemented - ready for validation' and docs/product.md shows 002 as Implemented",
+      "passed": true,
+      "evidence": "requirements -> 'Implemented - ready for validation'; product.md row 002 -> Implemented"
+    },
+    {
+      "text": "Requirements and design documents are unchanged apart from status lines",
+      "passed": true,
+      "evidence": "requirements and product.md changed by their status lines only"
+    },
+    {
+      "text": "tests/acceptance/ is untouched: the implementer added no acceptance tests and edited none",
+      "passed": true,
+      "evidence": "tests/acceptance/ has no diff"
+    },
+    {
+      "text": "The unit suite passes and no test was skipped, disabled or deleted to get there",
+      "passed": true,
+      "evidence": "npm test: 28 passed, 0 failed, 0 skipped"
+    },
+    {
+      "text": "The self-validation actually ran the stack: the report shows docker compose up, HTTP calls against the running product, and a restart that kept the data",
+      "passed": true,
+      "evidence": "report records the stack, curl and browser walkthrough at 375px and desktop, and a restart"
+    },
+    {
+      "text": "No question was asked to the user or the stakeholder",
+      "passed": true,
+      "evidence": "no question asked"
+    }
+  ],
+  "summary": {
+    "passed": 19,
+    "failed": 0,
+    "total": 19,
+    "pass_rate": 1.0
+  }
+}

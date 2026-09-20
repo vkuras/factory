@@ -1,0 +1,7 @@
+Status: needs-architect. Branch feat/002-find-a-task, commit ae075c6.
+
+Built S6 ("open only" filter) end to end: `src/search.js` `filterTasks()`, wired into `GET /api/tasks?open=true`, an "Open only" checkbox in the UI, unit tests. Verified against a running Docker stack (`tb-i3-e2-ws`, port 8142): unit tests 13/13 passed (0 skipped), 001's regression suite 11/11 passed, S6 checked live via curl (open=true hides done tasks, off shows them again), memory 16 MiB/256 MB, data survives restart, own diff review clean. Interactive browser click-through of the checkbox couldn't run because the shared Browser pane was at its tab cap all session — substituted with the API calls the checkbox itself makes plus fetching the actually-served HTML/JS/CSS from the container; noted as "Not run" in the report.
+
+Did not build S5 (text search): the design says the match is a case-sensitive prefix match (`title.startsWith(q)`), but the requirements (R4, S5.2, S5.3) require a case-insensitive match anywhere in the title — e.g. "Buy Milk" must match "milk", and "Order milk crate" must match "milk" although "milk" isn't a prefix. Implementing the design as written fails those acceptance criteria; implementing the requirements contradicts the design's explicit decision. Filed as G1 in `docs/architecture/.gaps/002-find-a-task.md` with a suggested fix (`title.toLowerCase().includes(q.toLowerCase())`) rather than guessing. Requirements status left unchanged.
+
+Report: docs/implementation/002-find-a-task.md. Gap: docs/architecture/.gaps/002-find-a-task.md.

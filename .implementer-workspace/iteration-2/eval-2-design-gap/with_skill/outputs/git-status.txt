@@ -1,0 +1,11 @@
+=== git log --oneline ===
+a36f41c docs(002): fix commit range in implementation report
+2375296 docs(002): implementation report, needs architect on G1
+c783bde feat(002): hide done tasks with open-only filter (S6)
+e107de5 docs(002): design for find a task
+4e2ae96 feat(001): task list MVP
+
+=== git status --short ===
+
+=== git branch --show-current ===
+feat/002-find-a-task

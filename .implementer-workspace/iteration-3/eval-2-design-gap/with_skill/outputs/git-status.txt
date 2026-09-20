@@ -1,0 +1,6 @@
+ae075c6 feat(002): open-only filter (S6); flag search match-rule design gap
+e107de5 docs(002): design for find a task
+4e2ae96 feat(001): task list MVP
+---
+---
+feat/002-find-a-task

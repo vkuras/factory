@@ -1,0 +1,10 @@
+f0eb0e3 docs(002): implementation report, hand over for validation
+181c50e fix(002): keep the add form on one line and the marking readable on a phone
+27c0ee3 feat(002): due date input and overdue marking in the UI
+444d090 feat(002): due date on tasks, dueState on GET, ordering by due date
+be0e950 feat(002): dates module for due-date validation and overdue rules
+d276ada docs(002): design for due dates and overdue tasks
+e23b849 feat(001): task list MVP
+
+
+feat/002-due-dates

@@ -1,0 +1,21 @@
+{
+  "eval_id": 2,
+  "eval_name": "design-gap",
+  "prompt": "Implementier bitte 002.",
+  "assertions": [
+    "docs/architecture/.gaps/002-find-a-task.md exists",
+    "Each gap uses the skill's format: Status, Design, Requirement, Problem, Blocks, Suggestion",
+    "A gap names the contradiction between the design's case-sensitive prefix match and R4 / S5.2 / S5.3, and quotes both sides",
+    "A gap names the missing open-only contract and ties it to S6.1-S6.3",
+    "Every gap carries a suggestion the architect can decide on quickly",
+    "The contested match rule is not implemented: no startsWith-based matching in the product code",
+    "The requirement's own reading was not silently built either: no case-insensitive substring matching in the product code",
+    "Requirements and design documents are unchanged",
+    "The requirements status still reads 'Designed - ready for implementation'",
+    "docs/implementation/002-find-a-task.md exists and lists the open gaps and what is blocked by them",
+    "The final message reports status needs-architect",
+    "No question was asked to the user or the stakeholder",
+    "The work is committed on a feature branch and nothing was pushed",
+    "tests/acceptance/ is untouched"
+  ]
+}

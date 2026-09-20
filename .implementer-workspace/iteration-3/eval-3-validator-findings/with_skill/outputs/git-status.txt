@@ -1,0 +1,8 @@
+b48ac85 docs(002): implementation report round 2, validator findings F1-F3
+4d587fd fix(002): F1 due-today marked overdue, F3 non-atomic tasks.json write
+c277afe test(002): acceptance tests and validation round 1
+da811ae feat(002): due dates and overdue tasks
+4b3f75b feat(001): task list MVP
+---
+---
+feature/002-due-dates

@@ -50,13 +50,19 @@ Check the environment the self-validation needs: the language toolchains, `docke
 
 Make a working checklist from the design's build order and its traceability table. Each slice lists its acceptance criteria, rules, components, the tests that prove them, and the compose changes. Keep it in a scratch file (`docs/implementation/.plan-NNN.md`) and delete it at the end. While you plan, collect everything the design leaves open at architecture level. If some of it blocks the work, write it to the gaps file now, not halfway through a slice.
 
+Then read the traceability table as the design's own claim about itself, and test that claim one row at a time. Each row promises that some design element answers some requirement. Open that element and find **the sentence that defines the thing** — the parameter and its values, the field and its type, the shape of the message. Write that sentence into your checklist. If you cannot quote it, the row is unbacked, and an unbacked row is a gap for the architect, not a decision for you.
+
+Quoting is the point, because "I checked and it is specified" is something you can tell yourself about a section you merely recognise. A quote either exists or it doesn't. Do the same for anything the design mentions in one place and defines nowhere: a parameter in a component table, a field in a rule, a header in a sequence. The architect wrote it down once because they meant to specify it, so the missing half is theirs to supply.
+
+This is the kind of gap that gets walked past, and it is worth knowing why. A contradiction announces itself — two sentences disagree and you cannot satisfy both. A hole makes no noise at all: there is simply nothing there, the shape of the answer is obvious, and filling it in feels like ordinary work rather than a decision. That feeling is the tell. An obvious answer you invented is still an undocumented design decision, and the next person to read the design will find the same nothing you found.
+
 ### 3. Build slice by slice
 
 For each slice:
 
 1. **Tests first for business rules.** Write the unit tests from the design's worked examples and edge cases before the logic, and watch them fail. Then implement until they pass. Rules are where subtle bugs live, and the design's examples are the spec.
 2. **Implement** the slice as designed. Match existing code style, and put configuration in environment variables as the design lists them.
-3. **Write the remaining tests** the design's test strategy names for this slice's acceptance criteria (unit, integration, API, UI). Keep tests deterministic: use an injectable clock for time, no real external services in unit tests, and no sleeps as synchronization.
+3. **Write the remaining tests** the design's test strategy names for this slice's acceptance criteria (unit, integration, API, UI), in your own test locations as the conventions place them. Keep tests deterministic: use an injectable clock for time, no real external services in unit tests, and no sleeps as synchronization.
 4. **Run the whole test suite**, not just the new tests, and fix what broke.
 5. **Commit.**
 
@@ -64,7 +70,11 @@ Unit tests test behaviour through a module's public interface: inputs, outputs a
 
 Never disable, skip, delete or weaken a test to make the suite pass, and never special-case production code for a test. If a test is wrong, meaning it contradicts the design, fix the test and note it in the report.
 
-`tests/acceptance/` belongs to the validator. It holds black-box tests of all features, and they are the product's regression suite. Run them in your self-validation, but never edit them. If one of them contradicts the requirements or the design, say so in your report and quote the requirement or design.
+`tests/acceptance/` belongs to the validator, in every state it can be in. Run what is there in your self-validation, and leave the directory exactly as you found it: don't edit a test, and don't add one either, not even for a feature that has none yet. An empty directory is not an invitation.
+
+The reason is not ownership but independence. That suite is the product's regression suite and the stakeholder's check that what was agreed is what was built. A test you wrote is a check against your own reading of the requirements, and your reading is the thing being checked. Hand the validator a suite you filled in and they inherit your blind spots: the acceptance criterion you misread is now green, and the one check that was supposed to be independent has quietly become a second opinion from the same person.
+
+So cover every acceptance criterion with your own tests, wherever your tests live, and say in the report which test covers which criterion. The validator writes the black-box suite afterwards, from the requirements rather than from your code. If a test already in `tests/acceptance/` contradicts the requirements or the design, say so in your report and quote the requirement or design.
 
 ### 4. Self-validation
 
@@ -74,13 +84,16 @@ Run this against a clean checkout state before every handover, including after f
 2. **All tests green**, including the validator's acceptance tests of all features (`tests/acceptance/`) against the running stack from step 4, and the count of disabled or skipped tests hasn't increased.
 3. **Traceability**: every acceptance criterion and rule in the design's traceability table maps to a test that exists and passed.
 4. **The real stack starts**: build the images, start them with `docker compose up -d` from a fresh state, and check that every service becomes healthy within its healthcheck window. Migrations run on an empty database, and on the previous schema when there is one.
-5. **Use it like a user**: against the running stack, walk through every story's main flow and at least one failure case per story, through the real interface (HTTP calls, the UI in a browser when a browser tool is available). Record each check with its command and the observed result.
+5. **Use it like a user**: against the running stack, walk through every story's main flow and at least one failure case per story, through the real interface — HTTP calls, and the UI in a browser. Record each check with its command and the observed result.
+   Where a requirement names something about the rendered page — a size, a reading distance, a row that has to stay one row, a tap target — ask the page for the number rather than judging it: computed font sizes, bounding boxes, the distinct vertical positions of a form's children, `scrollWidth` against `clientWidth`. Reading your own CSS is not a measurement of what the browser did with it, and a screenshot that looks plausible is not one either. Layout breaks in ways the stylesheet does not show: a column collapses to a few pixels and renders one letter per line while every font-size in the file is exactly what the requirement asked for.
 6. **Data survives**: restart the stack without deleting volumes, and check that the data is still there.
 7. **Hard constraints**: run every verification the design's drivers table names, such as a load test with its threshold, memory use against the limits (`docker stats`), or a build for the target CPU architecture.
 8. **Own diff review**: re-read your whole diff as the validator would. Check for leftover debug code, commented-out code, TODOs, secrets, scope creep, deviations from the design, and missing tests.
 9. **Tear down** what you started, using a project name of your own so that you never touch other running stacks.
 
 If a check fails, fix the cause and rerun from the failed step. If a failure resists three genuinely different fix attempts, stop. Report it with its evidence and hand back with status `failed`, rather than shipping around it.
+
+**A requirement you could not check is not a requirement that passed.** When a tool you need is missing or unusable, look for another way to get the same number — a headless browser, a script against the rendered page, a request that returns what you wanted to see. Say which way you used. If no way works, the requirement goes to the report as not verified **and the hand-over does not claim it is ready**: set the status to `failed`, name the requirement and what blocked you, and let the orchestrator decide whether to run you again with the tool or send it on. Noting an unverified requirement and handing over anyway is the same message as "it works", because that is what the next stage will read into it — and if you are wrong, the stakeholder is the one who finds out.
 
 ### 5. Hand over
 

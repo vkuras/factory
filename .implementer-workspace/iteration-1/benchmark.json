@@ -1,0 +1,653 @@
+{
+  "metadata": {
+    "skill_name": "implementer",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-09-19T23:07:56Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.9474,
+        "passed": 18,
+        "failed": 1,
+        "total": 19,
+        "time_seconds": 825.5,
+        "tokens": 164855,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Work happens on a feature branch for 002, not on main",
+          "passed": true,
+          "evidence": "branch feat/002-due-dates, 5 commits b4998ce..ebc2b1c"
+        },
+        {
+          "text": "A date module implements the R4 boundary with a strict comparison: a task due today is due-today, not overdue",
+          "passed": true,
+          "evidence": "src/dates.js:42 `if (dueDate < reference) return 'overdue'`"
+        },
+        {
+          "text": "Unit tests cover both sides of the R4 boundary (yesterday overdue, today not overdue)",
+          "passed": true,
+          "evidence": "test/dates.test.js: '2026-09-18' -> overdue, '2026-09-19' -> due-today"
+        },
+        {
+          "text": "R5 is enforced: a malformed date and a non-existent day such as 2026-02-30 are rejected with a message about the date",
+          "passed": true,
+          "evidence": "test/dates.test.js asserts an error for '2026-02-30' and '2026-13-01'"
+        },
+        {
+          "text": "POST accepts an optional dueDate and PATCH can set a day on a task that had none (S5.1-S5.3)",
+          "passed": true,
+          "evidence": "src/app.js POST validates optional dueDate; PATCH sets it when present"
+        },
+        {
+          "text": "GET /api/tasks returns a dueState for every task (S6.1-S6.4)",
+          "passed": true,
+          "evidence": "src/app.js:44 decorates every task with dueState(task.dueDate, reference)"
+        },
+        {
+          "text": "The list order keeps done tasks below open ones and orders by day inside each group, undated last (S6.5 plus 001 S3.2)",
+          "passed": true,
+          "evidence": "store.list() sorts done last, then by dueDate with null last, id desc as tiebreak"
+        },
+        {
+          "text": "The overdue marking carries a word, not only a colour (QE6)",
+          "passed": true,
+          "evidence": "rendered row reads 'Overdue 2026-09-18': the word is present, not only the colour"
+        },
+        {
+          "text": "Title and marking are at least 20 px on a phone viewport (QE5)",
+          "passed": true,
+          "evidence": "measured at 375x812: title 20px, marking 20px"
+        },
+        {
+          "text": "The add form stays one line of inputs and one button (QE7)",
+          "passed": true,
+          "evidence": "measured at 375x812: form children share one y (97), form height 65px, no horizontal scroll (375/375)"
+        },
+        {
+          "text": "Recurring tasks are not built: no repeat field, no repeat UI, no stored repeat value",
+          "passed": true,
+          "evidence": "no repeat/recurring anywhere in src or public"
+        },
+        {
+          "text": "No reminders, notifications or outbound mail were built",
+          "passed": true,
+          "evidence": "no reminder, notification or mail code in src or public"
+        },
+        {
+          "text": "docs/implementation/002-due-dates.md exists and its claims carry command evidence (commands and their observed output, not assertions of success)",
+          "passed": true,
+          "evidence": "self-validation table with 9 command rows and their observed output, incl. the restart result"
+        },
+        {
+          "text": "The requirements status is set to 'Implemented - ready for validation' and docs/product.md shows 002 as Implemented",
+          "passed": true,
+          "evidence": "requirements -> 'Implemented - ready for validation'; product.md row 002 -> Implemented"
+        },
+        {
+          "text": "Requirements and design documents are unchanged apart from status lines",
+          "passed": true,
+          "evidence": "git diff d276ada..HEAD: requirements and product.md changed by exactly one status line each; the design is untouched"
+        },
+        {
+          "text": "tests/acceptance/ is untouched: the implementer added no acceptance tests and edited none",
+          "passed": false,
+          "evidence": "added tests/acceptance/002-due-dates/due-dates.test.js (126 lines) and changed tests/acceptance/helpers.js - that directory belongs to the validator"
+        },
+        {
+          "text": "The unit suite passes and no test was skipped, disabled or deleted to get there",
+          "passed": true,
+          "evidence": "npm test: 26 passed, 0 failed, 0 skipped"
+        },
+        {
+          "text": "The self-validation actually ran the stack: the report shows docker compose up, HTTP calls against the running product, and a restart that kept the data",
+          "passed": true,
+          "evidence": "report row 6: `docker compose -p tb-i1-e1-ws restart` then GET /api/tasks, all fields intact; HTTP walkthrough in rows 4-5"
+        },
+        {
+          "text": "No question was asked to the user or the stakeholder",
+          "passed": true,
+          "evidence": "no question in the final message; the run never stopped for input"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8571,
+        "passed": 12,
+        "failed": 2,
+        "total": 14,
+        "time_seconds": 569.6,
+        "tokens": 114781,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "docs/architecture/.gaps/002-find-a-task.md exists",
+          "passed": true,
+          "evidence": "docs/architecture/.gaps/002-find-a-task.md exists"
+        },
+        {
+          "text": "Each gap uses the skill's format: Status, Design, Requirement, Problem, Blocks, Suggestion",
+          "passed": true,
+          "evidence": "G1 carries Status, Design, Requirement, Problem, Blocks and Suggestion"
+        },
+        {
+          "text": "A gap names the contradiction between the design's case-sensitive prefix match and R4 / S5.2 / S5.3, and quotes both sides",
+          "passed": true,
+          "evidence": "quotes the design's 'title.startsWith(q)' against R4, S5.2 and S5.3 verbatim, and explains why it is not a developer decision"
+        },
+        {
+          "text": "A gap names the missing open-only contract and ties it to S6.1-S6.3",
+          "passed": false,
+          "evidence": "the missing open-only contract is never raised; the run read the Components table, chose `?open=true` itself and shipped it as 'built despite G1'"
+        },
+        {
+          "text": "Every gap carries a suggestion the architect can decide on quickly",
+          "passed": true,
+          "evidence": "G1 suggests the case-insensitive substring match and argues why QE5 still holds"
+        },
+        {
+          "text": "The contested match rule is not implemented: no startsWith-based matching in the product code",
+          "passed": true,
+          "evidence": "no startsWith matching in src; only the unrelated content-type and path checks in app.js"
+        },
+        {
+          "text": "The requirement's own reading was not silently built either: no case-insensitive substring matching in the product code",
+          "passed": true,
+          "evidence": "no toLowerCase/includes matching in src; matchesQuery() was deliberately not written"
+        },
+        {
+          "text": "Requirements and design documents are unchanged",
+          "passed": true,
+          "evidence": "git diff e107de5..HEAD touches no requirements or design file"
+        },
+        {
+          "text": "The requirements status still reads 'Designed - ready for implementation'",
+          "passed": true,
+          "evidence": "requirements still read 'Designed - ready for implementation'; product.md unchanged"
+        },
+        {
+          "text": "docs/implementation/002-find-a-task.md exists and lists the open gaps and what is blocked by them",
+          "passed": true,
+          "evidence": "docs/implementation/002-find-a-task.md lists G1, what is blocked by it and what was built anyway"
+        },
+        {
+          "text": "The final message reports status needs-architect",
+          "passed": true,
+          "evidence": "final message opens with 'Status: needs-architect'"
+        },
+        {
+          "text": "No question was asked to the user or the stakeholder",
+          "passed": true,
+          "evidence": "no question asked"
+        },
+        {
+          "text": "The work is committed on a feature branch and nothing was pushed",
+          "passed": true,
+          "evidence": "branch feat/002-find-a-task, commits 3f47832 and 9f2ad15, nothing pushed"
+        },
+        {
+          "text": "tests/acceptance/ is untouched",
+          "passed": false,
+          "evidence": "added tests/acceptance/002-find-a-task/tasks.test.js"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 15,
+        "failed": 0,
+        "total": 15,
+        "time_seconds": 646.8,
+        "tokens": 126559,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "F1 is fixed: dueState uses a strict comparison, so a task due today is due-today",
+          "passed": true,
+          "evidence": "src/dates.js:34 `if (dueDate < reference) return 'overdue'` before the equality check"
+        },
+        {
+          "text": "A regression test covers the F1 boundary and passes",
+          "passed": true,
+          "evidence": "test/dates.test.js 'R4 marks a task due today as due today, not overdue' fails against the old code and passes now; acceptance S6.2 passes"
+        },
+        {
+          "text": "The unit test that asserted the defect ('R4 marks a task due today as overdue') is corrected, not deleted",
+          "passed": true,
+          "evidence": "the test that asserted the defect was renamed and its expectation corrected, not removed; the report's 'Tests changed' section says so"
+        },
+        {
+          "text": "F2 is answered as not a defect, with the quote from the requirements it contradicts (reminders and notifications are out of scope)",
+          "passed": true,
+          "evidence": "answered 'Not a defect', quoting 'Reminders, notifications or e-mails about tasks that are due or late' from Out of scope"
+        },
+        {
+          "text": "No reminder, notification, scheduler or mail code was built",
+          "passed": true,
+          "evidence": "no reminder, notification, scheduler or mail code anywhere"
+        },
+        {
+          "text": "F3 is answered as not reproducible, naming what was tried and what was observed",
+          "passed": true,
+          "evidence": "answered 'Not reproducible' after three genuinely different attempts (10 concurrent creates + restart; 5x5 creates racing an immediate restart; the same under SIGKILL), each with its observed result"
+        },
+        {
+          "text": "All three findings are answered in the report; none is dropped silently",
+          "passed": true,
+          "evidence": "F1, F2 and F3 each have a row in the report's Validator findings table"
+        },
+        {
+          "text": "The implementation report gained a new round rather than overwriting round 1",
+          "passed": true,
+          "evidence": "report header says Round 2; round 1's content is kept and the new answers are added"
+        },
+        {
+          "text": "docs/validation/002-due-dates.md is unchanged: the validation report belongs to the validator",
+          "passed": true,
+          "evidence": "docs/validation/002-due-dates.md is not in the diff"
+        },
+        {
+          "text": "tests/acceptance/ is untouched",
+          "passed": true,
+          "evidence": "tests/acceptance/ is not in the diff"
+        },
+        {
+          "text": "The full unit suite and the acceptance suite pass after the fix, including the S6.2 acceptance test that failed before",
+          "passed": true,
+          "evidence": "npm test 20/20; acceptance 001 11/11 and 002 13/13 including the S6.2 test that failed before"
+        },
+        {
+          "text": "The self-validation was rerun completely, not only the tests around F1",
+          "passed": true,
+          "evidence": "self-validation rerun end to end: build, unit, acceptance, stack health, restart, memory, browser walkthrough, diff review"
+        },
+        {
+          "text": "The fix is committed with a fix(002)-style message and nothing was pushed",
+          "passed": true,
+          "evidence": "b3c2606 'fix(002): F1 - a task due today was marked overdue' and 1c52e25 for the report; nothing pushed"
+        },
+        {
+          "text": "No question was asked to the user or the stakeholder",
+          "passed": true,
+          "evidence": "no question asked"
+        },
+        {
+          "text": "Nothing outside the findings and the design was built",
+          "passed": true,
+          "evidence": "diff is src/dates.js, test/dates.test.js and the report - nothing else"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.7895,
+        "passed": 15,
+        "failed": 4,
+        "total": 19,
+        "time_seconds": 500.6,
+        "tokens": 132697,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Work happens on a feature branch for 002, not on main",
+          "passed": false,
+          "evidence": "stayed on main with 0 commits; every change is an uncommitted working-tree change"
+        },
+        {
+          "text": "A date module implements the R4 boundary with a strict comparison: a task due today is due-today, not overdue",
+          "passed": true,
+          "evidence": "src/dates.js:53 `if (dueDate < reference) return 'overdue'`"
+        },
+        {
+          "text": "Unit tests cover both sides of the R4 boundary (yesterday overdue, today not overdue)",
+          "passed": true,
+          "evidence": "test/dates.test.js: '2026-09-18' -> overdue, '2026-09-19' -> due-today"
+        },
+        {
+          "text": "R5 is enforced: a malformed date and a non-existent day such as 2026-02-30 are rejected with a message about the date",
+          "passed": true,
+          "evidence": "test/dates.test.js:28 rejects '2026-02-30' and '2026-13-01'"
+        },
+        {
+          "text": "POST accepts an optional dueDate and PATCH can set a day on a task that had none (S5.1-S5.3)",
+          "passed": true,
+          "evidence": "src/app.js POST and PATCH both handle dueDate"
+        },
+        {
+          "text": "GET /api/tasks returns a dueState for every task (S6.1-S6.4)",
+          "passed": true,
+          "evidence": "src/app.js:44 decorates every task with dueState"
+        },
+        {
+          "text": "The list order keeps done tasks below open ones and orders by day inside each group, undated last (S6.5 plus 001 S3.2)",
+          "passed": true,
+          "evidence": "store.list() sorts done last, then by dueDate with null last"
+        },
+        {
+          "text": "The overdue marking carries a word, not only a colour (QE6)",
+          "passed": true,
+          "evidence": "rendered row reads 'Overdue 2026-09-18'"
+        },
+        {
+          "text": "Title and marking are at least 20 px on a phone viewport (QE5)",
+          "passed": true,
+          "evidence": "measured at 375x812: title 20px, marking 20px"
+        },
+        {
+          "text": "The add form stays one line of inputs and one button (QE7)",
+          "passed": true,
+          "evidence": "measured at 375x812: form children share one y (97), form height 44px, no horizontal scroll"
+        },
+        {
+          "text": "Recurring tasks are not built: no repeat field, no repeat UI, no stored repeat value",
+          "passed": true,
+          "evidence": "no repeat/recurring anywhere in src or public"
+        },
+        {
+          "text": "No reminders, notifications or outbound mail were built",
+          "passed": true,
+          "evidence": "no reminder, notification or mail code"
+        },
+        {
+          "text": "docs/implementation/002-due-dates.md exists and its claims carry command evidence (commands and their observed output, not assertions of success)",
+          "passed": true,
+          "evidence": "self-validation table with 8 rows, each naming a command and its observed result"
+        },
+        {
+          "text": "The requirements status is set to 'Implemented - ready for validation' and docs/product.md shows 002 as Implemented",
+          "passed": false,
+          "evidence": "requirements status set correctly, but docs/product.md still shows 002 as 'Designed - ready for implementation'"
+        },
+        {
+          "text": "Requirements and design documents are unchanged apart from status lines",
+          "passed": true,
+          "evidence": "requirements and the design changed by one status line each, nothing else"
+        },
+        {
+          "text": "tests/acceptance/ is untouched: the implementer added no acceptance tests and edited none",
+          "passed": false,
+          "evidence": "added tests/acceptance/002-due-dates/tasks.test.js and changed tests/acceptance/helpers.js"
+        },
+        {
+          "text": "The unit suite passes and no test was skipped, disabled or deleted to get there",
+          "passed": true,
+          "evidence": "npm test: 25 passed, 0 failed, 0 skipped"
+        },
+        {
+          "text": "The self-validation actually ran the stack: the report shows docker compose up, HTTP calls against the running product, and a restart that kept the data",
+          "passed": false,
+          "evidence": "the stack was started and exercised over HTTP, but no restart or persistence check was run; the report's 'Not run' section says 'None', so the omission is not disclosed"
+        },
+        {
+          "text": "No question was asked to the user or the stakeholder",
+          "passed": true,
+          "evidence": "no question asked"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.2857,
+        "passed": 4,
+        "failed": 10,
+        "total": 14,
+        "time_seconds": 461.7,
+        "tokens": 106714,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "docs/architecture/.gaps/002-find-a-task.md exists",
+          "passed": false,
+          "evidence": "no docs/architecture/.gaps/ directory was created"
+        },
+        {
+          "text": "Each gap uses the skill's format: Status, Design, Requirement, Problem, Blocks, Suggestion",
+          "passed": false,
+          "evidence": "no gap entry exists, so no format to check"
+        },
+        {
+          "text": "A gap names the contradiction between the design's case-sensitive prefix match and R4 / S5.2 / S5.3, and quotes both sides",
+          "passed": false,
+          "evidence": "the contradiction was found and described, but in the implementation report, not as a gap to the architect"
+        },
+        {
+          "text": "A gap names the missing open-only contract and ties it to S6.1-S6.3",
+          "passed": false,
+          "evidence": "the missing open-only contract is never mentioned; `?open=true` was chosen and built"
+        },
+        {
+          "text": "Every gap carries a suggestion the architect can decide on quickly",
+          "passed": false,
+          "evidence": "no gap, no suggestion for the architect to decide on"
+        },
+        {
+          "text": "The contested match rule is not implemented: no startsWith-based matching in the product code",
+          "passed": true,
+          "evidence": "no startsWith matching in src"
+        },
+        {
+          "text": "The requirement's own reading was not silently built either: no case-insensitive substring matching in the product code",
+          "passed": false,
+          "evidence": "src/search.js:19 `title.toLowerCase().includes(query.toLowerCase())` - the contested rule was decided and built"
+        },
+        {
+          "text": "Requirements and design documents are unchanged",
+          "passed": true,
+          "evidence": "requirements and design changed by their status lines only"
+        },
+        {
+          "text": "The requirements status still reads 'Designed - ready for implementation'",
+          "passed": false,
+          "evidence": "requirements set to 'Implemented - ready for validation' although the match rule is unresolved"
+        },
+        {
+          "text": "docs/implementation/002-find-a-task.md exists and lists the open gaps and what is blocked by them",
+          "passed": true,
+          "evidence": "the report has 'Design gap found during implementation' and 'Open gaps' sections naming the conflict"
+        },
+        {
+          "text": "The final message reports status needs-architect",
+          "passed": false,
+          "evidence": "the final message reports the feature as implemented and ready for validation"
+        },
+        {
+          "text": "No question was asked to the user or the stakeholder",
+          "passed": true,
+          "evidence": "no question asked"
+        },
+        {
+          "text": "The work is committed on a feature branch and nothing was pushed",
+          "passed": false,
+          "evidence": "no commits at all; work left uncommitted on main"
+        },
+        {
+          "text": "tests/acceptance/ is untouched",
+          "passed": false,
+          "evidence": "added tests/acceptance/002-find-a-task/search.test.js"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8667,
+        "passed": 13,
+        "failed": 2,
+        "total": 15,
+        "time_seconds": 382.2,
+        "tokens": 101121,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "F1 is fixed: dueState uses a strict comparison, so a task due today is due-today",
+          "passed": true,
+          "evidence": "src/dates.js checks equality first, then `dueDate < reference`; a task due today is due-today"
+        },
+        {
+          "text": "A regression test covers the F1 boundary and passes",
+          "passed": true,
+          "evidence": "the corrected unit test and the S6.2 acceptance test both cover the boundary and pass"
+        },
+        {
+          "text": "The unit test that asserted the defect ('R4 marks a task due today as overdue') is corrected, not deleted",
+          "passed": true,
+          "evidence": "the test was corrected to assert due-today rather than deleted"
+        },
+        {
+          "text": "F2 is answered as not a defect, with the quote from the requirements it contradicts (reminders and notifications are out of scope)",
+          "passed": true,
+          "evidence": "answered as a requirements conflict, quoting the Out of scope line on reminders and notifications"
+        },
+        {
+          "text": "No reminder, notification, scheduler or mail code was built",
+          "passed": true,
+          "evidence": "no notification, scheduler or mail code was added"
+        },
+        {
+          "text": "F3 is answered as not reproducible, naming what was tried and what was observed",
+          "passed": false,
+          "evidence": "F3 was declared 'fixed defensively': store.flush() was rewritten with a temp file, fsync and atomic rename without the finding ever being reproduced. The report claims the fix 'removes the window the validator's symptom points at', which no observation supports"
+        },
+        {
+          "text": "All three findings are answered in the report; none is dropped silently",
+          "passed": true,
+          "evidence": "all three findings have a row in the report"
+        },
+        {
+          "text": "The implementation report gained a new round rather than overwriting round 1",
+          "passed": true,
+          "evidence": "report header says Round 2 and keeps round 1"
+        },
+        {
+          "text": "docs/validation/002-due-dates.md is unchanged: the validation report belongs to the validator",
+          "passed": true,
+          "evidence": "docs/validation/002-due-dates.md is not in the diff"
+        },
+        {
+          "text": "tests/acceptance/ is untouched",
+          "passed": true,
+          "evidence": "tests/acceptance/ is not in the diff"
+        },
+        {
+          "text": "The full unit suite and the acceptance suite pass after the fix, including the S6.2 acceptance test that failed before",
+          "passed": true,
+          "evidence": "npm test 21/21; acceptance 11 + 13 passed including S6.2"
+        },
+        {
+          "text": "The self-validation was rerun completely, not only the tests around F1",
+          "passed": true,
+          "evidence": "unit tests, full acceptance suite, stack build and a restart check were all rerun"
+        },
+        {
+          "text": "The fix is committed with a fix(002)-style message and nothing was pushed",
+          "passed": true,
+          "evidence": "303dd58 'fix(002): address validator findings F1 and F3, reject F2 as scope conflict'; nothing pushed"
+        },
+        {
+          "text": "No question was asked to the user or the stakeholder",
+          "passed": true,
+          "evidence": "no question asked"
+        },
+        {
+          "text": "Nothing outside the findings and the design was built",
+          "passed": false,
+          "evidence": "src/store.js and test/store.test.js were rewritten for F3, a finding that was never reproduced - a change to the persistence layer that no finding justified"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9348,
+        "stddev": 0.0723,
+        "min": 0.8571,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 680.6333,
+        "stddev": 131.262,
+        "min": 569.6,
+        "max": 825.5
+      },
+      "tokens": {
+        "mean": 135398.3333,
+        "stddev": 26181.1331,
+        "min": 114781,
+        "max": 164855
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.6473,
+        "stddev": 0.3155,
+        "min": 0.2857,
+        "max": 0.8667
+      },
+      "time_seconds": {
+        "mean": 448.1667,
+        "stddev": 60.349,
+        "min": 382.2,
+        "max": 500.6
+      },
+      "tokens": {
+        "mean": 113510.6667,
+        "stddev": 16849.5386,
+        "min": 101121,
+        "max": 132697
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.29",
+      "time_seconds": "+232.5",
+      "tokens": "+21888"
+    }
+  },
+  "notes": []
+}

@@ -1,0 +1,9 @@
+4244b1d docs(002): implementation report, hand over for validation
+7b0d105 feat(002): UI for due dates and overdue marking (S5, S6)
+168d35b feat(002): API accepts and derives due dates (S5, S6)
+cc332fc feat(002): date rules module (today, validateDueDate, dueState)
+d276ada docs(002): design for due dates and overdue tasks
+e23b849 feat(001): task list MVP
+---
+---
+feat/002-due-dates

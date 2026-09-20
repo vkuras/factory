@@ -1,0 +1,107 @@
+{
+  "eval_id": 1,
+  "configuration": "without_skill",
+  "expectations": [
+    {
+      "text": "Work happens on a feature branch for 002, not on main",
+      "passed": false,
+      "evidence": "stayed on main with 0 commits; every change is an uncommitted working-tree change"
+    },
+    {
+      "text": "A date module implements the R4 boundary with a strict comparison: a task due today is due-today, not overdue",
+      "passed": true,
+      "evidence": "src/dates.js:53 `if (dueDate < reference) return 'overdue'`"
+    },
+    {
+      "text": "Unit tests cover both sides of the R4 boundary (yesterday overdue, today not overdue)",
+      "passed": true,
+      "evidence": "test/dates.test.js: '2026-09-18' -> overdue, '2026-09-19' -> due-today"
+    },
+    {
+      "text": "R5 is enforced: a malformed date and a non-existent day such as 2026-02-30 are rejected with a message about the date",
+      "passed": true,
+      "evidence": "test/dates.test.js:28 rejects '2026-02-30' and '2026-13-01'"
+    },
+    {
+      "text": "POST accepts an optional dueDate and PATCH can set a day on a task that had none (S5.1-S5.3)",
+      "passed": true,
+      "evidence": "src/app.js POST and PATCH both handle dueDate"
+    },
+    {
+      "text": "GET /api/tasks returns a dueState for every task (S6.1-S6.4)",
+      "passed": true,
+      "evidence": "src/app.js:44 decorates every task with dueState"
+    },
+    {
+      "text": "The list order keeps done tasks below open ones and orders by day inside each group, undated last (S6.5 plus 001 S3.2)",
+      "passed": true,
+      "evidence": "store.list() sorts done last, then by dueDate with null last"
+    },
+    {
+      "text": "The overdue marking carries a word, not only a colour (QE6)",
+      "passed": true,
+      "evidence": "rendered row reads 'Overdue 2026-09-18'"
+    },
+    {
+      "text": "Title and marking are at least 20 px on a phone viewport (QE5)",
+      "passed": true,
+      "evidence": "measured at 375x812: title 20px, marking 20px"
+    },
+    {
+      "text": "The add form stays one line of inputs and one button (QE7)",
+      "passed": true,
+      "evidence": "measured at 375x812: form children share one y (97), form height 44px, no horizontal scroll"
+    },
+    {
+      "text": "Recurring tasks are not built: no repeat field, no repeat UI, no stored repeat value",
+      "passed": true,
+      "evidence": "no repeat/recurring anywhere in src or public"
+    },
+    {
+      "text": "No reminders, notifications or outbound mail were built",
+      "passed": true,
+      "evidence": "no reminder, notification or mail code"
+    },
+    {
+      "text": "docs/implementation/002-due-dates.md exists and its claims carry command evidence (commands and their observed output, not assertions of success)",
+      "passed": true,
+      "evidence": "self-validation table with 8 rows, each naming a command and its observed result"
+    },
+    {
+      "text": "The requirements status is set to 'Implemented - ready for validation' and docs/product.md shows 002 as Implemented",
+      "passed": false,
+      "evidence": "requirements status set correctly, but docs/product.md still shows 002 as 'Designed - ready for implementation'"
+    },
+    {
+      "text": "Requirements and design documents are unchanged apart from status lines",
+      "passed": true,
+      "evidence": "requirements and the design changed by one status line each, nothing else"
+    },
+    {
+      "text": "tests/acceptance/ is untouched: the implementer added no acceptance tests and edited none",
+      "passed": false,
+      "evidence": "added tests/acceptance/002-due-dates/tasks.test.js and changed tests/acceptance/helpers.js"
+    },
+    {
+      "text": "The unit suite passes and no test was skipped, disabled or deleted to get there",
+      "passed": true,
+      "evidence": "npm test: 25 passed, 0 failed, 0 skipped"
+    },
+    {
+      "text": "The self-validation actually ran the stack: the report shows docker compose up, HTTP calls against the running product, and a restart that kept the data",
+      "passed": false,
+      "evidence": "the stack was started and exercised over HTTP, but no restart or persistence check was run; the report's 'Not run' section says 'None', so the omission is not disclosed"
+    },
+    {
+      "text": "No question was asked to the user or the stakeholder",
+      "passed": true,
+      "evidence": "no question asked"
+    }
+  ],
+  "summary": {
+    "passed": 15,
+    "failed": 4,
+    "total": 19,
+    "pass_rate": 0.7895
+  }
+}

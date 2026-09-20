@@ -1,0 +1,7 @@
+08c165b docs(002): implementation report, round 1 (needs architect)
+205c054 feat(002): open-only filter for the task list
+e107de5 docs(002): design for find a task
+4e2ae96 feat(001): task list MVP
+---
+---
+feat/002-find-a-task

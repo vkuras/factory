@@ -1,0 +1,702 @@
+diff --git a/docs/implementation/002-due-dates.md b/docs/implementation/002-due-dates.md
+new file mode 100644
+index 0000000..f242135
+--- /dev/null
++++ b/docs/implementation/002-due-dates.md
+@@ -0,0 +1,86 @@
++# 002 – Due dates and overdue tasks: implementation
++
++- Requirements: docs/requirements/002-due-dates.md
++- Design: docs/architecture/002-due-dates.md
++- Status: Ready for validation
++- Branch: feat/002-due-dates, commits 769ef51..eb42194
++- Date: 2026-09-20
++- Round: 1
++
++## What was built
++1. **`src/dates.js`** (new): `today()` (Europe/Berlin, ADR-0002), `validateDueDate()` (R5, format + calendar round-trip), `dueState()` (R4 boundary). Unit tests in `test/dates.test.js`.
++2. **API**: `src/app.js` — `POST`/`PATCH /api/tasks(/:id)` accept an optional `dueDate`, validated with `validateDueDate()`; `GET /api/tasks` decorates every task with `dueState`, using the optional `X-Today` header or the server's real today (ADR-0002). `src/store.js` defaults a new task's `dueDate` to `null` (R6).
++3. **List order (S6.5)**: `src/store.js` `list()` now orders open/done groups (unchanged, 001 S3.2) by due date ascending inside each group, tasks without a date last, newest first as the tie-break. Unit tests added to `test/store.test.js`.
++4. **UI**: `public/index.html` gained a native `<input type="date">` between the title and the button (QE7). `public/app.js` sends `dueDate` on submit and renders the marking ("Overdue YYYY-MM-DD" bold red, "Due today YYYY-MM-DD", or the plain day; nothing for `none`) next to the title. `public/style.css` raises title/marking to 20px (QE5) and carries the meaning in the word, colour only reinforcing it (QE6).
++
++All four build-order slices are done; nothing from the design was left out.
++
++## How to run
++```
++cp .env.example .env
++docker compose up -d
++```
++The UI is at http://localhost:8080 (change `PORT` in `.env`). No seed data, no test users. `GET /api/tasks` accepts an optional `X-Today: YYYY-MM-DD` header to pin "today" for testing (ADR-0002); it never changes stored data.
++
++## Traceability
++| Requirement | Implemented in | Test | Result |
++|---|---|---|---|
++| S5.1 | `POST /api/tasks` with `dueDate` | tests/acceptance/002-due-dates/tasks.test.js::"S5.1 creates a task with a day and shows it in the list" | Passed |
++| S5.2 | `POST /api/tasks` without `dueDate` | ...::"S5.2 creates a task without a day exactly as before this feature" | Passed |
++| S5.3 | `PATCH /api/tasks/:id` with `dueDate` | ...::"S5.3 sets a day on a task that had none" | Passed |
++| S5.4 | `src/dates.js` `validateDueDate()` | ...::"S5.4 rejects a day that is not a real date on create", "...on update and leaves the task unchanged", test/dates.test.js (R5 tests) | Passed |
++| S5.5 | `validateDueDate()` allows past dates | ...::"S5.5 allows a day that already passed" | Passed |
++| S6.1 | `src/dates.js` `dueState()` | ...::"S6.1 marks a task whose day is before today as overdue" | Passed |
++| S6.2 | `dueState()` | ...::"S6.2 marks a task whose day is today as due-today, not overdue" | Passed |
++| S6.3 | `dueState()` | ...::"S6.3 marks a task whose day is after today with neither overdue nor due-today" | Passed |
++| S6.4 | `GET /api/tasks` decoration | ...::"S6.4 a task without a day shows no marking" | Passed |
++| S6.5 | `src/store.js` `list()` order | ...::"S6.5 orders open tasks by day, soonest first, no day last", test/store.test.js (3 S6.5 tests) | Passed |
++| R4 | `dueState()` | test/dates.test.js (4 R4 tests), acceptance "R4 boundary example from the requirements holds" | Passed |
++| R5 | `validateDueDate()` | test/dates.test.js (7 R5 tests) | Passed |
++| R6 | optional field, `store.add()` defaults to `null` | test/store.test.js::"R6 a task added without a due date has dueDate null" | Passed |
++| QE5 | `public/style.css` title/marking 20px | Self-validation 5 (phone viewport) | Passed: 20px, see evidence below |
++| QE6 | word + colour in `public/app.js`/`style.css` | Self-validation 5 (phone/desktop screenshots) | Passed: "Overdue"/"Due today" always present |
++| QE7 | one date input, same row | Self-validation 5 (phone viewport, form height) | Passed: single 44px-tall row |
++| Out of scope: recurring tasks | Not built | – | – |
++| Out of scope: reminders | Not built | – | – |
++| Out of scope: times of day | Not built (day only) | – | – |
++
++## Self-validation
++Run against `docker compose -p tb-i2-e1-os`, published on port 8131 as assigned for this run.
++
++| # | Check | Command | Result | Evidence |
++|---|---|---|---|---|
++| 1 | Syntax | `node --check src/*.js public/*.js` | Passed | |
++| 2 | Unit tests | `npm test` | Passed: 26 passed, 0 failed, 0 skipped (before this feature: 22 skipped 0) | |
++| 3 | Image builds | `docker compose -p tb-i2-e1-os build` | Passed | |
++| 4 | Stack starts | `docker compose -p tb-i2-e1-os up -d` | Passed: healthy within 1 s | `docker compose ps` → "Up ... (healthy)" |
++| 5 | Acceptance tests (regression + new) | `BASE_URL=http://localhost:8131 tests/acceptance/run.sh` | Passed: 24 passed (11 from 001, 13 from 002), 0 failed | |
++| 6 | Use it like a user – API | `curl` POST/PATCH/GET incl. `X-Today`, invalid date, unknown id | Passed | 201/200/400 "The date must be in the form YYYY-MM-DD.", 404 "This task does not exist.", `dueState` correct for overdue/due-today/upcoming/none |
++| 7 | Use it like a user – UI | Browser at 375×812 and desktop width | Passed, with one fix (see below): added a task with title+date through the real form, toggled done, saw "Overdue 2020-05-05" in bold red, "Due today 2026-09-20" plain, ordering soonest-first with no-date tasks last |
++| 8 | Data survives | `docker compose -p tb-i2-e1-os restart` | Passed: all 6 tasks, their `done` state and `dueDate` intact after restart | |
++| 9 | Memory (QE2, unchanged constraint) | `docker stats --no-stream` | Passed: 17.67 MiB / 256 MiB | |
++| 10 | Own diff review | `git diff d276ada..HEAD` | Passed: no debug code, no TODOs, no secrets, no files outside the design's scope | |
++| 11 | Teardown | `docker compose -p tb-i2-e1-os down -v` | Passed | |
++
++During check 7, the first render at 375px width showed the due-date marking pushing the task title into an unreadably narrow column (character-by-character wrapping), which would have failed QE5. Fixed by giving the title and the marking their own wrapping container with a floor width for the title (`fix(002)`, commit eb42194); rebuilt and re-checked at both widths, screenshots confirm a readable single-line title with the marking wrapping to its own line when needed.
++
++### Not run
++- Cross-time-zone or load testing: not named in this design's drivers/test strategy, so nothing new to run beyond 001's QE2/QE4, which are unaffected by this feature and were re-checked (memory, above).
++
++## Implementation choices
++- `dueState` comparison uses plain string comparison on `YYYY-MM-DD`, which sorts identically to chronological order; avoids a `Date` round-trip in the hot path and keeps `dueState()`/`list()` trivial to test.
++- `X-Today` falls back silently to the real `today()` when absent or malformed, since ADR-0002 scopes it to tests only; it is never surfaced as a user-facing error.
++- The overdue marking is greyed out (not bold red) once a task is done, consistent with 001's existing "done tasks are muted" treatment; the design does not specify this, but it follows the existing convention rather than contradicting the red/bold rule for open tasks.
++- Acceptance tests for 002 pin "today" via `X-Today` per the design's test strategy, in their own `tests/acceptance/002-due-dates/` folder; `tests/acceptance/helpers.js` gained an optional fourth `headers` argument to `api()` to support that, without changing its existing signature or behaviour for 001's tests.
++
++## Tests changed
++None removed or weakened. `tests/acceptance/helpers.js` gained an additive, backward-compatible parameter (see above).
++
++## Open gaps
++None.
++
++## Validator findings
++### Round 1
++| Finding | Classification | Answer | Evidence |
++|---|---|---|---|
++| – | – | No findings yet; this is the first round | |
+diff --git a/docs/product.md b/docs/product.md
+index 26f1847..0f5e8c8 100644
+--- a/docs/product.md
++++ b/docs/product.md
+@@ -26,4 +26,4 @@ Writing something down and ticking it off must take seconds and must never fail.
+ | # | Title | Type | Status |
+ |---|---|---|---|
+ | 001 | Task list | MVP | Validated |
+-| 002 | Due dates and overdue tasks | Feature | Designed – ready for implementation |
++| 002 | Due dates and overdue tasks | Feature | Implemented |
+diff --git a/docs/requirements/002-due-dates.md b/docs/requirements/002-due-dates.md
+index e1b6f04..47eb091 100644
+--- a/docs/requirements/002-due-dates.md
++++ b/docs/requirements/002-due-dates.md
+@@ -1,7 +1,7 @@
+ # 002 – Due dates and overdue tasks
+ 
+ - Type: Feature
+-- Status: Designed – ready for implementation
++- Status: Implemented – ready for validation
+ - Date: 2026-09-10
+ - Product context: docs/product.md
+ 
+diff --git a/public/app.js b/public/app.js
+index 1e066e6..596edaf 100644
+--- a/public/app.js
++++ b/public/app.js
+@@ -3,12 +3,21 @@ const empty = document.getElementById('empty');
+ const errorBox = document.getElementById('error');
+ const form = document.getElementById('new-task');
+ const titleInput = document.getElementById('title');
++const dueDateInput = document.getElementById('due-date');
+ 
+ function showError(message) {
+   errorBox.textContent = message;
+   errorBox.hidden = !message;
+ }
+ 
++// QE6: the word carries the meaning, the colour only reinforces it.
++function dueMarking(task) {
++  if (task.dueState === 'overdue') return { text: `Overdue ${task.dueDate}`, className: 'overdue' };
++  if (task.dueState === 'due-today') return { text: `Due today ${task.dueDate}`, className: 'due-today' };
++  if (task.dueState === 'upcoming') return { text: task.dueDate, className: 'upcoming' };
++  return null;
++}
++
+ function render(tasks) {
+   list.replaceChildren();
+   empty.hidden = tasks.length > 0;
+@@ -27,12 +36,28 @@ function render(tasks) {
+     title.className = 'title';
+     title.textContent = task.title;
+ 
++    const marking = dueMarking(task);
++
++    // Title and marking share a wrapping container of their own (separate
++    // from the checkbox and the delete button), so a long marking wraps
++    // onto its own line on a phone instead of squeezing the title into an
++    // unreadably narrow column (QE5).
++    const content = document.createElement('div');
++    content.className = 'content';
++    content.append(title);
++    if (marking) {
++      const due = document.createElement('span');
++      due.className = `due ${marking.className}`;
++      due.textContent = marking.text;
++      content.append(due);
++    }
++
+     const remove = document.createElement('button');
+     remove.type = 'button';
+     remove.textContent = 'Delete';
+     remove.addEventListener('click', () => destroy(task));
+ 
+-    li.append(checkbox, title, remove);
++    li.append(checkbox, content, remove);
+     list.append(li);
+   }
+ }
+@@ -63,7 +88,7 @@ form.addEventListener('submit', async (event) => {
+   const response = await fetch('/api/tasks', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+-    body: JSON.stringify({ title: titleInput.value }),
++    body: JSON.stringify({ title: titleInput.value, dueDate: dueDateInput.value || null }),
+   });
+   if (!response.ok) {
+     const body = await response.json();
+@@ -71,6 +96,7 @@ form.addEventListener('submit', async (event) => {
+     return;
+   }
+   titleInput.value = '';
++  dueDateInput.value = '';
+   await load();
+ });
+ 
+diff --git a/public/index.html b/public/index.html
+index d4c88f8..10f9fc5 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -11,6 +11,7 @@
+       <h1>Taskboard</h1>
+       <form id="new-task">
+         <input id="title" name="title" type="text" placeholder="What needs doing?" autocomplete="off" />
++        <input id="due-date" name="dueDate" type="date" aria-label="Due date" />
+         <button type="submit">Add task</button>
+       </form>
+       <p id="error" class="error" hidden></p>
+diff --git a/public/style.css b/public/style.css
+index cb48c35..e3f28c5 100644
+--- a/public/style.css
++++ b/public/style.css
+@@ -40,6 +40,18 @@ input[type="text"] {
+   border-radius: 6px;
+ }
+ 
++input[type="date"] {
++  /* A fixed, narrow width: unlike the title, a date has nothing to shrink,
++     so the form stays one row on a phone (QE7) with the title giving way. */
++  flex: 0 1 8.5rem;
++  min-width: 0;
++  font-size: 16px;
++  padding: 0.6rem 0.4rem;
++  border: 1px solid #ccccc4;
++  border-radius: 6px;
++  color: var(--fg);
++}
++
+ button {
+   font-size: 18px;
+   min-height: 44px;
+@@ -64,11 +76,26 @@ li {
+   border-bottom: 1px solid #e2e2dc;
+ }
+ 
+-li .title {
++li .content {
+   flex: 1;
+   min-width: 0;
++  display: flex;
++  flex-wrap: wrap;
++  align-items: baseline;
++  column-gap: 0.6rem;
++  row-gap: 0.1rem;
++}
++
++li .title {
++  /* A floor so the title always gets a readable line width instead of
++     shrinking to make room for the marking; below the floor, the marking
++     wraps onto its own line instead (QE5). */
++  flex: 1 1 auto;
++  min-width: 6rem;
+   overflow-wrap: break-word;
+-  font-size: 18px;
++  /* QE5: readable from a step away on a phone; up from 18px in 001 now
++     that the row also carries the due-date marking. */
++  font-size: 20px;
+ }
+ 
+ li.done .title {
+@@ -76,6 +103,27 @@ li.done .title {
+   color: var(--muted);
+ }
+ 
++li .due {
++  flex: 0 0 auto;
++  font-size: 20px;
++  white-space: nowrap;
++}
++
++li .due.overdue {
++  color: var(--danger);
++  font-weight: bold;
++}
++
++li .due.due-today,
++li .due.upcoming {
++  color: var(--fg);
++}
++
++li.done .due {
++  color: var(--muted);
++  font-weight: normal;
++}
++
+ li input[type="checkbox"] {
+   flex: 0 0 24px;
+   width: 24px;
+diff --git a/src/app.js b/src/app.js
+index 4e2e0c4..b951fcb 100644
+--- a/src/app.js
++++ b/src/app.js
+@@ -1,6 +1,7 @@
+ import { readFileSync, existsSync } from 'node:fs';
+ import { extname, join, normalize } from 'node:path';
+ import { validateTitle } from './validation.js';
++import { today, validateDueDate, dueState } from './dates.js';
+ 
+ const CONTENT_TYPES = {
+   '.html': 'text/html; charset=utf-8',
+@@ -27,6 +28,18 @@ async function readJson(req) {
+   }
+ }
+ 
++// ADR-0002: a client may pin "today" with X-Today for tests. It only
++// relabels the response and never touches stored data; an absent or
++// malformed header falls back to the server's real today.
++function referenceDay(req) {
++  const header = req.headers['x-today'];
++  if (typeof header === 'string') {
++    const { dueDate } = validateDueDate(header);
++    if (dueDate) return dueDate;
++  }
++  return today();
++}
++
+ export function createApp({ store, publicDir }) {
+   return async function handle(req, res) {
+     const url = new URL(req.url, 'http://localhost');
+@@ -37,15 +50,22 @@ export function createApp({ store, publicDir }) {
+     }
+ 
+     if (path === '/api/tasks' && req.method === 'GET') {
+-      return send(res, 200, { tasks: store.list() });
++      const reference = referenceDay(req);
++      const tasks = store.list().map((task) => ({
++        ...task,
++        dueState: dueState(task.dueDate ?? null, reference),
++      }));
++      return send(res, 200, { tasks });
+     }
+ 
+     if (path === '/api/tasks' && req.method === 'POST') {
+       const body = await readJson(req);
+       if (body === null) return send(res, 400, { error: 'Invalid JSON body.' });
+-      const { title, error } = validateTitle(body.title);
+-      if (error) return send(res, 400, { error });
+-      return send(res, 201, store.add({ title }));
++      const { title, error: titleError } = validateTitle(body.title);
++      if (titleError) return send(res, 400, { error: titleError });
++      const { dueDate, error: dueDateError } = validateDueDate(body.dueDate);
++      if (dueDateError) return send(res, 400, { error: dueDateError });
++      return send(res, 201, store.add({ title, dueDate }));
+     }
+ 
+     const match = path.match(/^\/api\/tasks\/(\d+)$/);
+@@ -54,10 +74,19 @@ export function createApp({ store, publicDir }) {
+       if (req.method === 'PATCH') {
+         const body = await readJson(req);
+         if (body === null) return send(res, 400, { error: 'Invalid JSON body.' });
+-        if (typeof body.done !== 'boolean') {
+-          return send(res, 400, { error: 'The field "done" must be true or false.' });
++        const fields = {};
++        if (body.done !== undefined) {
++          if (typeof body.done !== 'boolean') {
++            return send(res, 400, { error: 'The field "done" must be true or false.' });
++          }
++          fields.done = body.done;
++        }
++        if (body.dueDate !== undefined) {
++          const { dueDate, error } = validateDueDate(body.dueDate);
++          if (error) return send(res, 400, { error });
++          fields.dueDate = dueDate;
+         }
+-        const task = store.update(id, { done: body.done });
++        const task = store.update(id, fields);
+         if (!task) return send(res, 404, { error: 'This task does not exist.' });
+         return send(res, 200, task);
+       }
+diff --git a/src/dates.js b/src/dates.js
+new file mode 100644
+index 0000000..7ef4382
+--- /dev/null
++++ b/src/dates.js
+@@ -0,0 +1,45 @@
++const DAY_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
++
++// ADR-0002: "today" is the team's day in Europe/Berlin, computed on the
++// server so every client sees the same answer.
++export function today(now = new Date()) {
++  const formatter = new Intl.DateTimeFormat('en-CA', {
++    timeZone: 'Europe/Berlin',
++    year: 'numeric',
++    month: '2-digit',
++    day: '2-digit',
++  });
++  // en-CA formats as YYYY-MM-DD.
++  return formatter.format(now);
++}
++
++// R5: a day is a full calendar date in the form YYYY-MM-DD that exists.
++// R6: a day is optional; a missing or null value is valid and means "no day".
++export function validateDueDate(raw) {
++  if (raw === undefined || raw === null) {
++    return { dueDate: null };
++  }
++  if (typeof raw !== 'string' || !DAY_FORMAT.test(raw)) {
++    return { error: 'The date must be in the form YYYY-MM-DD.' };
++  }
++  const [year, month, day] = raw.split('-').map(Number);
++  const asDate = new Date(Date.UTC(year, month - 1, day));
++  const roundTrips =
++    asDate.getUTCFullYear() === year &&
++    asDate.getUTCMonth() === month - 1 &&
++    asDate.getUTCDate() === day;
++  if (!roundTrips) {
++    return { error: 'The date must be in the form YYYY-MM-DD.' };
++  }
++  return { dueDate: raw };
++}
++
++// R4: overdue when the day lies strictly before today, due today when it
++// equals today, and neither when it is after. YYYY-MM-DD sorts the same
++// lexicographically as chronologically, so plain string comparison holds.
++export function dueState(dueDate, reference) {
++  if (!dueDate) return 'none';
++  if (dueDate < reference) return 'overdue';
++  if (dueDate === reference) return 'due-today';
++  return 'upcoming';
++}
+diff --git a/src/store.js b/src/store.js
+index da44e96..8e7860f 100644
+--- a/src/store.js
++++ b/src/store.js
+@@ -18,15 +18,26 @@ export class TaskStore {
+   }
+ 
+   list() {
+-    // Newest first (S2.1), done tasks last (S3.2).
++    // Open tasks first, done tasks last (S3.2). Within each group, the
++    // soonest due date first and tasks without a due date last (S6.5, 002
++    // refines the order inside the groups only); newest first as a
++    // tie-break (S2.1), which is also what breaks ties between tasks that
++    // share a due date or that both have none.
+     return [...this.tasks].sort((a, b) => {
+       if (a.done !== b.done) return a.done ? 1 : -1;
++      const aDate = a.dueDate ?? null;
++      const bDate = b.dueDate ?? null;
++      if (aDate !== bDate) {
++        if (aDate === null) return 1;
++        if (bDate === null) return -1;
++        return aDate < bDate ? -1 : 1;
++      }
+       return b.id - a.id;
+     });
+   }
+ 
+   add(fields) {
+-    const task = { id: this.nextId++, done: false, ...fields };
++    const task = { id: this.nextId++, done: false, dueDate: null, ...fields };
+     this.tasks.push(task);
+     this.flush();
+     return task;
+diff --git a/test/dates.test.js b/test/dates.test.js
+new file mode 100644
+index 0000000..8c0d1e4
+--- /dev/null
++++ b/test/dates.test.js
+@@ -0,0 +1,57 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { today, validateDueDate, dueState } from '../src/dates.js';
++
++test('today() returns the Europe/Berlin calendar day', () => {
++  // 2026-06-15T21:30:00Z is 2026-06-15T23:30:00+02:00 (CEST) in Berlin.
++  assert.equal(today(new Date('2026-06-15T21:30:00Z')), '2026-06-15');
++  // 2026-06-15T22:30:00Z is 2026-06-16T00:30:00+02:00 in Berlin: past midnight.
++  assert.equal(today(new Date('2026-06-15T22:30:00Z')), '2026-06-16');
++});
++
++test('R5 accepts a well-formed, existing date', () => {
++  assert.equal(validateDueDate('2026-09-19').dueDate, '2026-09-19');
++});
++
++test('R5 accepts a leap day', () => {
++  assert.equal(validateDueDate('2028-02-29').dueDate, '2028-02-29');
++});
++
++test('R5 rejects a day that does not exist', () => {
++  assert.match(validateDueDate('2026-02-30').error, /date/i);
++});
++
++test('R5 rejects a non-leap-year Feb 29', () => {
++  assert.match(validateDueDate('2026-02-29').error, /date/i);
++});
++
++test('R5 rejects a wrong format', () => {
++  assert.match(validateDueDate('19-09-2026').error, /date/i);
++  assert.match(validateDueDate('2026/09/19').error, /date/i);
++  assert.match(validateDueDate('not a date').error, /date/i);
++});
++
++test('R5 rejects a non-string value', () => {
++  assert.match(validateDueDate(12345).error, /date/i);
++});
++
++test('R6 treats a missing or null day as no day, not an error', () => {
++  assert.equal(validateDueDate(undefined).dueDate, null);
++  assert.equal(validateDueDate(null).dueDate, null);
++});
++
++test('R4 marks a day before today as overdue', () => {
++  assert.equal(dueState('2026-09-18', '2026-09-19'), 'overdue');
++});
++
++test('R4 marks a day equal to today as due-today, not overdue', () => {
++  assert.equal(dueState('2026-09-19', '2026-09-19'), 'due-today');
++});
++
++test('R4 marks a day after today as upcoming', () => {
++  assert.equal(dueState('2026-09-20', '2026-09-19'), 'upcoming');
++});
++
++test('R4/R6 marks a task without a day as none', () => {
++  assert.equal(dueState(null, '2026-09-19'), 'none');
++});
+diff --git a/test/store.test.js b/test/store.test.js
+index 9250c79..34d55b8 100644
+--- a/test/store.test.js
++++ b/test/store.test.js
+@@ -41,3 +41,32 @@ test('R2 reloads the tasks from disk', () => {
+   const reopened = new TaskStore(store.file.replace('/tasks.json', ''));
+   assert.deepEqual(reopened.list().map((t) => t.title), ['persisted']);
+ });
++
++test('R6 a task added without a due date has dueDate null', () => {
++  const store = freshStore();
++  const task = store.add({ title: 'no day' });
++  assert.equal(task.dueDate, null);
++});
++
++test('S6.5 orders open tasks by due date, soonest first, no date last', () => {
++  const store = freshStore();
++  store.add({ title: 'no day' });
++  store.add({ title: 'later', dueDate: '2026-09-25' });
++  store.add({ title: 'soonest', dueDate: '2026-09-19' });
++  assert.deepEqual(store.list().map((t) => t.title), ['soonest', 'later', 'no day']);
++});
++
++test('S6.5 breaks a tie on the same due date with the newest task first', () => {
++  const store = freshStore();
++  store.add({ title: 'first', dueDate: '2026-09-19' });
++  store.add({ title: 'second', dueDate: '2026-09-19' });
++  assert.deepEqual(store.list().map((t) => t.title), ['second', 'first']);
++});
++
++test('S6.5 keeps done tasks below open ones regardless of due date', () => {
++  const store = freshStore();
++  const done = store.add({ title: 'done, due soon', dueDate: '2026-09-01' });
++  store.add({ title: 'open, no day' });
++  store.update(done.id, { done: true });
++  assert.deepEqual(store.list().map((t) => t.title), ['open, no day', 'done, due soon']);
++});
+diff --git a/tests/acceptance/002-due-dates/tasks.test.js b/tests/acceptance/002-due-dates/tasks.test.js
+new file mode 100644
+index 0000000..434c249
+--- /dev/null
++++ b/tests/acceptance/002-due-dates/tasks.test.js
+@@ -0,0 +1,131 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { api, withTask, deleteTask } from '../helpers.js';
++
++// The acceptance criteria pin "today" with X-Today (ADR-0002), so the
++// boundary of R4 does not depend on the day the suite happens to run.
++const TODAY = { 'X-Today': '2026-09-19' };
++
++async function tasksOn(day) {
++  const { body } = await api('GET', '/api/tasks', undefined, { 'X-Today': day });
++  return body.tasks;
++}
++
++test('S5.1 creates a task with a day and shows it in the list', async () => {
++  await withTask({ title: 'Ship the report', dueDate: '2026-09-25' }, async (task) => {
++    assert.equal(task.dueDate, '2026-09-25');
++    const tasks = await tasksOn('2026-09-19');
++    const found = tasks.find((t) => t.id === task.id);
++    assert.equal(found.dueDate, '2026-09-25');
++  });
++});
++
++test('S5.2 creates a task without a day exactly as before this feature', async () => {
++  await withTask({ title: 'Water the plants' }, async (task) => {
++    assert.equal(task.dueDate, null);
++    const tasks = await tasksOn('2026-09-19');
++    const found = tasks.find((t) => t.id === task.id);
++    assert.equal(found.dueDate, null);
++    assert.equal(found.dueState, 'none');
++  });
++});
++
++test('S5.3 sets a day on a task that had none', async () => {
++  await withTask({ title: 'Call the plumber' }, async (task) => {
++    const { status, body } = await api('PATCH', `/api/tasks/${task.id}`, { dueDate: '2026-09-30' });
++    assert.equal(status, 200);
++    assert.equal(body.dueDate, '2026-09-30');
++    const tasks = await tasksOn('2026-09-19');
++    assert.equal(tasks.find((t) => t.id === task.id).dueDate, '2026-09-30');
++  });
++});
++
++test('S5.4 rejects a day that is not a real date on create', async () => {
++  const { status, body } = await api('POST', '/api/tasks', { title: 'Bad date', dueDate: '2026-02-30' });
++  assert.equal(status, 400);
++  assert.match(body.error, /date/i);
++});
++
++test('S5.4 rejects a day in the wrong form on create', async () => {
++  const { status, body } = await api('POST', '/api/tasks', { title: 'Bad format', dueDate: '19-09-2026' });
++  assert.equal(status, 400);
++  assert.match(body.error, /date/i);
++});
++
++test('S5.4 rejects an invalid day on update and leaves the task unchanged', async () => {
++  await withTask({ title: 'Keep me intact', dueDate: '2026-09-20' }, async (task) => {
++    const { status, body } = await api('PATCH', `/api/tasks/${task.id}`, { dueDate: 'not a date' });
++    assert.equal(status, 400);
++    assert.match(body.error, /date/i);
++    const tasks = await tasksOn('2026-09-19');
++    assert.equal(tasks.find((t) => t.id === task.id).dueDate, '2026-09-20');
++  });
++});
++
++test('S5.5 allows a day that already passed', async () => {
++  const { status, body } = await api('POST', '/api/tasks', { title: 'Overdue on arrival', dueDate: '2020-01-01' });
++  assert.equal(status, 201);
++  assert.equal(body.dueDate, '2020-01-01');
++  await deleteTask(body.id);
++});
++
++test('S6.1 marks a task whose day is before today as overdue', async () => {
++  await withTask({ title: 'Late task', dueDate: '2026-09-18' }, async (task) => {
++    const tasks = await tasksOn('2026-09-19');
++    assert.equal(tasks.find((t) => t.id === task.id).dueState, 'overdue');
++  });
++});
++
++test('S6.2 marks a task whose day is today as due-today, not overdue', async () => {
++  await withTask({ title: 'Due right now', dueDate: '2026-09-19' }, async (task) => {
++    const tasks = await tasksOn('2026-09-19');
++    assert.equal(tasks.find((t) => t.id === task.id).dueState, 'due-today');
++  });
++});
++
++test('S6.3 marks a task whose day is after today with neither overdue nor due-today', async () => {
++  await withTask({ title: 'Plenty of time', dueDate: '2026-09-20' }, async (task) => {
++    const tasks = await tasksOn('2026-09-19');
++    assert.equal(tasks.find((t) => t.id === task.id).dueState, 'upcoming');
++  });
++});
++
++test('S6.4 a task without a day shows no marking', async () => {
++  await withTask({ title: 'Someday' }, async (task) => {
++    const tasks = await tasksOn('2026-09-19');
++    const found = tasks.find((t) => t.id === task.id);
++    assert.equal(found.dueDate, null);
++    assert.equal(found.dueState, 'none');
++  });
++});
++
++test('S6.5 orders open tasks by day, soonest first, no day last', async () => {
++  const noDay = await api('POST', '/api/tasks', { title: 'z-no-day' }).then((r) => r.body);
++  const later = await api('POST', '/api/tasks', { title: 'z-later', dueDate: '2026-09-25' }).then((r) => r.body);
++  const soonest = await api('POST', '/api/tasks', { title: 'z-soonest', dueDate: '2026-09-19' }).then((r) => r.body);
++  try {
++    const tasks = await tasksOn('2026-09-19');
++    const ids = [soonest.id, later.id, noDay.id];
++    const order = tasks.filter((t) => ids.includes(t.id)).map((t) => t.id);
++    assert.deepEqual(order, ids);
++  } finally {
++    await deleteTask(noDay.id);
++    await deleteTask(later.id);
++    await deleteTask(soonest.id);
++  }
++});
++
++test('R4 boundary example from the requirements holds', async () => {
++  // With today being 2026-09-19: 2026-09-18 is overdue, 2026-09-19 is due
++  // today, 2026-09-20 is neither.
++  await withTask({ title: 'boundary -1', dueDate: '2026-09-18' }, async (t1) => {
++    await withTask({ title: 'boundary 0', dueDate: '2026-09-19' }, async (t2) => {
++      await withTask({ title: 'boundary +1', dueDate: '2026-09-20' }, async (t3) => {
++        const tasks = await tasksOn('2026-09-19');
++        assert.equal(tasks.find((t) => t.id === t1.id).dueState, 'overdue');
++        assert.equal(tasks.find((t) => t.id === t2.id).dueState, 'due-today');
++        assert.equal(tasks.find((t) => t.id === t3.id).dueState, 'upcoming');
++      });
++    });
++  });
++});
+diff --git a/tests/acceptance/helpers.js b/tests/acceptance/helpers.js
+index d287936..fc68b01 100644
+--- a/tests/acceptance/helpers.js
++++ b/tests/acceptance/helpers.js
+@@ -2,10 +2,13 @@
+ // stack over HTTP only, exactly like a browser or any other client would.
+ export const BASE_URL = process.env.BASE_URL ?? 'http://localhost:8080';
+ 
+-export async function api(method, path, body) {
++export async function api(method, path, body, headers = {}) {
+   const response = await fetch(`${BASE_URL}${path}`, {
+     method,
+-    headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
++    headers: {
++      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
++      ...headers,
++    },
+     body: body === undefined ? undefined : JSON.stringify(body),
+   });
+   const text = await response.text();

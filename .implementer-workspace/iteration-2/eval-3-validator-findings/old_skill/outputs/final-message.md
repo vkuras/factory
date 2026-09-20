@@ -1,0 +1,9 @@
+Validator findings for 002 (docs/validation/002-due-dates.md) resolved. Status: ready for validation, round 2.
+
+- **F1 (bug, fixed)**: `dueState()` checked `<=` before the equality branch, so a task due today fell into `overdue`. Fixed to strict `<` in `src/dates.js`. Also fixed the existing unit test that had asserted the buggy behaviour (it contradicted R4/S6.2). The validator's acceptance test `S6.2` now passes, and the finding's exact curl repro now returns `due-today`.
+- **F2 (not a defect)**: notifications/reminders are explicitly out of scope in requirements 002 ("Reminders, notifications or e-mails about tasks that are due or late."). Not built. If the team wants this, it needs a new requirement, not a fix to 002.
+- **F3 (not reproducible, hardened anyway)**: could not reproduce due-date loss on restart after 20 rounds of concurrent creates + `docker compose restart` (100 tasks, 0 mismatches) and 8 rounds of concurrent creates + `docker kill` mid-flight (hardest case; every completed task kept its data, file stayed valid JSON). Found via code review that `TaskStore.flush()` wrote `tasks.json` directly with no atomic rename, a real (if unproven) risk on a cut-off write, so hardened it to write-to-temp-then-rename. Reported as a defensive improvement, not a confirmed fix.
+
+Self-validation re-run in full from a clean build: 20 unit tests + 24 acceptance tests (001 + 002) passed, stack builds and starts healthy, data survives both `restart` and `down`/`up`, memory 18.7 MiB / 256 MiB, own diff review clean (3 files, no debug code/TODOs/scope creep). Details and evidence in `docs/implementation/002-due-dates.md` (round 2).
+
+No gaps sent to the architect. Requirements status unchanged (`Implemented – ready for validation`), branch `feature/002-due-dates`, commit `b8ca698`.

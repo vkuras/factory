@@ -1,0 +1,150 @@
+:root {
+  --bg: #f7f7f5;
+  --fg: #1c1c1a;
+  --accent: #2f6f4f;
+  --danger: #a12a2a;
+  --muted: #6b6b66;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 18px;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+h1 {
+  font-size: 1.8rem;
+}
+
+form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+form input,
+form button {
+  /* So a fixed width or flex-basis is the element's whole footprint,
+     padding and border included, and the three controls' widths add up to
+     the form's width predictably (QE7: one line on a phone). */
+  box-sizing: border-box;
+}
+
+input[type="text"] {
+  flex: 1;
+  /* Without this a text input refuses to shrink below its default size, which
+     pushes the add form onto a second line on a phone (QE1/QE7). */
+  min-width: 0;
+  font-size: 18px;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #ccccc4;
+  border-radius: 6px;
+}
+
+input[type="date"] {
+  /* Fixed width (QE7): a day never needs more room than this, and it must
+     not shrink or grow and eat into the title's space on a phone. Browsers
+     give a date input an automatic minimum width based on its own content,
+     which wins over a flex-basis unless min-width is reset here. */
+  flex: 0 0 8.5rem;
+  min-width: 0;
+  font-size: 16px;
+  padding: 0.6rem 0.4rem;
+  border: 1px solid #ccccc4;
+  border-radius: 6px;
+  color: var(--fg);
+  background: #fff;
+}
+
+button {
+  flex: 0 0 auto;
+  font-size: 18px;
+  min-height: 44px;
+  padding: 0 0.8rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  white-space: nowrap;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+}
+
+li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid #e2e2dc;
+}
+
+li .title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: break-word;
+  /* QE5: readable from a step away on a phone, at least 20 px. */
+  font-size: 20px;
+}
+
+li.done .title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* The marking always takes its own full-width row under the title instead of
+   competing with it for space on the same line, which would otherwise
+   squeeze the title into an unreadably narrow column on a phone (QE5).
+   QE6: the word ("Overdue"/"Due today") carries the meaning; colour and
+   weight only reinforce it, since not everyone distinguishes red reliably. */
+li .due {
+  flex: 1 1 100%;
+  margin-left: calc(24px + 0.6rem);
+  font-size: 20px;
+  color: var(--muted);
+}
+
+li .due.overdue {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+li .due.due-today {
+  color: var(--fg);
+  font-weight: bold;
+}
+
+li input[type="checkbox"] {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+}
+
+li button {
+  flex: 0 0 auto;
+  background: none;
+  color: var(--danger);
+  min-height: 44px;
+  padding: 0 0.5rem;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 18px;
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 18px;
+}

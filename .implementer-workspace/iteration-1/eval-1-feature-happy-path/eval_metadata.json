@@ -1,0 +1,26 @@
+{
+  "eval_id": 1,
+  "eval_name": "feature-happy-path",
+  "prompt": "Das Design für 002 ist fertig. Setz es um.",
+  "assertions": [
+    "Work happens on a feature branch for 002, not on main",
+    "A date module implements the R4 boundary with a strict comparison: a task due today is due-today, not overdue",
+    "Unit tests cover both sides of the R4 boundary (yesterday overdue, today not overdue)",
+    "R5 is enforced: a malformed date and a non-existent day such as 2026-02-30 are rejected with a message about the date",
+    "POST accepts an optional dueDate and PATCH can set a day on a task that had none (S5.1-S5.3)",
+    "GET /api/tasks returns a dueState for every task (S6.1-S6.4)",
+    "The list order keeps done tasks below open ones and orders by day inside each group, undated last (S6.5 plus 001 S3.2)",
+    "The overdue marking carries a word, not only a colour (QE6)",
+    "Title and marking are at least 20 px on a phone viewport (QE5)",
+    "The add form stays one line of inputs and one button (QE7)",
+    "Recurring tasks are not built: no repeat field, no repeat UI, no stored repeat value",
+    "No reminders, notifications or outbound mail were built",
+    "docs/implementation/002-due-dates.md exists and its claims carry command evidence (commands and their observed output, not assertions of success)",
+    "The requirements status is set to 'Implemented - ready for validation' and docs/product.md shows 002 as Implemented",
+    "Requirements and design documents are unchanged apart from status lines",
+    "tests/acceptance/ is untouched: the implementer added no acceptance tests and edited none",
+    "The unit suite passes and no test was skipped, disabled or deleted to get there",
+    "The self-validation actually ran the stack: the report shows docker compose up, HTTP calls against the running product, and a restart that kept the data",
+    "No question was asked to the user or the stakeholder"
+  ]
+}

@@ -1,0 +1,246 @@
+diff --git a/docs/architecture/.gaps/002-find-a-task.md b/docs/architecture/.gaps/002-find-a-task.md
+new file mode 100644
+index 0000000..8a925d4
+--- /dev/null
++++ b/docs/architecture/.gaps/002-find-a-task.md
+@@ -0,0 +1,7 @@
++## G1 – The designed match rule contradicts the requirements
++- Status: Open
++- Design: docs/architecture/002-find-a-task.md, "Decisions" and "Interfaces" ("The match is a prefix match on the title, compared case-sensitively", `title.startsWith(q)`)
++- Requirement: R4, S5.2, S5.3 (and, downstream, S5.1, S5.4, S5.5, S6.2, which all depend on what a search actually matches)
++- Problem: The design specifies a case-sensitive prefix match (`title.startsWith(q)`). The requirements ask for the opposite, twice over: R4 says "A search matches when the typed text occurs anywhere in the task's title, comparing without regard to upper and lower case", and gives the worked example "milk" matching "Buy Milk", "Order milk crate" and "MILK" — none of which start with "milk". S5.2 and S5.3 test exactly this: case-insensitivity and mid-string matches. The appendix trace backs it with the stakeholder's own words: "I type milk and I want to see everything with milk in it" (L2), "I never know how somebody wrote it down" (L3), "Exact letters, just anywhere in the text" (L4). No ADR documents a deviation — ADR-0003 only decides *where* the filter runs (the list endpoint vs. a separate endpoint), never the match rule. As written, the design's own worked interface would fail S5.2 and S5.3 of the requirements it exists to satisfy.
++- Blocks: S5.1, S5.2, S5.3, S5.4, S5.5, R4, S6.2 (the combination of "open only" with a search term). S6.1 and S6.3 don't depend on the match rule and are built in this round.
++- Suggestion: Implement `matchesQuery()` as the requirements state it — `title.toLowerCase().includes(q.toLowerCase())` — an anywhere, case-insensitive substring match. At the stated scale (500 in-memory titles, QE5) this is still sub-millisecond: a `toLowerCase()` + `includes()` over a few hundred short strings costs microseconds, so QE5's p95-under-500ms budget is not at risk. Recommend updating the design's Decisions/Interfaces sections to this rule; if there's a reason to keep a prefix match despite the requirements, that needs a requirements change instead, not a silent design choice.
+diff --git a/docs/implementation/002-find-a-task.md b/docs/implementation/002-find-a-task.md
+new file mode 100644
+index 0000000..a80db32
+--- /dev/null
++++ b/docs/implementation/002-find-a-task.md
+@@ -0,0 +1,79 @@
++# 002 – Find a task: implementation
++
++- Requirements: docs/requirements/002-find-a-task.md
++- Design: docs/architecture/002-find-a-task.md
++- Status: Needs architect
++- Branch: feat/002-find-a-task, commits e107de5..205c054
++- Date: 2026-09-20
++- Round: 1
++
++## What was built
++1. **S6 – Hide what is finished**: `src/search.js` (`filterTasks(tasks, { open })`), wired into `GET /api/tasks?open=true` in `src/app.js`. The UI (`public/index.html`, `public/app.js`, `public/style.css`) got an "Open only" checkbox above the list that toggles the `open` request parameter and re-renders.
++2. **S5 – Find a task by typing: not built.** The design's match rule contradicts the requirements it implements (see "Open gaps", G1). Building it would mean guessing which of the two contradictory rules is right, so `q` is not wired into the API and no search field was added to the UI (an inert search input would be misleading). `matchesQuery()` from the design's Components table does not exist yet.
++3. **R5** (nothing about a search is stored): true by construction — no state was added; `open` lives in the request only.
++
++## How to run
++```
++cp .env.example .env
++docker compose up -d
++```
++The UI is at http://localhost:8080 (or `$PORT`). No seed data, no test users. Same as 001.
++
++## Traceability
++| Requirement | Design element | Implemented in | Test | Result |
++|---|---|---|---|---|
++| S5.1 | `q` in `GET /api/tasks`, `matchesQuery()` | Not built | – | Blocked by G1 |
++| S5.2 | `matchesQuery()` | Not built | – | Blocked by G1 |
++| S5.3 | `matchesQuery()` | Not built | – | Blocked by G1 |
++| S5.4 | empty `q` selects everything | Not built | – | Blocked by G1 |
++| S5.5 | no-match UI state | Not built | – | Blocked by G1 |
++| S6.1 | open-only filter | `src/search.js` `filterTasks()`, `src/app.js` GET | test/search.test.js::"S6.1 keeps only the tasks that are not done when open is on" | Passed |
++| S6.2 | open-only + search combined | Not built | – | Blocked by G1 (needs a working search first) |
++| S6.3 | open-only filter | `src/search.js` `filterTasks()`, `public/app.js` | test/search.test.js::"S6.3 shows done tasks again when open is off" | Passed |
++| R4 | `matchesQuery()` | Not built | – | Blocked by G1 |
++| R5 | query in request only | No code added | – | Passed by construction |
++| QE5 | filtering in memory | `filterTasks()` over the in-memory list | Self-validation 7 (500+3 tasks) | Passed for what's built: 15 ms for `GET /api/tasks?open=true` |
++| QE6 | no new container | Unchanged compose stack | Self-validation 7 | Passed: 19 MiB / 256 MiB |
++| QE7 | one row above the list | `public/index.html` `.filters` row | Manual/HTTP check (Self-validation 5) | Passed for the checkbox; the search field is part of the blocked slice |
++| Out of scope: fuzzy matching | Not designed | Not built | – | – |
++| Out of scope: searching other fields | Only `title` | Not built | – | – |
++| Out of scope: sorting options | Order unchanged | Unchanged `store.list()` | – | Passed by construction |
++
++## Self-validation
++| # | Check | Command | Result | Evidence |
++|---|---|---|---|---|
++| 1 | Syntax | `node --check src/app.js src/search.js public/app.js` | Passed | |
++| 2 | Unit tests | `npm test` | Passed: 13 passed, 0 failed, 0 skipped (before: 10 passed, 0 skipped) | |
++| 3 | Image builds | `PORT=8152 docker compose -p tb-i3-e2-os build` | Passed | |
++| 4 | Stack starts | `PORT=8152 docker compose -p tb-i3-e2-os up -d` | Passed: app healthy after ~8 s | |
++| 5 | Regression suite (001) | `BASE_URL=http://localhost:8152 tests/acceptance/run.sh` | Passed: 11 passed, 0 failed (unchanged; no acceptance tests exist yet for 002, directory left untouched) | |
++| 5 | S6 main flow via API | `curl` create 3 tasks, mark one done, `GET /api/tasks` and `GET /api/tasks?open=true` | Passed: full list has 3, `open=true` has 2 (done task excluded) | see command output in session log |
++| 5 | Validation failure path | `curl -X POST /api/tasks -d '{"title":"  "}'` | Passed: 400 | |
++| 5 | UI served | `curl http://localhost:8152/`, `/app.js`, `/style.css` | Passed: page includes the "Open only" checkbox, `app.js` sends `open=true` when checked | Browser tool unavailable this round (shared pane at its tab cap) — see "Not run" |
++| 6 | Data survives | `docker compose -p tb-i3-e2-os restart`, then `down` (no `-v`) + `up -d` | Passed: all 3 tasks (incl. the done one) still present both times | |
++| 7 | QE5-adjacent timing at scale | 500 tasks created, then timed `GET /api/tasks` and `GET /api/tasks?open=true` | Passed for what's built: 8.7 ms / 15.2 ms, far under the 500 ms budget | |
++| 7 | QE6 memory | `docker stats --no-stream` | Passed: 18.9 MiB / 256 MiB | |
++| 8 | Own diff review | `git diff e107de5..HEAD` | Passed: no debug code, no TODOs, no secrets, no scope creep | |
++| 9 | Tear down | `docker compose -p tb-i3-e2-os down -v` | Done | |
++
++### Not run
++- Clicking through the UI in a real browser: the shared Browser pane was at its tab cap for the whole session (other evaluation runs' tabs occupy it) and neither a new tab nor reusing an existing one was possible without touching another run's tab. Compensated with: unit tests for `filterTasks()`, an HTTP fetch of `/`, `/app.js` and `/style.css` confirming the checkbox and its wiring are served correctly, and `curl` end-to-end checks of the API path the checkbox drives.
++- A full QE5 load test (10 concurrent users, p95 threshold) against the search: not applicable yet, since S5 (the thing QE5 is a budget for) isn't built. The single-request timings above cover what is built (`open`).
++- `docker buildx build --platform ...` for a non-default architecture: not attempted, no target architecture is stated in the design beyond `node:22-alpine`, unchanged from 001.
++
++## Implementation choices
++- `filterTasks(tasks, { open })` takes an options object rather than a second positional argument, so a `q` option can be added later (once G1 is resolved) without changing the call sites' shape.
++- The "Open only" checkbox lives in its own `.filters` row now, sized to the same 44 px / 18 px convention as the rest of the UI, so the search field can be dropped into the same row later without restyling it.
++- `open` is read as the exact string `"true"` (`url.searchParams.get('open') === 'true'`), matching how the browser's `URLSearchParams` serializes a checked checkbox; anything else (missing, `"false"`, etc.) is treated as "off".
++
++## Tests changed
++None.
++
++## Open gaps
++- **G1** (docs/architecture/.gaps/002-find-a-task.md): the design's match rule (`title.startsWith(q)`, case-sensitive) contradicts the requirements (R4, S5.2, S5.3: case-insensitive, anywhere in the title), with no ADR covering the deviation. Blocks S5.1, S5.2, S5.3, S5.4, S5.5, R4, and S6.2. Everything else in the design's build order (S6, R5, the compose stack) is built and self-validated.
++
++## Validator findings
++### Round 1
++| Finding | Classification | Answer | Evidence |
++|---|---|---|---|
++| – | – | No findings yet (first round) | |
+diff --git a/public/app.js b/public/app.js
+index 1e066e6..5818961 100644
+--- a/public/app.js
++++ b/public/app.js
+@@ -3,6 +3,7 @@ const empty = document.getElementById('empty');
+ const errorBox = document.getElementById('error');
+ const form = document.getElementById('new-task');
+ const titleInput = document.getElementById('title');
++const openOnly = document.getElementById('open-only');
+ 
+ function showError(message) {
+   errorBox.textContent = message;
+@@ -38,7 +39,9 @@ function render(tasks) {
+ }
+ 
+ async function load() {
+-  const response = await fetch('/api/tasks');
++  const params = new URLSearchParams();
++  if (openOnly.checked) params.set('open', 'true');
++  const response = await fetch(`/api/tasks?${params}`);
+   const body = await response.json();
+   render(body.tasks);
+ }
+@@ -74,4 +77,6 @@ form.addEventListener('submit', async (event) => {
+   await load();
+ });
+ 
++openOnly.addEventListener('change', load);
++
+ load();
+diff --git a/public/index.html b/public/index.html
+index d4c88f8..5322f81 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -14,6 +14,9 @@
+         <button type="submit">Add task</button>
+       </form>
+       <p id="error" class="error" hidden></p>
++      <div class="filters">
++        <label><input type="checkbox" id="open-only" /> Open only</label>
++      </div>
+       <ul id="tasks"></ul>
+       <p id="empty" class="empty" hidden>No tasks yet.</p>
+     </main>
+diff --git a/public/style.css b/public/style.css
+index cb48c35..61cef07 100644
+--- a/public/style.css
++++ b/public/style.css
+@@ -50,10 +50,29 @@ button {
+   color: #fff;
+ }
+ 
++.filters {
++  display: flex;
++  align-items: center;
++  min-height: 44px;
++  margin-top: 1rem;
++  font-size: 18px;
++}
++
++.filters label {
++  display: flex;
++  align-items: center;
++  gap: 0.4rem;
++}
++
++.filters input[type="checkbox"] {
++  width: 24px;
++  height: 24px;
++}
++
+ ul {
+   list-style: none;
+   padding: 0;
+-  margin: 1.5rem 0 0;
++  margin: 0.5rem 0 0;
+ }
+ 
+ li {
+diff --git a/src/app.js b/src/app.js
+index 4e2e0c4..3fa5964 100644
+--- a/src/app.js
++++ b/src/app.js
+@@ -1,6 +1,7 @@
+ import { readFileSync, existsSync } from 'node:fs';
+ import { extname, join, normalize } from 'node:path';
+ import { validateTitle } from './validation.js';
++import { filterTasks } from './search.js';
+ 
+ const CONTENT_TYPES = {
+   '.html': 'text/html; charset=utf-8',
+@@ -37,7 +38,11 @@ export function createApp({ store, publicDir }) {
+     }
+ 
+     if (path === '/api/tasks' && req.method === 'GET') {
+-      return send(res, 200, { tasks: store.list() });
++      // S5 (the `q` search term) is blocked by a design gap: see
++      // docs/architecture/.gaps/002-find-a-task.md (G1). Only S6 (`open`) is
++      // implemented so far.
++      const open = url.searchParams.get('open') === 'true';
++      return send(res, 200, { tasks: filterTasks(store.list(), { open }) });
+     }
+ 
+     if (path === '/api/tasks' && req.method === 'POST') {
+diff --git a/src/search.js b/src/search.js
+new file mode 100644
+index 0000000..ab66c85
+--- /dev/null
++++ b/src/search.js
+@@ -0,0 +1,8 @@
++// S5 (matching a search term against a title) is blocked by a design gap:
++// see docs/architecture/.gaps/002-find-a-task.md (G1). Only the "open only"
++// filter (S6) is implemented here until the gap is resolved.
++
++// S6.1/S6.3: keep only the tasks that are not done when `open` is set.
++export function filterTasks(tasks, { open } = {}) {
++  return open ? tasks.filter((task) => !task.done) : tasks;
++}
+diff --git a/test/search.test.js b/test/search.test.js
+new file mode 100644
+index 0000000..9e6e882
+--- /dev/null
++++ b/test/search.test.js
+@@ -0,0 +1,24 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { filterTasks } from '../src/search.js';
++
++const tasks = [
++  { id: 1, title: 'Buy milk', done: false },
++  { id: 2, title: 'Order milk crate', done: true },
++  { id: 3, title: 'Milk bill', done: false },
++];
++
++test('returns every task when open is not requested', () => {
++  assert.deepEqual(filterTasks(tasks, {}), tasks);
++  assert.deepEqual(filterTasks(tasks), tasks);
++});
++
++test('S6.1 keeps only the tasks that are not done when open is on', () => {
++  const result = filterTasks(tasks, { open: true });
++  assert.deepEqual(result.map((t) => t.id), [1, 3]);
++});
++
++test('S6.3 shows done tasks again when open is off', () => {
++  const result = filterTasks(tasks, { open: false });
++  assert.deepEqual(result.map((t) => t.id), [1, 2, 3]);
++});

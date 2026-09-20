@@ -1,0 +1,11 @@
+Validator findings for 002 (docs/validation/002-due-dates.md) worked through:
+
+- **F1 (blocking, bug)** — fixed. `dueState()` in `src/dates.js` checked `dueDate <= reference` before the equality check, so a task due today fell into `overdue` instead of `due-today`. Changed to a strict `<`. The unit test that had asserted the buggy behaviour was wrong per R4/design and is now corrected; the acceptance test for S6.2 and the finding's exact curl repro both pass, and I re-verified it live in a browser at phone width.
+- **F2 (blocking per validator)** — not a defect. It asks for a notification/e-mail when a task goes overdue; requirements 002 explicitly lists "Reminders, notifications or e-mails about tasks that are due or late" as out of scope. Not built. If the team actually needs this, it's a new requirement for the groomer, not a fix to 002.
+- **F3 (blocking, alleged data loss on restart)** — not reproducible. Reviewed `src/store.js` (every write is synchronous and inline, no debounce/async gap that could race). Tried three real repros against the Docker stack (concurrent creates + restart, concurrent creates racing an immediate restart over 5 rounds, and the same racing a SIGKILL): due dates always survived intact; under SIGKILL a few in-flight requests simply never completed (expected), but no task ever came back with a lost `dueDate`. Documented in the report; will need a sharper repro from the validator if it recurs.
+
+Self-validation round 2, full: unit tests 20/20, acceptance regression 001+11 and 002+13 all green (project `tb-i1-e3-ws`, port 8103), clean image build, stack healthy in 6s, restart-survival checked (once gracefully, plus the F3 repros above), memory 18.5/256 MiB, UI walked through in a real browser at 375x812 confirming QE5/QE6/QE7 and the F1 fix. Own diff review: 2 files changed (`src/dates.js`, `test/dates.test.js`), no debug code or scope creep. Docker stack torn down (`down -v`).
+
+Commits: `b3c2606` (fix F1 + test), `1c52e25` (round-2 implementation report answering all three findings). Branch `feature/002-due-dates`, on top of the validated commit `c277afe`. Requirements/product status lines unchanged (already "Implemented – ready for validation" / "Implemented").
+
+Ready for re-validation.

@@ -1,0 +1,147 @@
+:root {
+  --bg: #f7f7f5;
+  --fg: #1c1c1a;
+  --accent: #2f6f4f;
+  --danger: #a12a2a;
+  --muted: #6b6b66;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 18px;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+h1 {
+  font-size: 1.8rem;
+}
+
+form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+input[type="text"] {
+  flex: 1;
+  /* Without this a text input refuses to shrink below its default size, which
+     pushes the add form onto a second line on a phone (QE1/QE7). */
+  min-width: 0;
+  font-size: 18px;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #ccccc4;
+  border-radius: 6px;
+}
+
+form input[type="date"] {
+  /* Kept small so the form stays one row even with the extra input (QE7). */
+  flex: 0 1 9.5rem;
+  min-width: 0;
+  font-size: 16px;
+  padding: 0.6rem 0.4rem;
+  border: 1px solid #ccccc4;
+  border-radius: 6px;
+}
+
+button {
+  font-size: 18px;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid #e2e2dc;
+}
+
+li .title {
+  flex: 1 1 auto;
+  min-width: 8rem;
+  overflow-wrap: break-word;
+  /* QE5: readable from a step away on a phone. */
+  font-size: 20px;
+}
+
+li.done .title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* S6.1-S6.4/QE5/QE6: the word carries the meaning, the colour only
+   reinforces it, and both are at least 20px on a phone. */
+li .due {
+  flex: 0 0 auto;
+  font-size: 20px;
+}
+
+li .due:empty {
+  display: none;
+}
+
+li .due.overdue {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+li .due.due-today {
+  color: var(--fg);
+  font-weight: bold;
+}
+
+li .due.upcoming {
+  color: var(--muted);
+}
+
+li input[type="date"].due-input {
+  flex: 0 0 auto;
+  width: 9.5rem;
+  font-size: 14px;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid #ccccc4;
+  border-radius: 6px;
+}
+
+li input[type="checkbox"] {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+}
+
+li button {
+  flex: 0 0 auto;
+  background: none;
+  color: var(--danger);
+  min-height: 44px;
+  padding: 0 0.5rem;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 18px;
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 18px;
+}

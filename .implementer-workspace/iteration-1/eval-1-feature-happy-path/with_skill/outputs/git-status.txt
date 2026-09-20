@@ -1,0 +1,10 @@
+ebc2b1c docs(002): hand over 002 for validation
+8bdbd3a fix(002): let task rows wrap on narrow phones
+9f2f1d1 feat(002): add due-date UI and acceptance tests
+0004d5a feat(002): add dueDate to the API and order the list by due day
+b4998ce feat(002): add dates module for due-date rules R4/R5
+d276ada docs(002): design for due dates and overdue tasks
+e23b849 feat(001): task list MVP
+---status---
+---branch---
+feat/002-due-dates

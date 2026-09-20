@@ -1,0 +1,10 @@
+235a1d2 docs(002): implementation report, mark 002 ready for validation
+eb42194 fix(002): stop the due-date marking from crushing the title on a phone
+fc624c2 feat(002): UI for due dates and overdue marking
+1bf7403 feat(002): API dueDate field, dueState on GET, S6.5 list order
+769ef51 feat(002): date rules for due dates (dates.js)
+d276ada docs(002): design for due dates and overdue tasks
+e23b849 feat(001): task list MVP
+
+
+feat/002-due-dates

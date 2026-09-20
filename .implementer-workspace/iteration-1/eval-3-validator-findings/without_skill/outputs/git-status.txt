@@ -1,0 +1,7 @@
+303dd58 fix(002): address validator findings F1 and F3, reject F2 as scope conflict
+c277afe test(002): acceptance tests and validation round 1
+da811ae feat(002): due dates and overdue tasks
+4b3f75b feat(001): task list MVP
+---
+---
+feature/002-due-dates

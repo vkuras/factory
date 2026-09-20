@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Taskboard</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Taskboard</h1>
+      <form id="new-task">
+        <input id="title" name="title" type="text" placeholder="What needs doing?" autocomplete="off" />
+        <button type="submit">Add task</button>
+      </form>
+      <p id="error" class="error" hidden></p>
+      <div id="search-bar">
+        <input id="search" name="search" type="search" placeholder="Search tasks" autocomplete="off" aria-label="Search tasks" />
+        <label id="open-only-label">
+          <input id="open-only" type="checkbox" />
+          Open only
+        </label>
+      </div>
+      <ul id="tasks"></ul>
+      <p id="empty" class="empty" hidden>No tasks yet.</p>
+      <p id="no-match" class="empty" hidden></p>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

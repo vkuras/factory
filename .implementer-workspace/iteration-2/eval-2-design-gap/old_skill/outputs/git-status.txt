@@ -1,0 +1,7 @@
+e17ecfc docs(002): implementation report, hand back needs-architect
+7513900 feat(002): open-only filter (S6), flag design gap for text search (G1)
+e107de5 docs(002): design for find a task
+4e2ae96 feat(001): task list MVP
+---status---
+---branch---
+feat/002-find-a-task

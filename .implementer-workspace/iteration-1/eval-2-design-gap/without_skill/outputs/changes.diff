@@ -1,0 +1,489 @@
+diff --git a/docs/architecture/002-find-a-task.md b/docs/architecture/002-find-a-task.md
+index 0cfcc86..f933c1f 100644
+--- a/docs/architecture/002-find-a-task.md
++++ b/docs/architecture/002-find-a-task.md
+@@ -1,7 +1,7 @@
+ # 002 – Find a task: design
+ 
+ - Requirements: docs/requirements/002-find-a-task.md
+-- Status: Ready for implementation
++- Status: Implemented (see docs/implementation/002-find-a-task.md — the match rule below conflicts with the requirements and was implemented per the requirements instead; this design needs reconciling)
+ - Date: 2026-09-11
+ 
+ ## Summary
+diff --git a/docs/implementation/002-find-a-task.md b/docs/implementation/002-find-a-task.md
+new file mode 100644
+index 0000000..ddf4da2
+--- /dev/null
++++ b/docs/implementation/002-find-a-task.md
+@@ -0,0 +1,123 @@
++# 002 – Find a task: implementation
++
++- Requirements: docs/requirements/002-find-a-task.md
++- Design: docs/architecture/002-find-a-task.md
++- Status: Ready for validation
++- Date: 2026-09-20
++- Round: 1
++
++## What was built
++1. **Search/filter**: `src/search.js` — `matchesQuery()` and `filterTasks()`.
++2. **API**: `GET /api/tasks` in `src/app.js` now reads `q` and `open` from the
++   query string and filters before answering, per ADR-0003.
++3. **UI**: a search field and an "open only" checkbox added above the list in
++   `public/index.html`/`public/style.css`; `public/app.js` fires a request on
++   every keystroke and checkbox change, and shows `No task matches "<text>".`
++   instead of the 001 empty state when a filter yields nothing (S5.5).
++
++## Design gap found during implementation
++The design's Decisions and Interfaces sections specify the match as a
++**case-sensitive prefix** match (`title.startsWith(q)`), justified by ADR-0003
++and a performance argument. That directly contradicts the requirements it is
++meant to satisfy:
++- R4: "A search matches when the typed text occurs anywhere in the task's
++  title, comparing without regard to upper and lower case."
++- S5.2: "Buy Milk" must be found by searching "milk" (case-insensitive).
++- S5.3: "Buy milk" must be found by searching "milk" even though the text is
++  not at the start of the title.
++
++A prefix/case-sensitive match would fail all three of these acceptance
++criteria (e.g. it would not find "Buy Milk" when searching "milk", nor "Order
++milk crate" when searching "milk" — the stakeholder's own example in the
++requirements' Notes and Appendix L2/L3).
++
++There is no human to defer to in this run, so I implemented `matchesQuery()`
++per the requirements (case-insensitive substring — `title.toLowerCase().
++includes(query.toLowerCase())`) rather than per the design's literal text,
++since the acceptance criteria are what the feature is judged against and the
++prefix rule would ship a feature that fails its own spec. This is called out
++in `src/search.js` and flagged here for architecture to reconcile: ADR-0003's
++"Decision" text and the design's "Interfaces"/"Decisions" sections should be
++corrected to describe a case-insensitive substring match, or the requirements
++should be revisited if a prefix match was actually intended for a reason not
++captured in R4/S5.2/S5.3. `open`/`q` as request query parameters, "filter
++inside GET /api/tasks" (ADR-0003's actual decision, option B), and the
++overall no-index/in-memory approach are unaffected and were implemented as
++designed.
++
++## How to run
++```
++cp .env.example .env
++docker compose up -d
++```
++The UI is at http://localhost:8080 (change `PORT` in `.env`).
++
++## Traceability
++| Requirement | Implemented in | Test | Result |
++|---|---|---|---|
++| S5.1 | src/search.js matchesQuery(), src/app.js `q` | tests/acceptance/002-find-a-task/search.test.js::"S5.1/S5.3 finds a task whose title contains the search text anywhere"; test/search.test.js | Passed |
++| S5.2 | src/search.js matchesQuery() (case-insensitive) | ...::"S5.2/R4 matching ignores case"; test/search.test.js | Passed |
++| S5.3 | src/search.js matchesQuery() (substring, not prefix) | ...::"S5.1/S5.3 finds a task whose title contains the search text anywhere"; test/search.test.js | Passed |
++| S5.4 | empty `q` selects everything | ...::"S5.4 clearing the search text shows the whole list again"; test/search.test.js | Passed |
++| S5.5 | public/app.js no-match message | ...::"S5.5 an unmatched search returns no tasks (the UI shows the no-match message)"; manual check 1 | Passed |
++| S6.1 | src/search.js filterTasks() `open` | ...::"S6.1 \"open only\" hides done tasks"; test/search.test.js | Passed |
++| S6.2 | src/search.js filterTasks() combined | ...::"S6.2 \"open only\" combines with the search text"; test/search.test.js | Passed |
++| S6.3 | src/app.js `open` param | ...::"S6.3 switching \"open only\" off shows done tasks again"; test/search.test.js | Passed |
++| R4 | src/search.js matchesQuery() — implemented per requirements, see "Design gap found during implementation" | test/search.test.js | Passed |
++| R5 | query lives in request/response only, store untouched | – | Passed by construction |
++| QE5 | in-memory `Array.prototype.filter`, no index, no extra request | Manual check 2 | Passed: sub-millisecond at current data sizes |
++| QE6 | no new container, no new stored data | Self-validation 3 | Passed: 18.75 MiB / 256 MiB |
++| QE7 | one row above the list, no search page | Manual check 1 | Passed |
++| Out of scope: fuzzy matching | Not built | – | – |
++| Out of scope: searching other fields | Only `title` compared | – | – |
++| Out of scope: sorting options | `store.list()` order unchanged | – | Passed by construction |
++
++## Self-validation
++| # | Check | Command | Result | Evidence |
++|---|---|---|---|---|
++| 1 | Syntax | `node --check src/*.js public/*.js` | Passed | |
++| 2 | Unit tests | `npm test` | Passed: 18 passed, 0 failed | |
++| 3 | Image builds | `PORT=8112 docker compose -p tb-i1-e2-ns up -d --build` | Passed | |
++| 4 | Stack starts | same as above | Passed: app healthy | |
++| 5 | Acceptance tests (regression + new) | `BASE_URL=http://localhost:8112 tests/acceptance/run.sh` | Passed: 11 (001) + 8 (002), 0 failed | |
++| 6 | QE6 memory | `docker stats --no-stream` | Passed: 18.75 MiB / 256 MiB | |
++| 7 | Manual: UI shows search field and checkbox above the list, 001 empty state untouched | Screenshot in Browser pane at http://localhost:8112 | Passed | |
++| 8 | Manual: end-to-end search/filter via curl (add "Buy Milk", "Order milk crate", "Call the plumber"; `?q=MILK` returns the two milk tasks; `?q=zzz` returns none; `?open=true` filters done tasks) | `curl` against the running stack | Passed | |
++
++### Not run
++A dedicated load test at 500 tasks / 10 concurrent users (QE5) was not run; at
++this data size (a handful of tasks) the in-memory filter is sub-millisecond,
++and the design's own reasoning (an array scan over 500 short strings costs
++microseconds) is not disputed by this implementation — only the match
++predicate's semantics changed, not its cost.
++
++## Implementation choices
++- `matchesQuery()` implements a case-insensitive substring match, not the
++  design's case-sensitive prefix match — see "Design gap found during
++  implementation".
++- The "no match" message reads `No task matches "<text>".` when a search
++  text is present (per the design's UI section and S5.5), or the generic
++  `No task matches.` when only "open only" narrows an otherwise-empty result
++  with no search text — the design and requirements do not specify wording
++  for that combination.
++- The browser fires one request per `input`/`change` event, no debounce, per
++  the design's explicit choice to leave debouncing out.
++
++## Tests changed
++None removed or altered; `test/search.test.js` and
++`tests/acceptance/002-find-a-task/search.test.js` added.
++
++## Open gaps
++- **Design gap (see above)**: docs/architecture/002-find-a-task.md's
++  Decisions and Interfaces sections, and ADR-0003, describe a case-sensitive
++  prefix match that contradicts R4/S5.2/S5.3. The code and its tests follow
++  the requirements. Architecture should update the design text (and confirm
++  ADR-0003's consequences still hold for a substring scan rather than a
++  prefix scan — it does, since both are O(tasks) at this size) so the design
++  and the shipped behaviour agree.
++
++## Validator findings
++### Round 1
++| Finding | Classification | Answer | Evidence |
++|---|---|---|---|
++| – | – | Not yet validated | |
+diff --git a/docs/requirements/002-find-a-task.md b/docs/requirements/002-find-a-task.md
+index 7c3f9ca..85c1875 100644
+--- a/docs/requirements/002-find-a-task.md
++++ b/docs/requirements/002-find-a-task.md
+@@ -1,7 +1,7 @@
+ # 002 – Find a task
+ 
+ - Type: Feature
+-- Status: Designed – ready for implementation
++- Status: Implemented – ready for validation
+ - Date: 2026-09-08
+ - Product context: docs/product.md
+ 
+diff --git a/public/app.js b/public/app.js
+index 1e066e6..689a2c7 100644
+--- a/public/app.js
++++ b/public/app.js
+@@ -1,17 +1,31 @@
+ const list = document.getElementById('tasks');
+ const empty = document.getElementById('empty');
++const noMatch = document.getElementById('no-match');
+ const errorBox = document.getElementById('error');
+ const form = document.getElementById('new-task');
+ const titleInput = document.getElementById('title');
++const searchInput = document.getElementById('search');
++const openOnlyInput = document.getElementById('open-only');
+ 
+ function showError(message) {
+   errorBox.textContent = message;
+   errorBox.hidden = !message;
+ }
+ 
+-function render(tasks) {
++// S5.5: an empty result while filtering gets its own message instead of the
++// 001 "No tasks yet." empty state.
++function isFiltering() {
++  return searchInput.value !== '' || openOnlyInput.checked;
++}
++
++function render(tasks, query) {
+   list.replaceChildren();
+-  empty.hidden = tasks.length > 0;
++  const filtering = isFiltering();
++  empty.hidden = tasks.length > 0 || filtering;
++  noMatch.hidden = tasks.length > 0 || !filtering;
++  if (noMatch.hidden === false) {
++    noMatch.textContent = query ? `No task matches "${query}".` : 'No task matches.';
++  }
+   for (const task of tasks) {
+     const li = document.createElement('li');
+     li.className = task.done ? 'done' : '';
+@@ -38,9 +52,13 @@ function render(tasks) {
+ }
+ 
+ async function load() {
+-  const response = await fetch('/api/tasks');
++  const params = new URLSearchParams();
++  if (searchInput.value) params.set('q', searchInput.value);
++  if (openOnlyInput.checked) params.set('open', 'true');
++  const query = params.toString();
++  const response = await fetch(`/api/tasks${query ? `?${query}` : ''}`);
+   const body = await response.json();
+-  render(body.tasks);
++  render(body.tasks, searchInput.value);
+ }
+ 
+ async function toggle(task, done) {
+@@ -74,4 +92,9 @@ form.addEventListener('submit', async (event) => {
+   await load();
+ });
+ 
++// S5.1/S5.4: a request and re-render on every keystroke, no button.
++searchInput.addEventListener('input', load);
++// S6.1/S6.3: toggling "open only" re-filters immediately.
++openOnlyInput.addEventListener('change', load);
++
+ load();
+diff --git a/public/index.html b/public/index.html
+index d4c88f8..2fdc4ca 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -14,8 +14,16 @@
+         <button type="submit">Add task</button>
+       </form>
+       <p id="error" class="error" hidden></p>
++      <div id="search-bar">
++        <input id="search" name="search" type="search" placeholder="Search tasks" autocomplete="off" aria-label="Search tasks" />
++        <label id="open-only-label">
++          <input id="open-only" type="checkbox" />
++          Open only
++        </label>
++      </div>
+       <ul id="tasks"></ul>
+       <p id="empty" class="empty" hidden>No tasks yet.</p>
++      <p id="no-match" class="empty" hidden></p>
+     </main>
+     <script src="/app.js"></script>
+   </body>
+diff --git a/public/style.css b/public/style.css
+index cb48c35..ea74622 100644
+--- a/public/style.css
++++ b/public/style.css
+@@ -50,6 +50,38 @@ button {
+   color: #fff;
+ }
+ 
++#search-bar {
++  display: flex;
++  align-items: center;
++  gap: 0.75rem;
++  margin-top: 1.5rem;
++}
++
++#search-bar input[type="search"] {
++  flex: 1;
++  min-width: 0;
++  font-size: 18px;
++  min-height: 44px;
++  padding: 0.4rem 0.7rem;
++  border: 1px solid #ccccc4;
++  border-radius: 6px;
++}
++
++#open-only-label {
++  display: flex;
++  align-items: center;
++  gap: 0.4rem;
++  flex: 0 0 auto;
++  font-size: 18px;
++  min-height: 44px;
++  white-space: nowrap;
++}
++
++#open-only-label input[type="checkbox"] {
++  width: 24px;
++  height: 24px;
++}
++
+ ul {
+   list-style: none;
+   padding: 0;
+diff --git a/src/app.js b/src/app.js
+index 4e2e0c4..9e04865 100644
+--- a/src/app.js
++++ b/src/app.js
+@@ -1,6 +1,7 @@
+ import { readFileSync, existsSync } from 'node:fs';
+ import { extname, join, normalize } from 'node:path';
+ import { validateTitle } from './validation.js';
++import { filterTasks } from './search.js';
+ 
+ const CONTENT_TYPES = {
+   '.html': 'text/html; charset=utf-8',
+@@ -37,7 +38,10 @@ export function createApp({ store, publicDir }) {
+     }
+ 
+     if (path === '/api/tasks' && req.method === 'GET') {
+-      return send(res, 200, { tasks: store.list() });
++      const q = url.searchParams.get('q') ?? '';
++      const open = url.searchParams.get('open') === 'true';
++      const tasks = filterTasks(store.list(), { q, open });
++      return send(res, 200, { tasks, query: q });
+     }
+ 
+     if (path === '/api/tasks' && req.method === 'POST') {
+diff --git a/src/search.js b/src/search.js
+new file mode 100644
+index 0000000..51d6130
+--- /dev/null
++++ b/src/search.js
+@@ -0,0 +1,28 @@
++// 002 - Find a task.
++//
++// Note on the match rule: the design (docs/architecture/002-find-a-task.md)
++// describes a case-sensitive prefix match (`title.startsWith(q)`). That
++// contradicts the requirements it is meant to implement:
++//   - R4: "A search matches when the typed text occurs anywhere in the
++//     task's title, comparing without regard to upper and lower case."
++//   - S5.2 / S5.3: "milk" must match "Buy Milk" (case) and "Order milk
++//     crate" (text not at the start).
++// The acceptance criteria are the contract a user-facing feature is judged
++// against, so this implementation follows the requirements (substring,
++// case-insensitive) rather than the design's prefix/case-sensitive text.
++// This should go back to architecture to reconcile ADR-0003 and the
++// Interfaces section with R4/S5.2/S5.3.
++
++// R4: matches when `query` occurs anywhere in `title`, ignoring case.
++export function matchesQuery(title, query) {
++  if (!query) return true;
++  return title.toLowerCase().includes(query.toLowerCase());
++}
++
++// S6: filters by search text and, optionally, to open (not done) tasks only.
++export function filterTasks(tasks, { q, open } = {}) {
++  return tasks.filter((task) => {
++    if (open && task.done) return false;
++    return matchesQuery(task.title, q);
++  });
++}
+diff --git a/test/search.test.js b/test/search.test.js
+new file mode 100644
+index 0000000..4015ec8
+--- /dev/null
++++ b/test/search.test.js
+@@ -0,0 +1,61 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { matchesQuery, filterTasks } from '../src/search.js';
++
++test('S5.4 an empty query matches everything', () => {
++  assert.equal(matchesQuery('Buy Milk', ''), true);
++});
++
++test('S5.1/S5.3 matches text anywhere in the title, not only the start', () => {
++  assert.equal(matchesQuery('Order milk crate', 'milk'), true);
++});
++
++test('R4/S5.2 matching ignores case', () => {
++  assert.equal(matchesQuery('Buy Milk', 'MILK'), true);
++  assert.equal(matchesQuery('MILK BILL', 'milk'), true);
++});
++
++test('R4 does not match text the title does not contain', () => {
++  assert.equal(matchesQuery('Buy bread', 'milk'), false);
++});
++
++test('filterTasks applies the search text', () => {
++  const tasks = [{ title: 'Buy Milk' }, { title: 'Call the plumber' }];
++  assert.deepEqual(
++    filterTasks(tasks, { q: 'milk' }).map((t) => t.title),
++    ['Buy Milk'],
++  );
++});
++
++test('S6.1 filterTasks applies "open only"', () => {
++  const tasks = [
++    { title: 'open task', done: false },
++    { title: 'done task', done: true },
++  ];
++  assert.deepEqual(
++    filterTasks(tasks, { open: true }).map((t) => t.title),
++    ['open task'],
++  );
++});
++
++test('S6.2 combines the search text with "open only"', () => {
++  const tasks = [
++    { title: 'Buy Milk', done: false },
++    { title: 'Buy Milk', done: true },
++    { title: 'Call the plumber', done: false },
++  ];
++  const result = filterTasks(tasks, { q: 'milk', open: true });
++  assert.equal(result.length, 1);
++  assert.equal(result[0].done, false);
++});
++
++test('S6.3 an "open only" of false keeps done tasks', () => {
++  const tasks = [
++    { title: 'open task', done: false },
++    { title: 'done task', done: true },
++  ];
++  assert.deepEqual(
++    filterTasks(tasks, { open: false }).map((t) => t.title),
++    ['open task', 'done task'],
++  );
++});
+diff --git a/tests/acceptance/002-find-a-task/search.test.js b/tests/acceptance/002-find-a-task/search.test.js
+new file mode 100644
+index 0000000..e92af00
+--- /dev/null
++++ b/tests/acceptance/002-find-a-task/search.test.js
+@@ -0,0 +1,75 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { api, withTask, createTask, deleteTask } from '../helpers.js';
++
++test('S5.1/S5.3 finds a task whose title contains the search text anywhere', async () => {
++  await withTask({ title: 'Order milk crate' }, async (task) => {
++    const { body } = await api('GET', '/api/tasks?q=milk');
++    assert.ok(body.tasks.some((t) => t.id === task.id));
++  });
++});
++
++test('S5.2/R4 matching ignores case', async () => {
++  await withTask({ title: 'Buy Milk' }, async (task) => {
++    const { body } = await api('GET', '/api/tasks?q=MILK');
++    assert.ok(body.tasks.some((t) => t.id === task.id));
++  });
++});
++
++test('S5.4 clearing the search text shows the whole list again', async () => {
++  await withTask({ title: 'Buy Milk' }, async (task) => {
++    await withTask({ title: 'Call the plumber' }, async (other) => {
++      const { body } = await api('GET', '/api/tasks?q=');
++      assert.ok(body.tasks.some((t) => t.id === task.id));
++      assert.ok(body.tasks.some((t) => t.id === other.id));
++    });
++  });
++});
++
++test('S5.5 an unmatched search returns no tasks (the UI shows the no-match message)', async () => {
++  const { body } = await api('GET', '/api/tasks?q=zzz-no-such-task-zzz');
++  assert.deepEqual(body.tasks, []);
++});
++
++test('S6.1 "open only" hides done tasks', async () => {
++  const task = await createTask({ title: 'to be finished' });
++  try {
++    await api('PATCH', `/api/tasks/${task.id}`, { done: true });
++    const { body } = await api('GET', '/api/tasks?open=true');
++    assert.ok(!body.tasks.some((t) => t.id === task.id));
++  } finally {
++    await deleteTask(task.id);
++  }
++});
++
++test('S6.2 "open only" combines with the search text', async () => {
++  const doneTask = await createTask({ title: 'Buy Milk done' });
++  await withTask({ title: 'Buy Milk open' }, async (openTask) => {
++    await api('PATCH', `/api/tasks/${doneTask.id}`, { done: true });
++    try {
++      const { body } = await api('GET', '/api/tasks?q=milk&open=true');
++      assert.ok(body.tasks.some((t) => t.id === openTask.id));
++      assert.ok(!body.tasks.some((t) => t.id === doneTask.id));
++    } finally {
++      await deleteTask(doneTask.id);
++    }
++  });
++});
++
++test('S6.3 switching "open only" off shows done tasks again', async () => {
++  const task = await createTask({ title: 'finished again' });
++  try {
++    await api('PATCH', `/api/tasks/${task.id}`, { done: true });
++    const { body } = await api('GET', '/api/tasks');
++    assert.ok(body.tasks.some((t) => t.id === task.id));
++  } finally {
++    await deleteTask(task.id);
++  }
++});
++
++test('QE7 the search field and list live on the same page', async () => {
++  const response = await fetch(`${process.env.BASE_URL ?? 'http://localhost:8080'}/`);
++  const html = await response.text();
++  assert.match(html, /id="search"/);
++  assert.match(html, /id="open-only"/);
++});

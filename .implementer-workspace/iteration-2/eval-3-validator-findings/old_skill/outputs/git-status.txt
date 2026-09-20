@@ -1,0 +1,7 @@
+b8ca698 fix(002): due-today marked overdue, and harden persistence (F1, F3)
+c277afe test(002): acceptance tests and validation round 1
+da811ae feat(002): due dates and overdue tasks
+4b3f75b feat(001): task list MVP
+---
+---
+feature/002-due-dates

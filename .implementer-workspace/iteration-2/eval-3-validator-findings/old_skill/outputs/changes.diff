@@ -1,0 +1,136 @@
+diff --git a/docs/implementation/002-due-dates.md b/docs/implementation/002-due-dates.md
+index caaca7a..e3299c0 100644
+--- a/docs/implementation/002-due-dates.md
++++ b/docs/implementation/002-due-dates.md
+@@ -3,9 +3,9 @@
+ - Requirements: docs/requirements/002-due-dates.md
+ - Design: docs/architecture/002-due-dates.md
+ - Status: Ready for validation
+-- Branch: feature/002-due-dates, commits 9c1d2e3..7b8a9f0
+-- Date: 2026-09-18
+-- Round: 1
++- Branch: feature/002-due-dates, commits 9c1d2e3..7b8a9f0 (round 1), da811ae..HEAD (round 2)
++- Date: 2026-09-20
++- Round: 2
+ 
+ ## What was built
+ 1. **Dates module**: `src/dates.js` with `today()` in Europe/Berlin, `validateDueDate()` (R5) and `dueState()` (R4). The comparison in `dueState()` is strict, so a task whose day is today is `due-today` and not `overdue`. Unit tests in `test/dates.test.js` cover both sides of that boundary.
+@@ -13,6 +13,10 @@
+ 3. **List order**: `store.list()` keeps the open/done grouping of 001 S3.2 and orders by due date inside each group, undated tasks last (S6.5).
+ 4. **UI**: a native date input in the add form and a marking per row ("Overdue 2026-09-18", "Due today 2026-09-19", or the plain day), red and bold when overdue. Title and marking are 20 px on a phone viewport (QE5).
+ 
++### Round 2 – validator findings
++5. **F1 fix**: `dueState()` compared with `<=` before checking equality, so a task due today fell into the `overdue` branch before the `due-today` branch was ever reached. Changed to a strict `<` (see `src/dates.js`). The existing unit test that asserted the wrong behaviour ("R4 marks a task due today as overdue") was itself wrong per R4/S6.2 and is fixed to expect `due-today`; the acceptance test `S6.2` (already written by the validator) now passes.
++6. **F3 hardening**: `TaskStore.flush()` now writes to `tasks.json.tmp` and `renameSync`s it into place, instead of writing `tasks.json` directly. A rename on the same filesystem is atomic, so a write that is cut off (a hard kill, a full disk) can no longer leave `tasks.json` half written or a field reverted. See "Validator findings" below for why this is a hardening, not a confirmed fix: the reported symptom could not be reproduced.
++
+ ## How to run
+ ```
+ cp .env.example .env
+@@ -32,7 +36,7 @@ curl -H 'X-Today: 2026-09-19' http://localhost:8080/api/tasks
+ | S5.4 | src/dates.js validateDueDate | test/dates.test.js (2 tests) | Passed |
+ | S5.5 | src/app.js POST | Self-validation 8 | Passed |
+ | S6.1 | src/dates.js dueState | test/dates.test.js::"R4 marks a task due yesterday as overdue" | Passed |
+-| S6.2 | src/dates.js dueState | test/dates.test.js::"R4 marks a task due today as due today, not overdue" | Passed |
++| S6.2 | src/dates.js dueState | test/dates.test.js::"R4 marks a task due today as due-today, not overdue"; tests/acceptance/002-due-dates::"S6.2 marks a task due today as due today and not as overdue" | Passed |
+ | S6.3 | src/dates.js dueState | test/dates.test.js::"R4 marks a task due tomorrow as upcoming" | Passed |
+ | S6.4 | src/dates.js dueState, public/style.css .due.none | test/dates.test.js::"R4 marks a task without a due date as none" | Passed |
+ | S6.5 | src/store.js list() | test/store.test.js (3 tests, including the done/open grouping) | Passed |
+@@ -62,6 +66,22 @@ curl -H 'X-Today: 2026-09-19' http://localhost:8080/api/tasks
+ | 11 | R2 restart | `docker compose down && docker compose up -d` | Passed: due dates survived | |
+ | 12 | QE2 memory | `docker stats --no-stream` | Passed: 43 MiB / 256 MiB | |
+ 
++### Round 2 (re-run in full, per finding fixes)
++| # | Check | Command | Result | Evidence |
++|---|---|---|---|---|
++| 13 | Syntax | `node --check src/*.js public/app.js` | Passed | |
++| 14 | Unit tests | `npm test` | Passed: 20 passed, 0 failed, 0 skipped (before: 0 skipped) | |
++| 15 | Image builds | `PORT=8133 docker compose -p tb-i2-e3-os build` | Passed | |
++| 16 | Stack starts | `PORT=8133 docker compose -p tb-i2-e3-os up -d` | Passed: app healthy after 1 s | |
++| 17 | Acceptance regression, 001 + 002 | `BASE_URL=http://localhost:8133 tests/acceptance/run.sh` | Passed: 24 passed (11 + 13), 0 failed | |
++| 18 | F1 repro from the finding | `curl -X POST -d '{"title":"Due today","dueDate":"2026-09-19"}'` then `curl -H 'X-Today: 2026-09-19' .../api/tasks` | Passed | `dueState` is now `due-today`, was `overdue` |
++| 19 | F3 stress: rapid concurrent creates + `docker compose restart` | 20 rounds x 5 concurrent `POST` with a due date, `restart` after every round, `dueDate` compared before/after | Passed: 100/100 tasks kept their exact `dueDate` across 20 restarts | |
++| 20 | F3 stress: rapid concurrent creates + `docker kill` (hardest case, no grace period) | 8 rounds x 8 concurrent `POST`, `docker kill` fired while requests were in flight, `up -d` after each | Passed: every task that got a `201` before the kill (8 of 64 attempted; the rest were refused mid-flight, none half-written) kept its `dueDate` intact, and `tasks.json` stayed valid JSON throughout | |
++| 21 | R2 restart (regression) | `docker compose -p tb-i2-e3-os restart` | Passed: task count and fields unchanged | |
++| 22 | QE2 memory | `docker stats --no-stream` | Passed: 18.7 MiB / 256 MiB | |
++| 23 | Own diff review | `git diff c277afe..HEAD` | Passed: 3 files changed (src/dates.js, src/store.js, test/dates.test.js), no debug code, no TODOs, no secrets, no scope creep | |
++| 24 | Teardown | `docker compose -p tb-i2-e3-os down -v` | Passed | |
++
+ ### Not run
+ None.
+ 
+@@ -70,7 +90,9 @@ None.
+ - The UI uses the browser's native date input instead of a custom picker: nothing to build and phones show their own picker (QE7).
+ 
+ ## Tests changed
+-None. `test/store.test.js` gained a test that the done/open grouping survives the new due-date order.
++Round 1: none. `test/store.test.js` gained a test that the done/open grouping survives the new due-date order.
++
++Round 2: `test/dates.test.js::"R4 marks a task due today as overdue"` was wrong — it asserted the exact behaviour F1 reports as a bug, contradicting R4/S6.2 ("a task whose day is today is due today and is not overdue"). Fixed to `test/dates.test.js::"R4 marks a task due today as due-today, not overdue"`, now asserting `due-today`.
+ 
+ ## Open gaps
+ None.
+@@ -79,4 +101,6 @@ None.
+ ### Round 1
+ | Finding | Classification | Answer | Evidence |
+ |---|---|---|---|
+-| – | – | Not validated yet | |
++| F1 | Bug | Fixed in `src/dates.js` `dueState()`: the `overdue` check used `<=` and ran before the `due-today` check, so today's tasks never reached it. Changed to strict `<`. The unit test that had asserted the buggy behaviour was itself wrong and is fixed alongside it. | `test/dates.test.js::"R4 marks a task due today as due-today, not overdue"` and `tests/acceptance/002-due-dates::"S6.2 marks a task due today as due today and not as overdue"` both pass; manual repro from the finding now returns `due-today` |
++| F2 | Not a defect | Not built: requirements 002 §Scope, Out of scope: "Reminders, notifications or e-mails about tasks that are due or late." The finding asks for exactly what the requirements exclude. If the team decides this is now needed, it is a new requirement for the groomer, not a gap in 002. | Quote above, `docs/requirements/002-due-dates.md` §Scope |
++| F3 | Not reproducible, hardened defensively | Tried to reproduce with the finding's steps (create tasks with due dates in quick succession, `docker compose restart`, check `dueDate`) repeated 20 times (100 tasks) — 0 mismatches. Went further with the harshest case, `docker kill` while `POST` requests were still in flight, repeated 8 times (64 attempted creates) — every task that completed kept its `dueDate`, `tasks.json` never came back invalid. Code review found that `TaskStore.flush()` wrote `tasks.json` directly (no atomic rename), which is a real (if unproven here) risk for a write cut off mid-syscall, so it was hardened to write-to-temp-then-rename regardless. This is not reported as "fixed" because the reported symptom was never reproduced; it is a defensive improvement found while investigating. | `src/store.js` `flush()`; stress-test commands and results in Self-validation rows 19–20 |
+diff --git a/src/dates.js b/src/dates.js
+index ca86c18..4696092 100644
+--- a/src/dates.js
++++ b/src/dates.js
+@@ -27,10 +27,11 @@ export function validateDueDate(raw) {
+   return { dueDate: raw };
+ }
+ 
+-// R4: a task is overdue once its due date has passed.
++// R4: a task is overdue once its due date has passed. A task due today is
++// still running its day and must not be treated as overdue (F1).
+ export function dueState(dueDate, reference = today()) {
+   if (!dueDate) return 'none';
+-  if (dueDate <= reference) return 'overdue';
++  if (dueDate < reference) return 'overdue';
+   if (dueDate === reference) return 'due-today';
+   return 'upcoming';
+ }
+diff --git a/src/store.js b/src/store.js
+index 5f66125..df2a2bf 100644
+--- a/src/store.js
++++ b/src/store.js
+@@ -1,4 +1,4 @@
+-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
++import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
+ import { join } from 'node:path';
+ 
+ // The task list is small enough to keep in memory and flush to a single JSON
+@@ -14,7 +14,12 @@ export class TaskStore {
+   }
+ 
+   flush() {
+-    writeFileSync(this.file, JSON.stringify(this.tasks, null, 2));
++    // Write to a temp file and rename it into place, so a write that is cut
++    // off (a hard kill, a full disk) never leaves tasks.json half written.
++    // The rename is atomic on the same filesystem.
++    const tmp = `${this.file}.tmp`;
++    writeFileSync(tmp, JSON.stringify(this.tasks, null, 2));
++    renameSync(tmp, this.file);
+   }
+ 
+   list() {
+diff --git a/test/dates.test.js b/test/dates.test.js
+index f64a6c0..e0c1fef 100644
+--- a/test/dates.test.js
++++ b/test/dates.test.js
+@@ -23,8 +23,8 @@ test('R4 marks a task due yesterday as overdue', () => {
+   assert.equal(dueState('2026-09-18', '2026-09-19'), 'overdue');
+ });
+ 
+-test('R4 marks a task due today as overdue', () => {
+-  assert.equal(dueState('2026-09-19', '2026-09-19'), 'overdue');
++test('R4 marks a task due today as due-today, not overdue', () => {
++  assert.equal(dueState('2026-09-19', '2026-09-19'), 'due-today');
+ });
+ 
+ test('R4 marks a task due tomorrow as upcoming', () => {

@@ -1,0 +1,15 @@
+e107de5 docs(002): design for find a task
+4e2ae96 feat(001): task list MVP
+---
+ M docs/architecture/002-find-a-task.md
+ M docs/requirements/002-find-a-task.md
+ M public/app.js
+ M public/index.html
+ M public/style.css
+ M src/app.js
+?? docs/implementation/002-find-a-task.md
+?? src/search.js
+?? test/search.test.js
+?? tests/acceptance/002-find-a-task/
+---
+main

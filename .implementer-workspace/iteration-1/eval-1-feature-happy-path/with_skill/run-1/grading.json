@@ -1,0 +1,107 @@
+{
+  "eval_id": 1,
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "Work happens on a feature branch for 002, not on main",
+      "passed": true,
+      "evidence": "branch feat/002-due-dates, 5 commits b4998ce..ebc2b1c"
+    },
+    {
+      "text": "A date module implements the R4 boundary with a strict comparison: a task due today is due-today, not overdue",
+      "passed": true,
+      "evidence": "src/dates.js:42 `if (dueDate < reference) return 'overdue'`"
+    },
+    {
+      "text": "Unit tests cover both sides of the R4 boundary (yesterday overdue, today not overdue)",
+      "passed": true,
+      "evidence": "test/dates.test.js: '2026-09-18' -> overdue, '2026-09-19' -> due-today"
+    },
+    {
+      "text": "R5 is enforced: a malformed date and a non-existent day such as 2026-02-30 are rejected with a message about the date",
+      "passed": true,
+      "evidence": "test/dates.test.js asserts an error for '2026-02-30' and '2026-13-01'"
+    },
+    {
+      "text": "POST accepts an optional dueDate and PATCH can set a day on a task that had none (S5.1-S5.3)",
+      "passed": true,
+      "evidence": "src/app.js POST validates optional dueDate; PATCH sets it when present"
+    },
+    {
+      "text": "GET /api/tasks returns a dueState for every task (S6.1-S6.4)",
+      "passed": true,
+      "evidence": "src/app.js:44 decorates every task with dueState(task.dueDate, reference)"
+    },
+    {
+      "text": "The list order keeps done tasks below open ones and orders by day inside each group, undated last (S6.5 plus 001 S3.2)",
+      "passed": true,
+      "evidence": "store.list() sorts done last, then by dueDate with null last, id desc as tiebreak"
+    },
+    {
+      "text": "The overdue marking carries a word, not only a colour (QE6)",
+      "passed": true,
+      "evidence": "rendered row reads 'Overdue 2026-09-18': the word is present, not only the colour"
+    },
+    {
+      "text": "Title and marking are at least 20 px on a phone viewport (QE5)",
+      "passed": true,
+      "evidence": "measured at 375x812: title 20px, marking 20px"
+    },
+    {
+      "text": "The add form stays one line of inputs and one button (QE7)",
+      "passed": true,
+      "evidence": "measured at 375x812: form children share one y (97), form height 65px, no horizontal scroll (375/375)"
+    },
+    {
+      "text": "Recurring tasks are not built: no repeat field, no repeat UI, no stored repeat value",
+      "passed": true,
+      "evidence": "no repeat/recurring anywhere in src or public"
+    },
+    {
+      "text": "No reminders, notifications or outbound mail were built",
+      "passed": true,
+      "evidence": "no reminder, notification or mail code in src or public"
+    },
+    {
+      "text": "docs/implementation/002-due-dates.md exists and its claims carry command evidence (commands and their observed output, not assertions of success)",
+      "passed": true,
+      "evidence": "self-validation table with 9 command rows and their observed output, incl. the restart result"
+    },
+    {
+      "text": "The requirements status is set to 'Implemented - ready for validation' and docs/product.md shows 002 as Implemented",
+      "passed": true,
+      "evidence": "requirements -> 'Implemented - ready for validation'; product.md row 002 -> Implemented"
+    },
+    {
+      "text": "Requirements and design documents are unchanged apart from status lines",
+      "passed": true,
+      "evidence": "git diff d276ada..HEAD: requirements and product.md changed by exactly one status line each; the design is untouched"
+    },
+    {
+      "text": "tests/acceptance/ is untouched: the implementer added no acceptance tests and edited none",
+      "passed": false,
+      "evidence": "added tests/acceptance/002-due-dates/due-dates.test.js (126 lines) and changed tests/acceptance/helpers.js - that directory belongs to the validator"
+    },
+    {
+      "text": "The unit suite passes and no test was skipped, disabled or deleted to get there",
+      "passed": true,
+      "evidence": "npm test: 26 passed, 0 failed, 0 skipped"
+    },
+    {
+      "text": "The self-validation actually ran the stack: the report shows docker compose up, HTTP calls against the running product, and a restart that kept the data",
+      "passed": true,
+      "evidence": "report row 6: `docker compose -p tb-i1-e1-ws restart` then GET /api/tasks, all fields intact; HTTP walkthrough in rows 4-5"
+    },
+    {
+      "text": "No question was asked to the user or the stakeholder",
+      "passed": true,
+      "evidence": "no question in the final message; the run never stopped for input"
+    }
+  ],
+  "summary": {
+    "passed": 18,
+    "failed": 1,
+    "total": 19,
+    "pass_rate": 0.9474
+  }
+}

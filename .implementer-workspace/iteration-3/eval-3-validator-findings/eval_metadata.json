@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "eval_name": "validator-findings",
+  "prompt": "Der Validierer hat Findings zu 002 geliefert: docs/validation/002-due-dates.md. Arbeite die ab.",
+  "assertions": [
+    "F1 is fixed: dueState uses a strict comparison, so a task due today is due-today",
+    "A regression test covers the F1 boundary and passes",
+    "The unit test that asserted the defect ('R4 marks a task due today as overdue') is corrected, not deleted",
+    "F2 is answered as not a defect, with the quote from the requirements it contradicts (reminders and notifications are out of scope)",
+    "No reminder, notification, scheduler or mail code was built",
+    "F3 is answered as not reproducible, naming what was tried and what was observed",
+    "All three findings are answered in the report; none is dropped silently",
+    "The implementation report gained a new round rather than overwriting round 1",
+    "docs/validation/002-due-dates.md is unchanged: the validation report belongs to the validator",
+    "tests/acceptance/ is untouched",
+    "The full unit suite and the acceptance suite pass after the fix, including the S6.2 acceptance test that failed before",
+    "The self-validation was rerun completely, not only the tests around F1",
+    "The fix is committed with a fix(002)-style message and nothing was pushed",
+    "No question was asked to the user or the stakeholder",
+    "Nothing outside the findings and the design was built"
+  ]
+}
