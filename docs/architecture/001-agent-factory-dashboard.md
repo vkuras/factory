@@ -2,24 +2,28 @@
 
 - Requirements: docs/requirements/001-agent-factory-dashboard.md
 - Status: Designed – ready for implementation
-- Date: 2026-09-20
+- Date: 2026-09-20 (revision 2: R3/D14–D17 repository display, R13 driver independence, no backup,
+  all dependencies moved to their newest stable version)
 - Architecture: docs/architecture/overview.md
 
 ## Summary
 
-Two halves in this repository. **The dashboard** is a small Node 22 application in `dashboard/`
+Two halves in this repository. **The dashboard** is a small Node 26 application in `dashboard/`
 that stores what the factory reports in a SQLite file and renders it as server-side HTML: three
 tabs (Attention, Pipeline, Analytics) and a ticket detail page, in the supplied dark design. It is
-one Docker container with two named volumes, started by the repository's `docker-compose.yml` on
+one Docker container with one named volume, started by the repository's `docker-compose.yml` on
 the operator's Raspberry Pi, and it never writes anything back to the factory. **The reporting
-side** is three Claude Code hooks shipped with the `factory` plugin: they fire when the coordinator
-spawns an agent and when that agent finishes, and a five-line POSIX shell script posts the raw hook
-payload to the dashboard with `curl`. The script always exits 0, so a dashboard that is down costs
-history and never work (R9); the dashboard does all parsing, so the agent's output is stored byte
-for byte as Claude Code produced it (R6). Operator interventions are the one thing no hook can
-attribute to a ticket, so the coordinate skill reports them by calling the same script.
+side** is six Claude Code hooks shipped with the `factory` plugin plus one POSIX shell script that
+posts the raw hook payload to the dashboard with `curl`. The hooks cover both ways an agent can be
+run: as a subagent (the coordinator today) and as the main agent of a session (a shell script
+tomorrow, R13). The same script is also a command-line reporter, so a driver that never touches
+Claude Code can report a run or an intervention with one line. The script always exits 0, so a
+dashboard that is down costs history and never work (R9); the dashboard does all parsing, so the
+agent's output is stored byte for byte as Claude Code produced it (R6).
 
-Everything the screens show is derived at request time from three tables. There is no client
+Everything the screens show is derived at request time from four tables. A ticket is
+`(repository, number)`; the repository is rendered on every ticket from the moment a second
+repository has reported, and on none while there is only one (R3, D17). There is no client
 framework, no build step for the browser, no second service, no login and no write path from the
 browser.
 
@@ -28,14 +32,18 @@ browser.
 | Driver | Source | In numbers | How the design meets it | Verified by |
 |---|---|---|---|---|
 | Runs on a Raspberry Pi shared with the factory | SC1, QE1 | Assume Pi 4/5, arm64, ≥ 4 GB RAM. Product budget: ≤ 256 MB RAM, ≤ 1.0 CPU, leaving ≥ 3.3 GB for Claude Code, the agents and the OS | One container, one process, no database server, Node heap capped at 192 MB, `mem_limit: 256m`, `cpus: "1.0"` | T-RES-1, T-PERF-1 |
-| Dockerized despite the hardware | SC2 | 1 service, 2 named volumes, one command | `docker-compose.yml` at the repository root; `docker compose up -d` is the whole start | T-DEPLOY-1 |
-| Images exist for the target CPU | SC1 | `linux/arm64` | `node:22-bookworm-slim` (glibc, arm64); build stage carries a compiler for `better-sqlite3` | T-ARCH-1 |
+| Dockerized despite the hardware | SC2 | 1 service, 1 named volume, one command | `docker-compose.yml` at the repository root; `docker compose up -d` is the whole start | T-DEPLOY-1 |
+| Images exist for the target CPU | SC1 | `linux/arm64` | `node:26.9.0-trixie-slim` (glibc, arm64); `better-sqlite3` ships an N-API `linux-arm64` binary in its npm package, so the image needs no compiler | T-ARCH-1 |
+| Every runtime, image and library is the newest stable one | SC9 | 0 components behind their newest stable release on 2026-09-20; every version verified against npm, Docker Hub and nodejs.org | §Dependency currency, all versions pinned exactly | T-DEP-1 |
+| No backup | SC8 | 0 backup jobs, 0 backup volumes, 0 `BACKUP_*` variables | The history lives in `dashboard-data` and is never deleted (R8); durability is the volume's | T-DATA-1 |
 | Opening the dashboard and switching tabs feels immediate | QE2, QE5 | `GET /` p95 < 300 ms, `GET /ticket/...` p95 < 200 ms at 300 tickets / 3 000 runs on 1 CPU / 256 MB; tab switch < 50 ms, no network | All three tabs are rendered into one response and toggled client-side; every aggregate is one indexed SQLite query | T-PERF-1, T-PERF-2 |
 | Reporting never breaks the factory | R9, QE6 | Hook adds ≤ 2 s (start) and ≤ 5 s (finish) worst case on a run that takes minutes; script exits 0 on every path; 0 tokens | `curl --connect-timeout 1 --max-time 2/5`; `exit 0` unconditionally; no LLM step in the report path | T-R9-1, T-R9-2, T-R9-3 |
-| The factory must not become less reliable | QE6, R5 | 0 changes to what an agent writes or prints; 3 changed lines in the coordinate skill, 0 in the agent files | Hooks observe, they do not participate; the agent's Claude Code output is untouched | T-HOOK-2, review item in T-DEPLOY-1 |
+| The factory must not become less reliable | QE6, R5 | 0 changes to what an agent writes or prints; 2 formatting lines in the coordinate skill, 0 in the agent files | Hooks observe, they do not participate; the agent's Claude Code output is untouched | T-HOOK-2, review item in T-DEPLOY-1 |
+| Reporting does not depend on the coordinator | R13, SC5 | 0 lines of the report path live in the coordinate skill; 2 of 2 ways of running an agent (subagent, main session) are hooked; 1 documented env variable is all a future driver must set | §R13, ADR-0008 | T-DRV-1…5 |
 | Agents in any repository report to the same dashboard | SC3, R3, R10 | 1 config file per installation (`~/.factory/dashboard.env`), 0 absolute paths in the repository | Reporter resolves URL, token and project key from the environment, then from that file | T-CFG-1, T-CFG-2 |
+| A ticket from a second repository is never confused with the first | R3, D14–D17 | Identity is the pair; the label appears on 5 of 5 places a ticket is rendered, from the 1st ticket of the 2nd repository, and on 0 places while there is 1 repository | `(project_key, number)` key, `repository` table, one `showRepository` flag per request | T-REPO-1…5 |
 | Others host the dashboard elsewhere | SC4, R10 | Everything configurable through `.env`; nothing hard-codes a host, a port or a path | `.env.example` lists every variable; the image has no baked-in host | T-CFG-1 |
-| History kept forever | R8, D9 | Nothing is deleted, ever. 300 tickets / 3 000 runs ≈ 80 MB; growth ≈ 50 tickets and 500 runs per year ≈ 13 MB/year | Append-only tables, no retention job, nightly backup of the volume | T-DATA-1, T-BACKUP-1 |
+| History kept forever | R8, D9 | Nothing is deleted, ever. 300 tickets / 3 000 runs ≈ 80 MB; growth ≈ 50 tickets and 500 runs per year ≈ 13 MB/year | Append-only tables, no retention job | T-DATA-1 |
 | Dark only, desktop browser only | QE3, QE4, OS5 | 1 stylesheet, 0 `prefers-color-scheme` rules, 0 breakpoints below 1024 px | The design file's own inline styles are kept verbatim | T-UI-1 |
 | No login, no accounts, no roles | D8, OS3 | 0 user tables, 0 sessions, 0 auth on read routes | Read routes are open; the optional ingest token is transport configuration, not a login | T-UI-1 review item |
 | The dashboard never acts | D1, OS1, OS2 | 0 write routes reachable from the browser | Only the factory's three ingest endpoints accept POST; every page is a GET | T-INT-9 |
@@ -44,12 +52,15 @@ browser.
 
 | # | Decision | Reason |
 |---|---|---|
-| 1 | One Node 22 + Express 5 + EJS + SQLite container, server-rendered HTML | ADR-0001 |
+| 1 | One Node 26 + Express 5 + EJS + SQLite container, server-rendered HTML | ADR-0001 |
 | 2 | The supplied design file becomes EJS templates with its inline styles kept verbatim | ADR-0002 |
 | 3 | The factory reports through Claude Code hooks, not through a skill the agent calls | ADR-0003 |
 | 4 | The reporter posts raw payloads; the dashboard parses; tokens are a cumulative delta | ADR-0004 |
 | 5 | The two attention thresholds are `.env` configuration, not a screen | ADR-0005 |
-| 6 | A ticket is `(project, number)` internally and its number on screen | ADR-0006, CR1 |
+| 6 | A ticket is `(project_key, number)`, in storage and in its identity on screen | ADR-0006 |
+| 6a | The repository is rendered on every ticket from the moment a second one has reported, and on none before | ADR-0007 (D14, D16, D17) |
+| 6b | Reporting is hooked on both ways of running an agent and exposes a CLI, so any driver works | ADR-0008 (R13, D15, D18) |
+| 6c | Every runtime, image and library is the newest stable release, verified on 2026-09-20 | ADR-0009 (SC9) |
 | 7 | Fonts (IBM Plex Sans/Mono) are self-hosted `woff2` files, copied in the build stage from the pinned `@fontsource/ibm-plex-sans` and `@fontsource/ibm-plex-mono` dev dependencies | The Pi and the browser must not depend on Google Fonts at page load; the product otherwise has no outbound dependency |
 | 8 | Interventions are rows in the same `run` table with `actor = 'human'` | R4 says an intervention is recorded "like an agent run"; one table gives the lane, the run list, the separate list and the count from one source |
 | 9 | Run expansion uses native `<details>`; client JavaScript exists only for tab switching (~40 lines) | Fewer moving parts; the detail page works with JavaScript disabled |
@@ -61,22 +72,25 @@ browser.
 
 ```mermaid
 flowchart LR
-  subgraph machine["Operator's machine(s) — Claude Code"]
-    coord["coordinate skill<br/>(main session)"]
-    agents["factory:groom / architect /<br/>implementer / validator<br/>(subagents)"]
-    hooks["plugin hooks<br/>PreToolUse(Agent)<br/>PostToolUse(Agent)<br/>SubagentStop"]
-    rep["hooks/report.sh<br/>(sh + curl)"]
-    coord -->|Agent tool| agents
-    agents -.->|payload| hooks
+  subgraph machine["Operator's machine(s)"]
+    driver["whatever drives the pipeline<br/>coordinate skill today,<br/>shell script tomorrow (R13)"]
+    subgraph cc["Claude Code session"]
+      main["main agent<br/>(driven agent run or<br/>the operator's chat)"]
+      agents["factory:groom / architect /<br/>implementer / validator<br/>(subagents)"]
+      hooks["plugin hooks<br/>PreToolUse · PostToolUse · SubagentStop<br/>UserPromptSubmit · Stop · SessionEnd"]
+      main -->|Agent tool| agents
+      main -.->|payload| hooks
+      agents -.->|payload| hooks
+    end
+    rep["hooks/report.sh<br/>(sh + curl)<br/>hook mode and CLI mode"]
+    driver --> cc
+    driver -.->|"CLI: run-start / run-finish / intervention"| rep
     hooks --> rep
-    coord -->|intervention| rep
   end
   subgraph pi["Raspberry Pi — Docker"]
     app["dashboard container<br/>Express · EJS · better-sqlite3"]
     db[("dashboard-data<br/>factory.sqlite")]
-    bak[("dashboard-backups")]
     app --- db
-    app --- bak
   end
   browser["Operator's browser<br/>(desktop)"]
   rep -->|"HTTP POST (fire and forget)"| app
@@ -85,21 +99,22 @@ flowchart LR
 
 | Component | Responsibility | Code |
 |---|---|---|
-| `dashboard/src/server.ts` | Express app, config loading and validation, routes, error handler, request log, startup (migrations, sweeper, backup timer) | `dashboard/src/` |
+| `dashboard/src/server.ts` | Express app, config loading and validation, routes, error handler, request log, startup (migrations, sweeper) | `dashboard/src/` |
 | `dashboard/src/db/schema.ts`, `dashboard/migrations/*.sql` | Tables, indexes, forward-only migrations | `dashboard/src/db/` |
 | `dashboard/src/db/queries.ts` | Every prepared statement; no SQL anywhere else | `dashboard/src/db/` |
 | `dashboard/src/ingest/meta.ts` | Decode and validate `X-Factory-Meta` | `dashboard/src/ingest/` |
 | `dashboard/src/ingest/payload.ts` | Extract output text, result, error flag and usage from a hook payload or a transcript tail; all the tolerant parsing lives here | `dashboard/src/ingest/` |
 | `dashboard/src/ingest/routes.ts` | The three ingest endpoints, run matching, idempotency | `dashboard/src/ingest/` |
 | `dashboard/src/domain/rules.ts` | R1 attention rules, R2 stage mapping, R7 online count, loop counting (D13) | `dashboard/src/domain/` |
+| `dashboard/src/domain/repository.ts` | R3 display: the `showRepository` flag and the repository label derivation (ADR-0007) | `dashboard/src/domain/` |
 | `dashboard/src/domain/metrics.ts` | Per-ticket metrics, per-agent spend, bounce counts | `dashboard/src/domain/` |
 | `dashboard/src/domain/trends.ts` | Weekly bucketing, the four trends, delta and improvement, period naming (R8) | `dashboard/src/domain/` |
 | `dashboard/src/domain/format.ts` | `fmtH`, `fmtTok`, `pct`, week labels — ported from the design file | `dashboard/src/domain/` |
 | `dashboard/src/views/*.ejs` | `layout`, `overview`, `attention`, `pipeline`, `analytics`, `detail`, `empty`, `error` | `dashboard/src/views/` |
 | `dashboard/src/public/` | `app.js` (tab switching), `app.css` (shared rules, `@font-face`, `:hover`), `fonts/*.woff2` | `dashboard/src/public/` |
-| `dashboard/src/jobs/` | Abandoned-run sweeper, nightly backup with catch-up | `dashboard/src/jobs/` |
-| `plugins/factory/hooks/hooks.json` | Registers the three hooks | `plugins/factory/hooks/` |
-| `plugins/factory/hooks/report.sh` | The reporter: `run-start`, `run-finish`, `intervention` | `plugins/factory/hooks/` |
+| `dashboard/src/jobs/` | Abandoned-run sweeper | `dashboard/src/jobs/` |
+| `plugins/factory/hooks/hooks.json` | Registers the six hooks | `plugins/factory/hooks/` |
+| `plugins/factory/hooks/report.sh` | The reporter, in hook mode and in CLI mode: `run-start`, `run-finish`, `intervention`, `prompt`, `session-end` | `plugins/factory/hooks/` |
 
 Nothing in `domain/` reads the clock, the database or the environment: every function takes plain
 data plus `now` and the thresholds, so each rule is unit-testable with a fixed clock.
@@ -113,7 +128,7 @@ One SQLite file, `/data/factory.sqlite`, WAL mode, `synchronous = NORMAL`, `busy
 
 | Field | Type | Null | Default | Notes |
 |---|---|---|---|---|
-| `project_key` | TEXT | no | – | e.g. `github.com/vkuras/factory`; never displayed (ADR-0006) |
+| `project_key` | TEXT | no | – | e.g. `github.com/vkuras/factory`; FK → `repository(project_key)`; displayed as the repository label once a second repository has reported (ADR-0006, ADR-0007) |
 | `number` | TEXT | no | – | as written in the filename, e.g. `001`; displayed as the ticket id |
 | `title` | TEXT | no | – | from the `# NNN – Title` heading of the requirements document, verbatim |
 | `slug` | TEXT | yes | `NULL` | from the filename, for diagnostics only |
@@ -124,9 +139,28 @@ One SQLite file, `/data/factory.sqlite`, WAL mode, `synchronous = NORMAL`, `busy
 | `validated_at` | INTEGER | yes | `NULL` | when `requirements_status` first became `Validated` |
 | `created_at`, `updated_at` | INTEGER | no | – | row bookkeeping |
 
-Primary key `(project_key, number)`. Indexes: `idx_ticket_activity (last_activity_at DESC)`.
+Primary key `(project_key, number)`. Indexes: `idx_ticket_activity (last_activity_at DESC)`,
+`idx_ticket_project (project_key)`.
 `title`, `requirements_status` and `slug` are overwritten by every report that carries them (the
 newest report wins); `first_seen_at` is only ever set once; `validated_at` is only ever set once.
+
+### `repository`
+
+One row per repository that has ever reported anything. It is the memory behind R3/D17: the label
+appears as soon as this table holds two rows, and because no row is ever deleted, it keeps
+appearing afterwards even when only one repository is active again.
+
+| Field | Type | Null | Default | Notes |
+|---|---|---|---|---|
+| `project_key` | TEXT | no | – | PK; the reporter's project key, verbatim, e.g. `github.com/vkuras/factory` |
+| `first_seen_at` | INTEGER | no | – | the first report that carried this key; only ever set once |
+| `last_seen_at` | INTEGER | no | – | the newest report that carried it |
+| `repo_path` | TEXT | yes | `NULL` | the last absolute path it reported from; diagnostics only, never displayed |
+
+Every ingest call upserts this row before it touches the ticket, including an intervention and
+including a report that is later dropped for another reason — "the dashboard has heard from this
+repository" is exactly what R3 counts. Nothing else writes it; the operator never types a
+repository (R3).
 
 ### `run`
 
@@ -147,6 +181,7 @@ One row per agent run **and** per operator intervention (decision 8).
 | `summary` | TEXT | yes | `NULL` | the `SUMMARY:` line, else the first non-empty output line, else `NULL` |
 | `status_before` | TEXT | yes | `NULL` | requirements status read at run start |
 | `status_after` | TEXT | yes | `NULL` | requirements status read at run finish |
+| `source` | TEXT | no | – | how this row was reported: `subagent-hook` \| `session-hook` \| `cli`; CHECK constraint. Diagnostics and the intervention merge rule; never displayed |
 | `tool_use_id` | TEXT | yes | `NULL` | when the hook payload carries one; used for matching |
 | `session_id` | TEXT | yes | `NULL` | Claude Code session; used for matching |
 | `transcript_path` | TEXT | yes | `NULL` | used for the token delta |
@@ -163,6 +198,7 @@ tool_use_id IS NOT NULL` (unique).
 | the agent's own `STATUS:` value (`groomed`, `in-grooming`, `designed`, `designed-with-conflicts`, `ready-for-validation`, `needs-architect`, `validated`, `changes-requested`, `needs-groomer`, `blocked-environment`, `escalated`, `nothing-to-do`) | a `STATUS:` line was parsed from the output |
 | `failed` | the tool payload flags an error, or the parsed `STATUS:` is `failed` |
 | `unreported` | the run finished but carried no parsable output |
+| `interrupted` | the Claude Code session ended while this run was still open (`SessionEnd`) |
 | `abandoned` | no finish arrived within `RUN_STALE_HOURS` (default 12) |
 | `intervention` | `actor = 'human'` |
 
@@ -200,9 +236,16 @@ Supports the cumulative token delta (ADR-0004).
 
 ### Migration from the current state
 
-There is no current state: the database does not exist yet. Migration `001_init.sql` creates all
-five tables and their indexes. There is no user, session, role, permission or settings table
-(ADR-0005), and no retention job (R8).
+There is no current state: the database does not exist yet, and nothing of this design has been
+built. Migration `001_init.sql` creates all six tables (`repository`, `ticket`, `run`,
+`ticket_status_event`, `hook_cursor`, `schema_migration`) and their indexes. There is no user,
+session, role, permission or settings table (ADR-0005), no retention job and no backup job
+(R8, SC8).
+
+**The switch to showing the repository needs no migration** (S1.8, R3): the repository is already
+part of every ticket's key from the first row on, so the second repository's first report only adds
+a row to `repository`, and the next page load renders the label on every ticket, old ones
+included. No stored row is rewritten, moved or deleted by the switch.
 
 ## Interfaces
 
@@ -231,16 +274,28 @@ Common to all three endpoints:
   "slug": "agent-factory-dashboard",
   "req_status": "Groomed – ready for architecture",
   "agent": "architect",
+  "source": "subagent-hook",
+  "origin": "subagent",
+  "driver": "coordinate",
   "session_id": "1c0f…",
   "tool_use_id": "toolu_01…",
   "transcript_path": "/home/pi/.claude/projects/…/1c0f….jsonl",
   "cum_tokens": 4821334,
+  "result": null,
   "what": "…"
 }
 ```
 
   `v`, `event`, `ts`, `project` and `ticket` are mandatory; a payload missing any of them is
   answered `400` and dropped. `agent` is mandatory for `run-start`, `what` for `intervention`.
+  `source` is one of `subagent-hook`, `session-hook`, `cli` and defaults to `cli`. `origin` is
+  `subagent` or `main` and says whether the reported agent ran as a subagent or as the session's
+  main agent; it decides the sidechain filter on the transcript (§`POST /api/hook/run-finish`) and
+  defaults to `subagent`. `driver` is free
+  text the driver may set (`coordinate`, the value of `FACTORY_DRIVER`, or absent); it is stored
+  nowhere and only appears in the dashboard's log line, so a broken wiring can be traced to the
+  thing that produced it. `result` is only honoured on `run-finish` from `source = cli`, where the
+  driver may state the outcome itself.
 - Header `Authorization: Bearer <token>` is required **if and only if** `FACTORY_INGEST_TOKEN` is
   set and non-empty on the dashboard; otherwise the header is ignored. A wrong or missing token
   when one is required is answered `401` and nothing is stored.
@@ -250,8 +305,11 @@ Common to all three endpoints:
 
 #### `POST /api/hook/run-start`
 
-Creates the run and, if needed, the ticket.
+Creates the run and, if needed, the repository and the ticket.
 
+0. Upsert `repository (project_key)`: `first_seen_at = min(existing, ts)`,
+   `last_seen_at = max(existing, ts)`, `repo_path = meta.repo_path`. This happens on every ingest
+   call of every endpoint, before anything else and inside the same transaction.
 1. Upsert `ticket (project, number)`: set `title`, `slug`, `requirements_status` from the meta;
    set `first_seen_at = min(existing, ts)`; set `last_activity_at = max(existing, ts)`; append a
    `ticket_status_event` if the status changed; set `validated_at` if the status is `Validated`
@@ -259,7 +317,8 @@ Creates the run and, if needed, the ticket.
 2. If `tool_use_id` is given and a run with it exists → do nothing (duplicate delivery).
 3. If an open run exists for the same `(project, number, actor, session_id)` → do nothing.
 4. Otherwise insert a run: `id = uuid()`, `actor = meta.agent`, `started_at = ts`,
-   `status_before = meta.req_status`, `ended_at = NULL`, `result = NULL`.
+   `status_before = meta.req_status`, `ended_at = NULL`, `result = NULL`,
+   `source = meta.source`.
 
 #### `POST /api/hook/run-finish`
 
@@ -277,7 +336,15 @@ double delivery of `PostToolUse` and `SubagentStop` harmless in any order.
 
 A payload that yields neither output text nor an error flag is **ignored** (answered `204`, logged
 as `report_ignored`): that is what a `PostToolUse` acknowledgement of a backgrounded agent looks
-like, and the real finish arrives later through `SubagentStop`.
+like, and the real finish arrives later through `SubagentStop`. Two exceptions, because both are a
+real end of a run and not an acknowledgement: `meta.event = "session-end"` and a `cli` finish that
+carries `meta.result`. Both close the run with no output rather than being ignored.
+
+For a run reported from the main session (`source = session-hook`, `meta.origin = "main"`), the
+output text is taken from the transcript tail with the sidechain filter **inverted**: the last
+entry with `type = "assistant"` and `isSidechain` absent or `false`. That entry is the main
+agent's final message, which is exactly what the operator would have seen in Claude Code (R5, R6).
+Everything else about the extraction is identical.
 
 Extraction from the body, in this order, all implemented in `ingest/payload.ts`:
 
@@ -289,7 +356,9 @@ Extraction from the body, in this order, all implemented in `ingest/payload.ts`:
 
 Then:
 
-- `result` = `failed` if the error flag is set, else the parsed `STATUS:` value, else `unreported`.
+- `result` = `interrupted` if `meta.event = "session-end"`, else `meta.result` when the meta carries
+  one and `source = cli`, else `failed` if the error flag is set, else the parsed `STATUS:` value,
+  else `unreported`.
   The `STATUS:` value is the first match of `/^STATUS:[ \t]*([a-z-]+)/m` in the output; anything
   after a `|` or a space is ignored, so `STATUS: designed` yields `designed`.
 - `agent_status` = the same parsed value, or `NULL`.
@@ -305,11 +374,27 @@ Then:
 
 #### `POST /api/intervention`
 
-Body is ignored. Creates the ticket if needed, then inserts a run with `actor = 'human'`,
-`started_at = ended_at = meta.ts`, `tokens = 0`, `result = 'intervention'`,
-`output = meta.what`, `summary = meta.what`, `status_before = status_after = meta.req_status`.
-Idempotency: an intervention with the same `(project, number, ts, what)` already present is
-ignored, so a repeated call by the coordinator cannot double-count (R4).
+Body is ignored. Creates the repository and the ticket if needed, then inserts a run with
+`actor = 'human'`, `started_at = ended_at = meta.ts`, `tokens = 0`, `result = 'intervention'`,
+`output = meta.what`, `summary = meta.what` (first line, truncated to 200 characters with `…`),
+`status_before = status_after = meta.req_status`, `source = meta.source`.
+
+`meta.what` is what the operator did, verbatim and untouched, capped at 4 KiB: the prompt they
+submitted when the hook captured it (§R13), or the text a driver passed on the command line.
+
+**Idempotency and merge (R4).** Before inserting, the dashboard looks for an existing intervention
+on the same `(project, number)` whose `started_at` is within 120 000 ms of `meta.ts`:
+
+- none → insert.
+- one with the same `what` → do nothing (a repeated delivery).
+- one with a different `what` → it is the same act of the operator seen twice (once by the prompt
+  hook, once by an explicit driver call). Keep one row; the `cli` text wins over the
+  `session-hook` text, because a driver that bothers to describe the intervention describes it
+  better than the raw prompt. `source` is updated with it.
+
+So neither a retry nor a driver that reports an intervention the hook already captured can
+double-count, which matters because "how many times I have intervened" is one of the numbers S5
+trends.
 
 #### `GET /healthz`
 
@@ -321,7 +406,8 @@ Used by the compose healthcheck. Never requires a token.
 | Route | Purpose | Notes |
 |---|---|---|
 | `GET /` | The three tabs in one response | `?tab=attention\|pipeline\|analytics`, default and fallback `attention` (R11) |
-| `GET /ticket/:project/:number` | The detail view | `?from=attention\|pipeline\|analytics`, default `attention`, drives the "back to …" label. `:project` is URL-encoded; an unknown ticket renders the 404 page |
+| `GET /ticket/:project/:number` | The detail view, canonical form | `?from=attention\|pipeline\|analytics`, default `attention`, drives the "back to …" label. `:project` is URL-encoded; an unknown ticket renders the 404 page |
+| `GET /ticket/:number` | The detail view, short form | Used in every link while `showRepository` is false, so that not even a URL carries a repository then (S1.7). Resolves to the one ticket with that number; with more than one, it answers `302` to the canonical URL of the most recently active one, so a bookmark taken before the second repository reported still works |
 | `GET /assets/*` | `app.css`, `app.js`, `fonts/*.woff2` | `Cache-Control: public, max-age=604800` |
 | `GET /healthz` | Liveness | – |
 
@@ -334,11 +420,10 @@ is no login (D8). No read route writes anything except the lazy sweeper's `UPDAT
 | Job | Trigger | What it does | Idempotency | Missed run |
 |---|---|---|---|---|
 | Abandoned-run sweeper | every 10 min, and at startup | Open runs with `started_at < now − RUN_STALE_HOURS` get `result = 'abandoned'`; `ended_at` stays `NULL` because the real end is unknown | `WHERE ended_at IS NULL AND result IS NULL` — re-running changes nothing | Nothing accumulates: the next sweep catches every stale run. The read path applies the same age filter itself, so "agents online" (R7) is correct even between sweeps |
-| Nightly backup | daily at `BACKUP_AT` (default `03:15`) local time, and at startup if the newest backup is older than 24 h | SQLite online backup (`db.backup()`) to `/backups/factory-YYYY-MM-DD.sqlite`, then delete all but the newest `BACKUP_KEEP` (default 14) | Same-day backup overwrites the same file name | The startup catch-up covers a Pi that was off at 03:15; a run that is late never produces two files for one day |
 
-Both jobs run inside the single application process; there is no cron container and nothing on the
-host. Timers are scheduled from `Date.now()` in the `TZ` zone and re-armed after each run, so a DST
-change shifts the next run at most one hour.
+That is the only job. There is no backup job (SC8), no retention job (R8), no cron container and
+nothing on the host. The timer runs inside the single application process, is scheduled from
+`Date.now()` and re-armed after each sweep.
 
 ### External services
 
@@ -359,7 +444,8 @@ Formatting helpers are ported from the design file and are part of the specifica
 Evaluated per ticket, in this exact order; the **first** match decides reason, note and severity.
 `LOOP` is `LOOP_THRESHOLD`, `IDLE` is `IDLE_HOURS` (ADR-0005). `loops` is defined under
 §Ticket metrics. `failedRun` is true when any run of the ticket has `result` `failed` or
-`blocked-environment` (see assumption A4).
+`blocked-environment` (see assumption 4). `abandoned` and `interrupted` do not count: neither is
+an agent failing at its work.
 
 | # | Condition | Reason | Severity | Colour | Note sentence |
 |---|---|---|---|---|---|
@@ -413,16 +499,82 @@ Verification, `human` → the stage of the newest non-human run); no runs, or no
 Owner = that actor, status colour `#6E7887`, and the status text is shown verbatim (empty →
 `unknown`). Nothing is dropped from a column.
 
-### R3 – Ticket identity
+### R3 – Ticket identity and the repository label
 
-Internally `(project_key, number)`; on screen only `number` and `title` (ADR-0006, CR1). The
-project is never rendered — not as a label, not as a tooltip, not as a table column. It appears in
-the URL of the detail page because a URL needs to address the row; the operator never types it.
+**Identity.** A ticket is the pair `(project_key, number)`, always, in storage, in every query and
+in the URL of its detail page (ADR-0006). Two repositories reporting a `001` are two rows, two
+histories, two cards. Nothing about that depends on what is displayed.
+
+**When the repository is displayed (D17, ADR-0007).** One boolean per request:
+
+```
+showRepository = (SELECT count(*) FROM repository) >= 2
+```
+
+- One repository has ever reported → `false` → no repository string is rendered anywhere: not on a
+  card, not on a chip, not in the analytics table, not in the detail head, not as a tooltip, not as
+  a hidden attribute (S1.7).
+- The first report of a second repository inserts the second `repository` row, so the very next
+  page load renders the label — on every ticket, including the ones stored long before (S1.8, R12).
+- The flag can never go back to `false`: no row of `repository` is ever deleted (R8), so once two
+  repositories have reported, the label stays even when only one of them is still active.
+- Nothing is rewritten when it flips. It is one count, evaluated at render time, over data that was
+  already there.
+
+**What is displayed (LTA7).** The label is derived from the project key at render time; nothing
+derived is stored. `keys` is the set of all `repository.project_key` values, `segs(k)` its
+non-empty `/`-separated segments:
+
+```
+label(k):
+  if length(segs(k)) == 1                                  -> segs(k)[0]
+  base = last segment of k
+  if no other key in keys has the same last segment        -> base
+  if no other key in keys has the same last two segments   -> last two segments joined by "/"
+  otherwise                                                -> k
+```
+
+Examples: `github.com/vkuras/factory` alone → `factory`; together with
+`github.com/vkuras/shop` → `factory` and `shop`; together with `github.com/acme/factory` →
+`vkuras/factory` and `acme/factory`; a key that is a bare directory name (`factory`) → `factory`.
+The derivation is stable per page (it depends only on the set of repositories) and deterministic,
+so the same ticket never shows two different labels on two tabs. `FACTORY_PROJECT_KEY` lets an
+installation set the key, and therefore the label, by hand (R10).
+
+**Where it is displayed (D16).** Everywhere a ticket appears, through one shared template partial
+`ticketId`, so the five places cannot drift apart:
+
+| Place | Rendering |
+|---|---|
+| Attention card (S1.2) | `{number}` then `·` then `{label}` in the mono id line |
+| `Running on their own` chip (S1.5) | the same, after the owner dot, before the title |
+| Pipeline card (S3.2) | the same, in the card's mono id line |
+| `Per ticket · lifetime` row (S5.4) | the same, in the `ticket` cell |
+| Detail head (S4.1) | the same, next to the id, above the title |
+
+**The link, too.** While `showRepository` is false, every link to a ticket uses the short form
+`/ticket/001`; from the moment it is true, every link uses the canonical `/ticket/{project}/{number}`.
+So with one repository the repository appears in no text, no attribute and no URL — S1.7 holds even
+against a grep of the page — and with two it appears exactly where R3 wants it. The short form keeps
+resolving afterwards, so nothing that was bookmarked breaks.
+
+The partial renders `<span class="af-id">001</span>` when `showRepository` is false, and
+`<span class="af-id">001</span><span class="af-repo"> · factory</span>` when it is true. `af-repo`
+is IBM Plex Mono 11 px, colour `#6E7887` (the design's muted mono colour), `title="{project_key}"`
+so the full key is available on hover, and it never wraps: it is truncated with `text-overflow:
+ellipsis` at 14 characters of width inside a chip. This is the fourth deviation from the supplied
+design file (D14), which has no such element; it is added in the design's own style and takes no
+element away.
+
+The operator never types a repository anywhere: it is derived by the reporter and rendered by the
+dashboard (R3).
 
 ### R4 – The operator is part of the history
 
-An intervention is a `run` row with `actor = 'human'` (decision 8). Consequences, all automatic
-because every screen reads the same table:
+An intervention is a `run` row with `actor = 'human'` (decision 8). It is captured by the prompt
+hook or reported by a driver over the CLI, never by the coordinate skill (§R13), so it is recorded
+whoever or whatever drives the pipeline. Consequences, all automatic because every screen reads the
+same table:
 
 - the `You` lane of the swimlane holds its block (zero length → clamped to the design's 3.5 %
   minimum width);
@@ -516,17 +668,26 @@ Enforced in four places:
 1. `report.sh` has `exit 0` as its only exit, including on unset configuration, an unreadable
    transcript, a missing `curl`, a non-2xx answer and a `curl` timeout. It writes nothing to stdout
    and nothing to stderr that Claude Code would surface.
-2. `curl --connect-timeout 1 --max-time 2` for a start, `--max-time 5` for a finish; `hooks.json`
-   sets `"timeout": 10` per hook as a second net.
+2. `curl --connect-timeout 1 --max-time 2` for a start and for an intervention, `--max-time 5` for
+   a finish; `hooks.json` sets `"timeout": 10`–`15` per hook as a second net.
 3. Nothing in the report path asks a model for anything: no skill call, no tool call, no token.
+   No hook writes to stdout, so none of them can add a word to a model's context (R5).
 4. The dashboard answers every accepted report with `204` and never asks for a retry; there is no
    queue, no backpressure and no state on the factory side. A report that is lost is lost, and the
    ticket simply has a gap in its history.
 
+A fifth place matters now that three hooks fire in **every** Claude Code session on the machine,
+including sessions that have nothing to do with the factory (ADR-0008): the prompt, stop and
+session-end hooks decide from the environment and one small local file, and they `exit 0` before
+any file is parsed and before any network call whenever the answer is "not a factory session". That
+path costs a process start and a `test -f`, under 50 ms, and it is measured by T-R9-3.
+
 Failure modes and their effect: dashboard down → nothing stored, run unaffected; dashboard slow →
-at most 2 s + 5 s added to a multi-minute run; wrong token → `401`, logged locally, run unaffected;
-start lost, finish arrives → finish is dropped (no actor) and the run is missing; finish lost →
-the run stays open and the sweeper marks it `abandoned` after 12 h.
+at most 2 s + 5 s added to a multi-minute run, and at most 2 s added to the operator's own prompt
+in a factory session; wrong token → `401`, logged locally, run unaffected; start lost, finish
+arrives → finish is dropped (no actor) and the run is missing; finish lost → the run stays open
+until `SessionEnd` marks it `interrupted`, or the sweeper marks it `abandoned` after 12 h; the
+state file lost → interventions of that session are not recorded, runs are unaffected.
 
 ### R10 – Where to report is configurable
 
@@ -540,9 +701,13 @@ The reporter resolves its configuration per installation:
 |---|---|---|
 | `FACTORY_DASHBOARD_URL` | Base URL of the dashboard, e.g. `http://pi.local:8787` | unset → **reporting is off**, the hook exits immediately |
 | `FACTORY_INGEST_TOKEN` | Bearer token, must match the dashboard's | empty |
-| `FACTORY_PROJECT_KEY` | Overrides the derived project key | derived |
+| `FACTORY_PROJECT_KEY` | Overrides the derived project key, and therefore the label of R3 | derived |
 | `FACTORY_REPORT_LOG` | Where failures are logged | `~/.factory/report.log`, trimmed to the last 200 lines |
 | `FACTORY_TRANSCRIPT_TAIL_BYTES` | How much transcript tail is sent on finish | `262144` |
+| `FACTORY_DRIVER` | Set by whatever drives the pipeline. Its presence is what makes a main-session run a reported agent run (§R13); its value is a free-text name that appears in the dashboard's log | unset → main-session runs are not reported (D18) |
+| `FACTORY_AGENT` | Which agent this session runs, when the driver wants to state it instead of naming it in the prompt | derived from the prompt |
+| `FACTORY_TICKET` | The ticket number this session works on, when the driver wants to state it | derived from the prompt, the payload or the transcript |
+| `FACTORY_STATE_DIR` | Where per-session state files live | `~/.factory/sessions` |
 
 The project key is `git -C <repo> remote get-url origin` reduced to `host/owner/repo` (scheme,
 `.git` suffix, credentials and `ssh://git@` form removed), else the basename of the repository
@@ -561,6 +726,120 @@ No polling, no websocket, no `<meta http-equiv="refresh">`, no "synced …" text
 relative age of the data. Every HTML response carries `Cache-Control: no-store` so the operator's
 reload really re-reads the database. All times rendered as `t+…` or as durations are computed from
 the request's `now`.
+
+### R13 – Reporting does not depend on the coordinator
+
+The rule is that every agent run and every intervention reaches the dashboard whatever drives the
+pipeline: the coordinate skill today, a shell script once the coordinator is switched off (D15),
+and nothing at all in between. Runs the operator types into a chat themselves are deliberately not
+covered (D18, S6.9). ADR-0008 holds the reasoning; this is the mechanism.
+
+**Where the report path lives.** Entirely in the plugin: `plugins/factory/hooks/hooks.json` and
+`plugins/factory/hooks/report.sh`. Not one line of it lives in the coordinate skill, in an agent
+file or in a driver. Whoever runs a factory agent has the plugin installed — that is where the
+agents themselves come from — so they have the reporting with it.
+
+**The two ways an agent can run, and the hooks that cover each.**
+
+| | How the agent runs | Who does it | Start | Finish |
+|---|---|---|---|---|
+| A | as a **subagent**, spawned with the Agent tool | the coordinate skill today; any driver that asks a session to spawn a stage | `PreToolUse(Agent\|Task)` | `PostToolUse(Agent\|Task)` and `SubagentStop` |
+| B | as the **main agent** of its own session, e.g. `claude -p "…"` | a shell script that runs one stage per session | `UserPromptSubmit` | `Stop`, with `SessionEnd` as the net |
+
+Case A is what the factory does today and needs nothing from the driver. Case B is the shell-script
+future. Both fire from the same `hooks.json`, and both end in the same three endpoints.
+
+**How a main-session run is recognised (case B).** The hook must be able to tell three situations
+apart, because two of them must be reported and one must not:
+
+| Situation | What the prompt hook sees | What it does |
+|---|---|---|
+| A driver runs a stage in its own session | `FACTORY_DRIVER` is set in the environment, **or** the prompt contains a line `Factory-Run: <agent> <ticket>` | `run-start` for that agent and ticket, and it writes the session state file `MODE=run` |
+| The operator types into a session that the factory is already running in | no driver marker, but a session state file exists for this session (written when a run of that session was reported) | `intervention` on that session's ticket, with the prompt text as `what` |
+| The operator starts an agent by hand in a chat, or chats about anything else | no driver marker and no session state file | nothing at all (D18, S6.9) |
+
+`FACTORY_DRIVER` is the whole contract, and it exists because D18 and R13 pull in opposite
+directions: a prompt that says `/factory:architect` looks exactly the same whether a script or a
+person typed it, and S6.9 requires the person's run to stay invisible. An environment variable is
+the one thing a script has and a chat has not.
+
+**The session state file.** `${FACTORY_STATE_DIR}/<session_id>.state`, `KEY=value`, written by the
+reporter, never read by anyone else:
+
+```
+MODE=run|observe
+AGENT=architect
+TICKET=001
+REPO=/home/pi/IdeaProjects/factory
+PROJECT=github.com/vkuras/factory
+STARTED=1758367200000
+```
+
+`MODE=run` is written when a case-B run starts. `MODE=observe` is written when a case-A run start
+is reported from this session — that is what later turns an operator's prompt in the coordinator's
+chat into an intervention on the right ticket. Files are removed by the `SessionEnd` hook, and any
+file older than 7 days is removed whenever the reporter writes one, so nothing accumulates. A lost
+state file costs at most one intervention and never a run.
+
+**The decision table of the prompt hook** (`UserPromptSubmit`), in this order:
+
+1. prompt contains `Factory-Run:` or `FACTORY_DRIVER` is set → resolve agent
+   (`FACTORY_AGENT`, else the marker, else `factory:(groom|architect|implementer|validator)` in the
+   prompt) and ticket (`FACTORY_TICKET`, else the marker, else `docs/requirements/NNN` or a
+   standalone `NNN` in the prompt). Both found → `run-start` (`source = session-hook`,
+   `origin = main`) and `MODE=run`. Agent or ticket missing → nothing is sent and one line goes to
+   the reporter's log saying which of the two was missing. That log line is the only way a
+   mis-wired driver announces itself, and the README says to check it once after wiring one up.
+2. state file exists with `MODE=observe` → `intervention` on `TICKET` (overridden by an `NNN` named
+   in the prompt itself), `what` = the prompt text verbatim, capped at 4 KiB.
+3. state file exists with `MODE=run` → nothing (a follow-up turn inside a driven run is part of
+   that run, not a new one).
+4. no state file → nothing (D18).
+
+**The finish hooks of case B.** `Stop` reports `run-finish` only when the session's state file says
+`MODE=run`; in every other session it does nothing at all, which is why a coordinator chat does not
+produce a finish after every turn. The output comes from the transcript tail, from the last
+non-sidechain assistant entry (§`POST /api/hook/run-finish`). `SessionEnd` closes a still-open
+`MODE=run` run with `result = interrupted` and deletes the state file; if `Stop` already finished
+the run, the fill rules make it a no-op.
+
+**The CLI, for a driver that never uses Claude Code.** `report.sh` takes the same three events as
+command-line calls, so a script can report without any hook at all:
+
+```sh
+report.sh run-start   --agent architect --ticket 001 --repo /abs/path [--session-id X]
+report.sh run-finish  --ticket 001 --repo /abs/path [--session-id X] \
+                      [--result designed] [--output-file <file>] [--tokens N]
+report.sh intervention --ticket 001 --repo /abs/path --what "answered the open question on R3"
+```
+
+These set `source = cli`. `--output-file` is sent as the body and stored verbatim (R6), which is
+what a script gets from `claude -p --output-format json`. A driver may use the CLI, the hooks, or
+both: the run matching of §`POST /api/hook/run-finish` and the intervention merge of
+§`POST /api/intervention` make a doubled report harmless.
+
+**What a future shell script has to do.** The assumption is that it drives the pipeline by running
+Claude Code once per stage, because that is the only way to run these agents at all; what it looks
+like is not knowable today. Whatever it looks like, this is its whole contract:
+
+1. Have the `factory` plugin installed and enabled in the session it starts — it needs that for the
+   agents anyway.
+2. Export `FACTORY_DRIVER=<a name>` for the Claude Code process, and either name the agent and the
+   requirements document in the prompt (`/factory:architect`, `Requirements: 001
+   (docs/requirements/001-…md)`) or export `FACTORY_AGENT` and `FACTORY_TICKET`.
+3. Have `~/.factory/dashboard.env` on that machine with `FACTORY_DASHBOARD_URL` (R10).
+4. When it takes an answer from the operator outside Claude Code — on its own terminal, in a file,
+   in a merge-request comment — call `report.sh intervention …` with that answer. When the operator
+   answers inside Claude Code instead, the prompt hook has it already.
+
+Nothing in that list is the coordinator, and nothing in it is more than an environment variable and
+a line the driver must say anyway. If a driver ignores the list completely, the failure mode is the
+one R9 prescribes: the factory runs, the dashboard keeps whatever it did get, and the ticket has a
+gap in its history.
+
+**What this replaces.** The previous revision of this design reported interventions from a
+paragraph inside the coordinate skill. That paragraph is gone: it was the only part of reporting
+that a driver could take away by not existing.
 
 ### Ticket metrics (S1.4, S3.2, S4.1, S5.4)
 
@@ -600,18 +879,22 @@ indicator of R7. The design's `/ synced 2 min ago` is removed (D5).
 total tickets, total tickets. The active tab is `#E6E9EE` with a `#9EE84B` underline. Hidden
 entirely when there is no ticket at all.
 
-**Tab 1 – Attention** (S1). Serves S1.1–S1.6, S2.
+**Tab 1 – Attention** (S1). Serves S1.1–S1.10 and S2.
 
 - One card per ticket that matches an attention rule, in R1's order. Left border in the severity
-  colour. Card content: mono id, bold title, the reason badge (mono, uppercase, tinted), the note
+  colour. Card content: the `ticketId` partial of §R3 (mono id, plus ` · {repository}` when
+  `showRepository`), bold title, the reason badge (mono, uppercase, tinted), the note
   sentence, then the mono meta row `status · {status}`, `owner · {ownerLabel}`,
   `idle · {fmtH(idle)}`, `loops · {loops}`, `you · {interventions}x`. On the right the severity
   word in the severity colour and the `open ticket →` chip. The whole card links to
-  `/ticket/{project}/{number}?from=attention`.
-- Below: `Running on their own · {count}` and a responsive grid of compact chips (owner dot, mono
-  id, title, ellipsised) for every ticket that matches no rule, ordered by `last_activity_at`
-  descending. Each chip links to the detail page with `from=attention`.
-- **Empty state (S1.6)**: when tickets exist but none needs attention, the card list is replaced by
+  the ticket link of §R3 (`/ticket/{number}` or `/ticket/{project}/{number}`) with
+  `?from=attention`.
+- Below: `Running on their own · {count}` and a responsive grid of compact chips (owner dot, the
+  `ticketId` partial, title, ellipsised) for every ticket that matches no rule, ordered by
+  `last_activity_at` descending. Each chip links to the detail page with `from=attention`. The chip
+  keeps its width when the repository is shown: the title is what gets ellipsised, the id and the
+  repository are never truncated.
+- **Empty state (S1.9)**: when tickets exist but none needs attention, the card list is replaced by
   one panel in the card style: `Nothing needs you.` (18 px, `#E6E9EE`) and, underneath,
   `All {n} tickets are running on their own.` (13 px, `#A6B0BE`). The `Running on their own`
   section is still rendered below it. *(New text; the design has no empty state.)*
@@ -619,8 +902,8 @@ entirely when there is no ticket at all.
 **Tab 2 – Pipeline** (S3). Four columns in the R2 order — `Grooming` (`requirements & open
 questions`), `Design` (`architecture decisions`), `Implementation` (`code & fix rounds`),
 `Verification` (`validated or in review`) — each with its stage colour, its count and its hint line.
-Cards inside a column are ordered by `last_activity_at` descending and show: mono id and the status
-dot, the title, the status text, and the mono row `↻ {loops}`, `◔ {fmtH(leadTime)}`,
+Cards inside a column are ordered by `last_activity_at` descending and show: the `ticketId` partial
+and the status dot, the title, the status text, and the mono row `↻ {loops}`, `◔ {fmtH(leadTime)}`,
 `⌁ {fmtTok(tokens)}`, `☺ {interventions}` (the last in `#FF7AB6` when there were interventions,
 `#5D6673` otherwise). A column with no ticket shows its header, its count `0` and nothing else.
 
@@ -629,7 +912,10 @@ dot, the title, the status text, and the mono row `↻ {loops}`, `◔ {fmtH(lead
 1. Four trend cards in the order `Human calls / ticket`, `Loops / ticket`, `Lead time (h)`,
    `Compute (h)`, each with the delta text, the period line, the bars and the week labels of R8.
 2. `Per ticket · lifetime` table with the design's columns `ticket`, `title`, `your calls`,
-   `loops`, `lead time`, `compute`, `tokens`; every numeric cell except tokens carries the design's
+   `loops`, `lead time`, `compute`, `tokens`; the `ticket` cell is the `ticketId` partial, so it
+   carries the repository when `showRepository` is true and only the number otherwise (S5.4). No
+   column is added, because a second column would change the design's table for a string that is
+   usually absent. Every numeric cell except tokens carries the design's
    mini bar (`#FF7AB6`, `#F5A524`, `#5BC8F5`, `#9EE84B`) at `pct(value, columnMax)`. Ordered by
    interventions desc, then loops desc, then number asc. Every row links to the detail page with
    `from=analytics`.
@@ -644,7 +930,7 @@ dot, the title, the status text, and the mono row `↻ {loops}`, `◔ {fmtH(lead
    rows instead of the design's four, because the validator can hand back to the architect as well
    and S5.6 asks for every junction; the row layout is the design's, repeated.
 
-**Empty state of the whole page (S1.7)**: when no ticket exists at all, the tab bar and all three
+**Empty state of the whole page (S1.10)**: when no ticket exists at all, the tab bar and all three
 tabs are replaced by a single centred panel: `Nothing here yet.` and
 `The dashboard fills up as soon as the factory reports its first agent run.` The header, including
 `no agents running`, stays. *(New text.)*
@@ -654,12 +940,13 @@ complete or not at all (R12). Offline is the browser's own error page; the produ
 data and nothing to cache. A server error renders the dark error page (`Something went wrong.` plus
 the request id) with status 500. There is no permission state, because there are no permissions.
 
-### Screen 2 — Ticket detail, `GET /ticket/:project/:number`
+### Screen 2 — Ticket detail, `GET /ticket/:project/:number` and `GET /ticket/:number`
 
 Serves S4 and is reachable from every ticket in every tab.
 
 - `← back to {from}` button (mono, uppercase, `#9EE84B`), linking to `/?tab={from}`.
-- Head: mono id, title, the status badge tinted in the status colour, and
+- Head: the `ticketId` partial (mono id, plus ` · {repository}` when `showRepository`), title, the
+  status badge tinted in the status colour, and
   `agent status · {agent_status}` in the owner colour (`—` when there is none).
 - Six metric tiles in the design's order: `lead time` `{fmtH(leadTime)}`, `agent compute`
   `{fmtH(workingTime)}` (`#9EE84B`), `loops` (`#F5A524` when `>= LOOP_THRESHOLD`), `your calls`
@@ -718,22 +1005,34 @@ panels are visible one below the other and every link still works. Run expansion
   `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;
   frame-ancestors 'none'; base-uri 'none'`. `X-Content-Type-Options: nosniff`.
 - **Time.** Stored in epoch milliseconds UTC; rendered in `TZ` (default `Europe/Berlin`) through
-  `Intl`. ISO weeks start Monday. DST is handled by the zone, and the two timers re-arm after each
-  run, so the nightly backup stays at its wall-clock time. Every domain function takes `now`, so
-  tests are deterministic.
-- **Failure and recovery paths.** A missed backup is caught up at startup; a re-run of the sweeper
-  changes nothing; a duplicated report is ignored or merged, never double-counted; a crash mid-run
-  leaves an open run that becomes `abandoned` after 12 h, which keeps R7 honest; a restore replaces
-  the database file while the container is down, and the next reports simply append. No recovery
-  path can produce a second `run` row for the same run, because every write is keyed by
-  `tool_use_id` or by the open-run match.
+  `Intl`. ISO weeks start Monday. DST is handled by the zone; the sweeper runs on a fixed 10-minute
+  interval and is unaffected by it. Every domain function takes `now`, so tests are deterministic.
+- **Failure and recovery paths.** A re-run of the sweeper changes nothing; a duplicated report is
+  ignored or merged, never double-counted; a duplicated intervention is merged within its 120 s
+  window; a crash mid-run leaves an open run that `SessionEnd` closes as `interrupted`, or that the
+  sweeper marks `abandoned` after 12 h, which keeps R7 honest; a container restart replays nothing,
+  because there is no queue on either side. No recovery path can produce a second `run` row for the
+  same run, because every write is keyed by `tool_use_id`, by the open-run match or by the
+  intervention window.
+- **Data durability.** There is no backup: the stakeholder decided against one ("Ich brauch kein
+  backup.", SC8). What that means, stated plainly so nobody reintroduces it by accident: R8's
+  "nothing is ever removed" is a retention rule the application honours — no `DELETE`, no
+  retention job, no compaction — and the durability of the SD card is the operator's. If the card
+  dies, the whole history is gone and the factory keeps working, because the dashboard is a
+  read-only mirror of what the factory already did. Nothing else in the product depends on the
+  database surviving. The volume is a plain named Docker volume, so an operator who changes their
+  mind can copy it with one `docker run --rm -v dashboard-data:/d -v "$PWD":/out busybox cp
+  /d/factory.sqlite /out/` while the stack is stopped; the README says that in one line and the
+  product does not do it.
 - **Errors.** One Express error handler. Render errors produce the dark 500 page with a request id;
   ingest errors produce `400`/`401`/`413` and a log line; an unexpected ingest exception produces
   `500` and a log line, and the reporter still exits 0. No error is ever shown to the factory.
 - **Observability.** One JSON line per request on stdout
-  (`{"t","lvl","event","method","path","status","ms","id"}`), plus `report_drop`,
-  `report_ignored`, `backup_done`, `sweep_done` and the startup configuration line with the token
-  redacted. Docker's json-file driver is capped at 3 × 10 MB, because the Pi writes to an SD card.
+  (`{"t","lvl","event","method","path","status","ms","id"}`), plus `report_drop` (with `reason` and
+  the meta's `driver` and `source`, so a mis-wired driver is visible), `report_ignored`,
+  `intervention_merged`, `repository_first_seen` (with the key and the new repository count — the
+  one line that explains why labels suddenly appear), `sweep_done` and the startup configuration
+  line with the token redacted. Docker's json-file driver is capped at 3 × 10 MB, because the Pi writes to an SD card.
 - **Locale and accessibility.** UI language English (project rule). Numbers use the design's own
   formatters, not locale formatting. `<html lang="en">`, semantic `<button>`/`<a>`/`<details>`,
   `title` attributes for every bar and block, focus outlines left at the browser default. Contrast
@@ -743,9 +1042,12 @@ panels are visible one below the other and every link still works. Run expansion
 - **Offline use.** Not a requirement for this product (R12 makes the page a snapshot); nothing is
   cached and no service worker exists.
 
-## Changes to the factory plugin (S6)
+## Changes to the factory plugin (S6, R13)
 
-Six files. Nothing changes in what an agent does or writes (R5).
+Six files: `hooks/hooks.json` (new), `hooks/report.sh` (new),
+`.claude-plugin/plugin.json` (one key), `skills/coordinate/SKILL.md` (two formatting lines),
+`.env.example` (new) and `README.md`. The four agent files are untouched. Nothing changes in what an
+agent does or writes (R5), and nothing that reports lives outside the plugin (R13).
 
 ### 1. `plugins/factory/hooks/hooks.json` (new)
 
@@ -765,15 +1067,34 @@ Six files. Nothing changes in what an agent does or writes (R5).
     "SubagentStop": [
       { "hooks": [ { "type": "command", "timeout": 15,
                      "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-finish" } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "timeout": 10,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" prompt" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "timeout": 15,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" session-finish" } ] }
+    ],
+    "SessionEnd": [
+      { "hooks": [ { "type": "command", "timeout": 10,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" session-end" } ] }
     ]
   }
 }
 ```
 
+The first three cover a stage that runs as a subagent (case A of §R13), the last three cover a
+stage that runs as the main agent of its own session and the operator's interventions (case B).
+`UserPromptSubmit` and `Stop` write nothing to stdout, so they add nothing to the model's context
+and cannot influence what an agent does (R5); every one of them exits 0 (R9).
+
 `plugins/factory/.claude-plugin/plugin.json` gains `"hooks": "./hooks/hooks.json"`. The implementer
-verifies in slice 1 that the installed plugin registers all three (`claude plugin details factory`)
+verifies in slice 1 that the installed plugin registers all six (`claude plugin details factory`)
 and, if the manifest key is rejected by the installed Claude Code version, keeps only the
-conventional `hooks/hooks.json` location and records that in the implementation report.
+conventional `hooks/hooks.json` location and records that in the implementation report. If an event
+name is not supported by the installed Claude Code version, the implementer reports it as a design
+gap rather than dropping it: `UserPromptSubmit`, `Stop` and `SessionEnd` are how R13 is met.
 
 ### 2. `plugins/factory/hooks/report.sh` (new)
 
@@ -786,61 +1107,83 @@ POSIX `sh`, no bashisms, uses only `cat`, `grep`, `sed`, `awk`, `date`, `base64`
    restore the remembered environment values. No `FACTORY_DASHBOARD_URL` → `exit 0`.
 4. `REPO` = the `"cwd"` value from the payload
    (`sed -n 's/.*"cwd"[ ]*:[ ]*"\([^"]*\)".*/\1/p'`, first match), else `$PWD`.
-5. `TICKET` = the first match of `grep -oE 'docs\\?/requirements\\?/[0-9]{3,}'` over the payload
-   (which also catches the JSON-escaped `docs\/requirements\/001`), reduced to its digits. For
-   `run-finish` the transcript file is searched as well. No ticket → `exit 0`. This is also the
-   filter that keeps non-factory subagents out of the dashboard.
-6. For `run-start`: `AGENT` = the first match of
-   `grep -oE '"subagent_type"[ ]*:[ ]*"(factory:)?(groom|architect|implementer|validator)"'`,
-   reduced to the bare agent name. No agent → `exit 0`.
+4a. `SESSION` = the `"session_id"` value of the payload, else `--session-id`, else empty. The state
+   file is `${FACTORY_STATE_DIR:-$HOME/.factory/sessions}/$SESSION.state`; it is read here and
+   written where §R13 says. With an empty `SESSION`, no state is kept and only the explicitly
+   declared paths work.
+4b. Decide what this invocation is, by the decision table of §R13. `prompt`, `session-finish` and
+   `session-end` that resolve to "nothing" `exit 0` right here, before any file is read and before
+   any network call — that is the D18 case and the ordinary-chat case.
+5. `TICKET` = `--ticket`, else `$FACTORY_TICKET`, else a `Factory-Run:` marker in the prompt, else
+   the first match of `grep -oE 'docs\\?/requirements\\?/[0-9]{3,}'` over the payload (which also
+   catches the JSON-escaped `docs\/requirements\/001`), else a standalone three-digit number in the
+   prompt, reduced to its digits. For `run-finish` and `session-finish` the transcript file is
+   searched as well, and for an intervention the state file's `TICKET` is the fallback. No ticket →
+   `exit 0`. This is also the filter that keeps non-factory subagents out of the dashboard.
+6. For a start: `AGENT` = `--agent`, else `$FACTORY_AGENT`, else the first match of
+   `grep -oE '"subagent_type"[ ]*:[ ]*"(factory:)?(groom|architect|implementer|validator)"'`
+   (case A), else the first match of `grep -oE '(factory:|/)(groom|architect|implementer|validator)'`
+   over the prompt (case B), reduced to the bare agent name. No agent → log one line and `exit 0`.
 7. `TITLE` and `REQ_STATUS` from `"$REPO"/docs/requirements/$TICKET-*.md`: the first line
    (`# NNN – Title`, with `# NNN – ` stripped) and the first `- Status:` line (with `- Status: `
    stripped). Missing file → both empty; the dashboard then keeps what it already knows and falls
    back to the ticket number as the title.
 8. `PROJECT` = `$FACTORY_PROJECT_KEY`, else `git -C "$REPO" remote get-url origin` normalised to
    `host/owner/repo`, else `basename "$REPO"`.
-9. For `run-finish`: `TRANSCRIPT` = the `"transcript_path"` value; `CUM` = the cumulative token
-   counter, `grep '"isSidechain":true' "$TRANSCRIPT"` (falling back to the whole file when that
-   yields nothing) piped through
+9. For `run-finish` and `session-finish`: `TRANSCRIPT` = the `"transcript_path"` value; `CUM` = the
+   cumulative token counter. For a subagent finish the counter lines are
+   `grep '"isSidechain":true' "$TRANSCRIPT"` (falling back to the whole file when that yields
+   nothing); for a main-session finish they are `grep -v '"isSidechain":true' "$TRANSCRIPT"`, so a
+   session's own turns are charged to the run and its subagents' turns are not. Either way piped
+   through
    `grep -oE '"(input_tokens|output_tokens|cache_creation_input_tokens|cache_read_input_tokens)":[0-9]+'`
    and summed with `awk -F: '{s+=$2} END{print s+0}'`.
 10. Build the meta JSON by hand, escaping `\` and `"` in `TITLE`, `REQ_STATUS` and `WHAT`
     (`sed 's/\\/\\\\/g; s/"/\\"/g'`), then `base64 | tr -d '\n'`.
-11. POST: body = the payload for `run-start`, the payload plus the last
-    `FACTORY_TRANSCRIPT_TAIL_BYTES` of the transcript for `run-finish` (sent as the body of
+11. POST: body = the payload for a start, the payload plus the last
+    `FACTORY_TRANSCRIPT_TAIL_BYTES` of the transcript for any finish (sent as the body of
     `/api/hook/run-finish` with the transcript tail appended after a `\n---8<---\n` separator line,
-    which the dashboard splits on), nothing for `intervention`.
+    which the dashboard splits on), the contents of `--output-file` for a CLI finish that has one,
+    nothing for `intervention`.
     `curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 1 --max-time 2|5 -X POST -H
     'Content-Type: application/json' -H "X-Factory-Meta: $META" [-H "Authorization: Bearer …"]
     --data-binary @- "$URL/api/hook/run-start|run-finish|/api/intervention"`.
-12. A non-2xx status or a `curl` failure appends one line to `$FACTORY_REPORT_LOG`, which is then
-    trimmed to its last 200 lines. Then `exit 0`.
+12. Write or update the state file (§R13) and delete state files older than 7 days. A non-2xx
+    status or a `curl` failure appends one line to `$FACTORY_REPORT_LOG`, which is then trimmed to
+    its last 200 lines. Then `exit 0`.
 
-`intervention` mode takes flags instead of stdin: `--ticket NNN --repo <abs path> --what "<text>"`,
-runs steps 3, 7, 8, 10 and 11 and exits 0 the same way.
+The five events the script accepts, and what each one does (the full decision logic is §R13):
+
+| Argument | Fired by | Does |
+|---|---|---|
+| `run-start` | `PreToolUse(Agent\|Task)` | reports the start of a subagent run; writes `MODE=observe` for the session |
+| `run-finish` | `PostToolUse`, `SubagentStop` | reports the finish of a subagent run |
+| `prompt` | `UserPromptSubmit` | starts a driven main-session run, or records an intervention, or does nothing |
+| `session-finish` | `Stop` | finishes a driven main-session run; does nothing in any other session |
+| `session-end` | `SessionEnd` | closes a still-open driven run as `interrupted`, removes the state file |
+
+Each of them also works as a CLI call with `--agent`, `--ticket`, `--repo`, `--session-id`,
+`--result`, `--tokens`, `--output-file` and `--what` instead of a hook payload on stdin (§R13);
+flags always win over anything read from stdin or the environment. `intervention` is CLI-only.
+Step 4's `REPO`, step 5's `TICKET` and step 6's `AGENT` are each overridden by the matching flag or
+environment variable before the payload is searched.
 
 ### 3. `plugins/factory/skills/coordinate/SKILL.md` (changed)
 
-Three additions, nothing removed:
+One addition, nothing removed, and nothing that reporting depends on (R13):
 
 - In §2 *Run the stage*, after the task-message template: the first two lines of every task message
-  are exactly `Product repo: <abs path>` and `Requirements: NNN (docs/requirements/NNN-<slug>.md)`,
-  because the dashboard's reporting hook reads the ticket and the repository from them. Without the
-  requirements path in the message the run is not reported and the ticket loses that piece of its
-  history.
-- A new §4a *Record the stakeholder's interventions*: whenever the stakeholder has decided,
-  answered, unblocked or changed something and you continue, record it before you route on:
-
-  ```
-  sh "<this skill's base directory>/../../hooks/report.sh" intervention \
-     --ticket NNN --repo /abs/path/to/repo --what "<one line, what they did, in the repo language>"
-  ```
-
-  It always succeeds and always exits 0; if the file is not there, skip it and continue. Never let
-  it block the pipeline, and never report an intervention you invented — only something the
-  stakeholder actually did.
+  are exactly `Product repo: <abs path>` and `Requirements: NNN (docs/requirements/NNN-<slug>.md)`.
+  This is a convention that makes the reporter's ticket detection exact; reporting still works
+  without it, from the payload, the `cwd` and the transcript. It is written into the skill as a
+  formatting rule, not as a reporting step.
 - In §*Never*: never describe the dashboard's state to the stakeholder as if you had read it; you
   report to it, you do not read from it.
+
+The previous revision of this design also gave the coordinate skill a paragraph that called the
+reporter for every stakeholder intervention. It is **removed**: interventions are captured by the
+prompt hook (§R13), so the one part of reporting that would have disappeared with the coordinator
+no longer exists.
 
 ### 4. `plugins/factory/agents/{groom,architect,implementer,validator}.md` (unchanged)
 
@@ -854,8 +1197,11 @@ implementer must not change these formats while building this MVP; if one of the
 
 `.env.example` lists every dashboard variable (see §Deployment). The README gains a
 *Dashboard* section: what it shows, `docker compose up -d`, the `.env` variables, how to point a
-machine at it (`~/.factory/dashboard.env`), how to verify reporting
-(`GET /healthz`, then one coordinator round), and how to restore a backup.
+machine at it (`~/.factory/dashboard.env`), how to verify reporting (`GET /healthz`, then one
+coordinator round), **how to drive the factory without the coordinator** (the four-point contract
+of §R13, with a worked `claude -p` example and the `report.sh intervention` line), the note that
+the repository label appears by itself once a second repository reports, and the one-line
+statement that there is no backup and what that means (§Cross-cutting concerns, Data durability).
 
 ## Deployment and runtime
 
@@ -867,13 +1213,12 @@ file per machine.
 
 | Service | Image or build | Ports (internal / published) | Volumes | Depends on | Healthcheck | Memory limit | Restart |
 |---|---|---|---|---|---|---|---|
-| `dashboard` | build `./dashboard` (multi-stage, `node:22-bookworm-slim`) | `8787` / `${DASHBOARD_BIND:-0.0.0.0}:${DASHBOARD_PORT:-8787}:8787` | `dashboard-data:/data`, `dashboard-backups:/backups` | – | `CMD-SHELL node -e "fetch('http://127.0.0.1:8787/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"`, interval 30 s, timeout 5 s, retries 3, start_period 20 s | `mem_limit: 256m`, `cpus: "1.0"` | `unless-stopped` |
+| `dashboard` | build `./dashboard` (multi-stage, `node:26.9.0-trixie-slim`) | `8787` / `${DASHBOARD_BIND:-0.0.0.0}:${DASHBOARD_PORT:-8787}:8787` | `dashboard-data:/data` | – | `CMD-SHELL node -e "fetch('http://127.0.0.1:8787/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"`, interval 30 s, timeout 5 s, retries 3, start_period 20 s | `mem_limit: 256m`, `cpus: "1.0"` | `unless-stopped` |
 
-Named volumes: `dashboard-data` holds `/data/factory.sqlite` and its WAL files — the entire history
-(R8); `dashboard-backups` holds `/backups/factory-YYYY-MM-DD.sqlite`, the last 14. Logging:
-`json-file`, `max-size: 10m`, `max-file: "3"`. There is no second service, no reverse proxy and no
-published database port, because there is no database server and no TLS requirement on a home
-network.
+One named volume: `dashboard-data` holds `/data/factory.sqlite` and its WAL files — the entire
+history (R8). There is no backups volume (SC8). Logging: `json-file`, `max-size: 10m`,
+`max-file: "3"`. There is no second service, no reverse proxy and no published database port,
+because there is no database server and no TLS requirement on a home network.
 
 **Environment and secrets.** `.env` at the repository root is not committed (`*.env` is already in
 `.gitignore`); `.env.example` is committed and lists all of them:
@@ -882,42 +1227,69 @@ network.
 |---|---|---|
 | `DASHBOARD_PORT` | published port | `8787` |
 | `DASHBOARD_BIND` | published bind address (`127.0.0.1` locks it to the Pi itself) | `0.0.0.0` |
-| `TZ` | display zone and the backup's wall-clock time | `Europe/Berlin` |
+| `TZ` | display zone for every rendered time and week | `Europe/Berlin` |
 | `LOOP_THRESHOLD` | R1 rule 5 / S7 | `3` |
 | `IDLE_HOURS` | R1 rule 7 / S7 | `24` |
 | `RUN_STALE_HOURS` | when an unfinished run counts as abandoned | `12` |
 | `FACTORY_INGEST_TOKEN` | bearer token required on ingest when non-empty | empty |
-| `BACKUP_AT` | local time of the nightly backup, `HH:MM` | `03:15` |
-| `BACKUP_KEEP` | backups retained | `14` |
 
 Fixed inside the image: `NODE_ENV=production`, `PORT=8787`, `DB_PATH=/data/factory.sqlite`,
-`BACKUP_DIR=/backups`, `NODE_OPTIONS=--max-old-space-size=192`. The only secret in the product is
-the optional ingest token; it exists only in `.env` and in each machine's
+`NODE_OPTIONS=--max-old-space-size=192`. There are no `BACKUP_*` variables (SC8). The only secret
+in the product is the optional ingest token; it exists only in `.env` and in each machine's
 `~/.factory/dashboard.env`.
 
-**Dockerfile.** Two stages on `node:22-bookworm-slim`, pinned to the current `22.x.y` patch tag at
-build time and recorded in the implementation report.
+**Dockerfile.** Two stages on `node:26.9.0-trixie-slim`, pinned to that exact patch tag (§Dependency
+currency).
 
-- *builder*: `apt-get install -y --no-install-recommends python3 make g++` (fallback for
-  `better-sqlite3` when no arm64 prebuild matches), `npm ci`, `npm run build` (TypeScript → ESM in
-  `dist/`), copy the IBM Plex `woff2` files out of the `@fontsource/*` dev dependencies into
-  `dist/public/fonts/`, then `npm prune --omit=dev`.
-- *runtime*: copy `dist/`, `node_modules/`, `migrations/`, `package.json`; `mkdir -p /data
-  /backups && chown node:node /data /backups`; `USER node`; `EXPOSE 8787`;
-  `CMD ["node","dist/server.js"]`. No shell entrypoint, no init system, no compiler in the final
-  image.
+- *builder*: `npm ci`, `npm run build` (TypeScript → ESM in `dist/`), copy the IBM Plex `woff2`
+  files out of the `@fontsource/*` dev dependencies into `dist/public/fonts/`, then
+  `npm prune --omit=dev`. No compiler and no `python3`: `better-sqlite3` 13 ships prebuilt N-API
+  binaries for `linux-arm64` and `linux-x64` inside its npm package, so nothing is compiled at
+  image build time. `npm ci` runs with `--foreground-scripts` so a silent fall-back to a source
+  build shows up in the build log, and T-ARCH-1 fails the build if the prebuilt binary is not the
+  one that gets loaded.
+- *runtime*: copy `dist/`, `node_modules/`, `migrations/`, `package.json`; `mkdir -p /data &&
+  chown node:node /data`; `USER node`; `EXPOSE 8787`; `CMD ["node","dist/server.js"]`. No shell
+  entrypoint, no init system, no compiler in the final image.
 
 **Startup.** `docker compose up -d` is the whole start, locally and on the Pi. The process: loads
 and validates the configuration (aborting with one line naming the offending variable), opens the
 database, applies pending migrations from `migrations/*.sql` in order, each in its own transaction,
-recorded in `schema_migration`, runs the sweeper and the backup catch-up, then listens. There is no
-start order to manage because there is one service.
+recorded in `schema_migration`, runs the sweeper once, then listens. There is no start order to
+manage because there is one service.
 
-**Backups and restore.** Nightly online backup as described in §Jobs. Restore:
-`docker compose down`, copy the chosen `factory-YYYY-MM-DD.sqlite` over
-`dashboard-data/factory.sqlite` (for example with a throwaway `busybox` container that mounts both
-volumes), delete any `-wal`/`-shm` files next to it, `docker compose up -d`. The README carries the
-exact commands, and T-BACKUP-1 runs them.
+**No backups.** The stakeholder decided against them (SC8). Nothing in the product writes a backup,
+schedules one or configures one; see §Cross-cutting concerns, *Data durability*, for what that
+means and for the manual volume copy an operator can run if they ever change their mind.
+
+### Dependency currency (SC9)
+
+Every runtime, base image, library and tool was checked against its registry on **2026-09-20** and
+pinned to the newest stable release available that day. Versions are pinned exactly (no `^`, no
+`~`, no floating tag), so a build is reproducible; keeping them current is a deliberate act, and
+`npm outdated` in CI is not part of this MVP.
+
+| Thing | Version | Newest stable on 2026-09-20 | Source checked | Note |
+|---|---|---|---|---|
+| Node.js runtime and base image | `node:26.9.0-trixie-slim` | Node 26.9.0 (2026-09-16), Debian 13 trixie | nodejs.org/dist/index.json, Docker Hub `library/node` (arm64 tag present) | Node 26 is the newest line and becomes Active LTS on 2026-10-28, supported to 2029-04-30. Node 24 (Active LTS today) enters maintenance on 2026-10-20 and Node 22 is already in maintenance, so both are older *and* shorter-lived. See ADR-0001 |
+| `express` | 5.2.1 | 5.2.1 | npm | |
+| `ejs` | 6.0.1 | 6.0.1 | npm | ESM export, zero dependencies, `<%= %>` still the escaping tag |
+| `better-sqlite3` | 13.0.3 | 13.0.3 | npm | `engines: node >= 22`; ships N-API prebuilds incl. `linux-arm64`, so no compiler in the image |
+| `typescript` (dev) | 7.0.2 | 7.0.2 | npm | |
+| `vitest` (dev) | 5.0.1 | 5.0.1 | npm | `engines` explicitly lists `>= 26`, which confirms the runtime choice |
+| `supertest` (dev) | 7.2.2 | 7.2.2 | npm | |
+| `cheerio` (dev) | 1.2.0 | 1.2.0 | npm | |
+| `@types/node` (dev) | 26.6.2 | 26.6.2 | npm | matches the runtime major |
+| `@types/express` (dev) | 5.0.6 | 5.0.6 | npm | |
+| `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` (dev) | 5.3.0 | 5.3.0 | npm | build-time only; only `woff2` files reach the image |
+| `koalaman/shellcheck` (dev, container) | `v0.11.0` | v0.11.0 (2025-08-04) | GitHub releases, Docker Hub (arm64 tag present) | the newest release there is; shellcheck simply releases rarely |
+| Docker Compose file | no `version:` key | Compose v2 schema | — | the `version` key is obsolete in Compose v2 |
+
+Nothing in the product is on a version older than the newest stable one, and nothing is left
+floating. Two pins carry a known risk, and both are accepted rather than avoided by taking
+something older: Node 26 is Current rather than Active LTS for another five weeks, and TypeScript 7
+is the new native compiler. Both are only used in ways this product exercises on every build — the
+container runs the app, `tsc` emits ESM — so a problem shows up in slice 1, not in production.
 
 ### Resource budget
 
@@ -925,17 +1297,18 @@ exact commands, and T-BACKUP-1 runs them.
 |---|---|---|---|
 | `dashboard` container | 256 MB, 1.0 CPU | ≈ 60 MB idle, ≈ 110 MB peak while rendering the analytics tab at 300 tickets / 3 000 runs | Node heap capped at 192 MB; the rest is the runtime and SQLite's page cache (`cache_size = -8000`, 8 MB) |
 | Disk, database | – | ≈ 80 MB at 300 tickets / 3 000 runs; ≈ 13 MB/year growth | Dominated by `run.output` (≈ 4 KB per run, 64 KiB cap) |
-| Disk, backups | – | 14 × the database size, ≈ 1.1 GB worst case at the volumes above, ≈ 30 MB in the first year | `BACKUP_KEEP` bounds it |
-| Reporter on the host | – | one `sh` + one `curl`, < 10 MB, 2–3 times per agent run | Not a container: it runs inside the operator's Claude Code session |
+| Disk, backups | – | 0 | There are none (SC8) |
+| Reporter on the host | – | one `sh` + one `curl`, < 10 MB, 2–4 times per agent run plus once per operator prompt | Not a container: it runs inside the Claude Code session or in the driver's shell |
+| Session state files | – | < 1 KB each, deleted at session end, swept after 7 days | `~/.factory/sessions/` |
 | **Left for the factory and the OS** | – | ≥ 3.3 GB of a 4 GB Pi | Claude Code and the agents are the machine's real workload |
 
-SD-card wear: 2–3 small transactions per agent run (tens per day) in WAL mode with
-`synchronous = NORMAL`, plus one backup file a night. That is orders of magnitude below what wears
-a card out.
+SD-card wear: 2–4 small transactions per agent run (tens per day) in WAL mode with
+`synchronous = NORMAL`, and nothing else writes. That is orders of magnitude below what wears a
+card out.
 
 ## Test strategy
 
-Vitest 3 for unit and integration tests, `supertest` for HTTP, `cheerio` for DOM assertions,
+Vitest 5 for unit and integration tests, `supertest` for HTTP, `cheerio` for DOM assertions,
 `shellcheck` plus a `sh`-driven test for the reporter. `npm test` runs everything that does not
 need Docker; `npm run test:stack` runs the ones that do. Every domain function takes an injected
 `now`, so no test depends on the real clock.
@@ -950,7 +1323,7 @@ need Docker; `npm run test:stack` runs the ones that do. Every domain function t
 | T-UNIT-FMT-1 | unit | `fmtH`, `fmtTok`, `pct` reproduce the design's output for a table of inputs including `0`, `59 m`, `9.9 h`, `10 h`, `24 h`, `999`, `1 000`, `9 999`, `10 000`, `1 000 000` |
 | T-UNIT-OUT-1 | unit | Output handling: verbatim storage, the numbered split (blank lines dropped, order kept, no classification), `SUMMARY:` extraction and its fallback, `STATUS:` extraction, the 64 KiB cap (R6) |
 | T-HOOK-1 | unit | `ingest/payload.ts` against **real captured payloads** — `PreToolUse`, a foreground `PostToolUse`, a background `PostToolUse` acknowledgement, a `SubagentStop` with a transcript tail, and an error case — committed as fixtures in slice 1 |
-| T-HOOK-2 | manual, scripted | One coordinator round with and without a reachable dashboard: the Claude Code output is identical (R5) and the run appears in the dashboard (S6.1–S6.3) |
+| T-HOOK-2 | manual, scripted | One coordinator round with and without a reachable dashboard: the Claude Code output is identical (R5) and the run appears in the dashboard (S6.1–S6.4) |
 | T-HOOK-3 | integration | The token delta: two consecutive runs in one shared transcript are charged their own share; a per-subagent transcript charges the full sum; a missing counter stores `NULL` |
 | T-INT-1…9 | integration | Ingest: start creates ticket and run; finish fills it; duplicate start and duplicate finish change nothing; finish before start is dropped and logged; both hooks delivering a finish merge; `400` on bad meta; `401` with a token set; `413` over 2 MiB; `GET` is the only verb the browser can use (T-INT-9) |
 | T-INT-A1…A7 | integration | The Attention tab: every S1 criterion, both empty states, the calm list and its count |
@@ -960,16 +1333,27 @@ need Docker; `npm run test:stack` runs the ones that do. Every domain function t
 | T-UI-1 | integration | The rendered HTML contains the design's literal captions (`Control room`, `Agent Factory`, `Running on their own`, `Route · swimlanes over time`, `Agent output log`, `Tokens per agent`, `Your involvement`, `Status trail`, `Per ticket · lifetime`, `Token spend per agent`, `Where tickets bounce back`) and its palette (`#0A0C0F`, `#12151A`, `#9EE84B`, `#FF7AB6`, `#5BC8F5`, `#A78BFA`, `#F5A524`, `#FF6B6B`); no `synced`, no `prefers-color-scheme`, no media query below 1024 px, no step-kind label, no form, no input, no POST target in any page (D5, D6, QE4, OS1) |
 | T-R9-1 | shell | `report.sh` exits 0 with: no configuration, an unreachable URL, a closed port, a malformed payload, an empty stdin, a missing transcript, a `401` answer. `shellcheck -s sh` is clean |
 | T-R9-2 | shell | With the dashboard unreachable, `run-start` returns within 2.5 s and `run-finish` within 5.5 s, measured over 5 runs |
-| T-R9-3 | shell | With `FACTORY_DASHBOARD_URL` unset the script returns in < 50 ms and makes no network call |
+| T-R9-3 | shell | With `FACTORY_DASHBOARD_URL` unset the script returns in < 50 ms and makes no network call; the same holds for `prompt`, `session-finish` and `session-end` in a session with no driver marker and no state file, even with the URL set |
 | T-CFG-1 | shell | Configuration resolution: file only, environment only, environment overriding the file, and the project key derived from an `origin` remote, from a directory name and from `FACTORY_PROJECT_KEY` |
-| T-CFG-2 | integration | Two different project keys reporting a ticket `001` each produce two tickets, two histories and two rows, and no repository string appears in the rendered HTML (CR1, R3) |
+| T-CFG-2 | integration | Two different project keys reporting a ticket `001` each produce two tickets, two separate histories and two rows on every tab (R3, S1.6, S3.4) |
+| T-REPO-1 | unit | The label derivation of §R3: single segment, unique last segment, colliding last segment → `owner/repo`, colliding `owner/repo` → the full key; the same ticket yields the same label for every screen |
+| T-REPO-2 | integration | One repository has reported: the strings of that project key and its label appear **nowhere** in the HTML of all three tabs and of the detail page — no text, no attribute, no URL, no comment; every ticket link is the short form (S1.7, D17, OS7) |
+| T-REPO-6 | integration | The short link form: `/ticket/001` renders the detail page with one repository; after a second repository has reported it answers `302` to the canonical URL of the most recently active `001`, and every rendered link is the canonical form |
+| T-REPO-3 | integration | A second repository reports one run; the very next render shows the label on the attention card, the calm chip, the pipeline card, the analytics row and the detail head — for the new ticket **and** for the tickets stored before it (S1.8, D16) |
+| T-REPO-4 | integration | The switch changes no stored data: a full dump of `ticket`, `run` and `ticket_status_event` before the second repository's report and after it differs only by that report's own rows (S1.8) |
+| T-REPO-5 | integration | Once two repositories have reported, the label keeps being shown when only the first repository reports again, and after a process restart (R3, R8) |
+| T-DRV-1 | integration | Case B start and finish: a `UserPromptSubmit` payload with `FACTORY_DRIVER` set and a `Stop` payload with the session's transcript produce one run with the agent, the output of the last non-sidechain assistant message, the tokens and the result (R13, S6.6) |
+| T-DRV-2 | shell | The prompt hook's decision table: driver marker → start; `MODE=observe` state file → intervention; `MODE=run` → nothing; no state file and no marker → **no network call at all** (D18, S6.9) |
+| T-DRV-3 | integration | The CLI path: `run-start`, `run-finish --result --output-file` and `intervention` from a plain shell, with no Claude Code and no hook, produce a complete ticket history (R13) |
+| T-DRV-4 | integration | Intervention capture and merge: a prompt in an observing session becomes one intervention with the prompt text verbatim; an explicit CLI intervention 30 s later keeps one row and its text; the same delivery twice keeps one row (R4) |
+| T-DRV-5 | integration | `SessionEnd` with an open driven run closes it as `interrupted`; the run leaves "agents online" (R7); a `SessionEnd` after a normal `Stop` changes nothing |
+| T-DEP-1 | unit | Every version in `package.json`, the `Dockerfile` and `docker-compose.yml` is pinned exactly and equals the value in §Dependency currency; no `^`, `~`, `latest`, `stable` or unpinned base image anywhere (SC9) |
 | T-PERF-1 | stack | Seeded with 300 tickets / 3 000 runs / 26 weeks of history, in a container limited to `--cpus=1 --memory=256m`: `GET /?tab=analytics` p95 < 300 ms over 100 requests |
 | T-PERF-2 | stack | Same seed: `GET /ticket/...` for the ticket with the most runs, p95 < 200 ms over 100 requests |
 | T-RES-1 | stack | Same seed, 200 requests across all tabs: peak container memory from `docker stats` < 256 MB and the container is never OOM-killed |
-| T-ARCH-1 | stack | `docker buildx build --platform linux/arm64 ./dashboard` succeeds |
+| T-ARCH-1 | stack | `docker buildx build --platform linux/arm64 ./dashboard` succeeds, the build log shows no compilation of `better-sqlite3`, and the running container loads `prebuilds/linux-arm64.node` |
 | T-DEPLOY-1 | stack | From a clean checkout with only `.env` copied from `.env.example`: `docker compose up -d` reaches `healthy` within 60 s, `GET /` answers 200 with the empty state, a report creates a ticket, `docker compose down && up -d` still shows it (volume persistence) |
-| T-BACKUP-1 | stack | The startup catch-up writes a backup; retention keeps `BACKUP_KEEP` files; the documented restore procedure reproduces the data |
-| T-DATA-1 | unit | Nothing deletes: a grep over the source finds no `DELETE FROM` other than the backup-file retention, and no `TTL`, `retention` or `purge` path |
+| T-DATA-1 | unit | Nothing deletes: a grep over the source finds no `DELETE FROM` at all, no `TTL`, `retention` or `purge` path, and no backup job, volume or `BACKUP_*` variable (R8, SC8) |
 
 Acceptance-criteria coverage is the traceability table; every criterion names the test that proves
 it.
@@ -980,18 +1364,22 @@ Each slice ends with a running application and green tests.
 
 1. **Skeleton and ingest.** `dashboard/` project, Dockerfile, compose service, `.env.example`,
    migrations, the three ingest endpoints, `healthz`, the plugin's `hooks.json` and `report.sh`.
-   **First task of this slice**: install the plugin locally, run one real coordinator round with a
-   hook that dumps its payloads to `/tmp`, and commit the five captured payloads as the fixtures of
-   T-HOOK-1 — every parser in `ingest/payload.ts` is written against them, not against a guess.
-   Done when a real agent run appears in the database.
-2. **Domain and the Attention tab.** `domain/`, the layout, the header with R7, the tab bar, the
-   Attention tab with both empty states. Done when the operator can see what needs them.
-3. **Pipeline tab.** Four columns, cards, R2 placement.
+   **First task of this slice**: install the plugin locally, run one real coordinator round **and**
+   one `claude -p` run with `FACTORY_DRIVER` set, with a hook that dumps its payloads to `/tmp`, and
+   commit the captured payloads as the fixtures of T-HOOK-1 and T-DRV-1 — one `PreToolUse`, one
+   foreground `PostToolUse`, one backgrounded `PostToolUse` acknowledgement, one `SubagentStop` with
+   a transcript tail, one error case, one `UserPromptSubmit`, one `Stop` and one `SessionEnd`. Every
+   parser in `ingest/payload.ts` is written against them, not against a guess. Done when a real
+   subagent run and a real main-session run both appear in the database.
+2. **Domain and the Attention tab.** `domain/`, the `ticketId` partial and `domain/repository.ts`,
+   the layout, the header with R7, the tab bar, the Attention tab with both empty states. Done when
+   the operator can see what needs them, and when T-REPO-2 and T-REPO-3 pass for this tab.
+3. **Pipeline tab.** Four columns, cards, R2 placement, the `ticketId` partial.
 4. **Detail page.** Metrics, swimlanes, run log with expansion, interventions panel, status trail;
-   the intervention endpoint and the coordinate-skill change.
+   the intervention endpoint, the prompt/Stop/SessionEnd hooks and the CLI mode of the reporter.
 5. **Analytics tab.** Trends, per-ticket table, per-agent spend, bounces.
-6. **Operations and hardening.** Sweeper, nightly backup and restore, logging caps, the perf,
-   resource, arm64 and deploy tests, README section.
+6. **Operations and hardening.** Sweeper, logging caps, the perf, resource, arm64, dependency and
+   deploy tests, the README section including the driver contract of §R13.
 
 ## Assumptions
 
@@ -1009,7 +1397,8 @@ Each slice ends with a running application and green tests.
    result as "what a run ended as, including `failed` and `blocked-environment`", and the design
    file lumps both under "agent run failed" in the bounce chart. A validator run that could not run
    its suite needs the operator as much as a crashed one. `abandoned` does not count, per
-   assumption 3.
+   assumption 3, and neither does `interrupted`: a session the operator or the driver ended is not
+   an agent failing at its work, and R1 rule 7 (idle) picks the ticket up if nothing follows.
 5. **26 weekly bars cannot each carry the design's value label.** D4 overrides the design on the
    period, so the card keeps its structure and moves the numbers into the last bar and the per-bar
    tooltip, with week labels on the first, middle and last bucket.
@@ -1026,15 +1415,28 @@ Each slice ends with a running application and green tests.
    weekly total. S5.1 names it without a qualifier, but the product's question is whether the
    factory is getting better, and a weekly total rises with throughput. All four cards are then
    "lower is better", which is what makes S5.2's improvement statement well defined.
-10. **Only runs the coordinator spawns through the Agent tool are reported.** A stage invoked by
-    hand in the main session (`/architect` in a chat) produces no run row; the status it wrote into
-    the requirements document is picked up by the next reported run, so the ticket stays correct,
-    only that one run is missing from its history. The coordinator is the factory's entry point;
-    covering manual invocations would need either an LLM-driven report (rejected in ADR-0003) or a
-    wrapper around Claude Code.
+10. **A future driver runs the agents through Claude Code, one stage per invocation.** R13 names a
+    shell script that does not exist yet, so its shape is an assumption: it starts Claude Code
+    (`claude -p …` or the equivalent) with the `factory` plugin enabled, once per stage, and every
+    stage runs either as that session's main agent or as a subagent it spawns. Both are covered.
+    What the script must do is the four-point contract in §R13, and its whole novelty is one
+    environment variable. A driver that calls the agents some other way — its own model client, a
+    different harness — is outside Claude Code entirely and can still report through the CLI mode
+    of `report.sh`; nothing else in the product would work for it either, because the agents are
+    Claude Code agents.
+10a. **An agent run started by hand in a chat is not reported, by construction** (S6.9, D18): it has
+    no `FACTORY_DRIVER`, so the prompt hook does nothing. The status it wrote into the requirements
+    document is picked up by the next reported run.
+10b. **Every prompt the operator submits in a session that is already running the pipeline is an
+    intervention** (R4). The alternative — trying to tell "answering the coordinator's question"
+    from "saying go on" — would need a judgement nothing in the report path is allowed to make.
+    The stakeholder's own definition is "jedesmal wenn der coordinator mich fragt", and a prompt in
+    a session that has reported a run is exactly that. The first prompt of a session is never an
+    intervention, because no run has been reported from it yet.
 11. **Two agent runs never overlap inside one Claude Code session.** The coordinator runs stages one
-    after another. If they ever did overlap, the token delta of ADR-0004 would attribute both runs'
-    tokens to whichever finished first. Nothing else would be wrong, and no work would be affected.
+    after another, and a driven main session runs one stage. If they ever did overlap, the token
+    delta of ADR-0004 would attribute both runs' tokens to whichever finished first. Nothing else
+    would be wrong, and no work would be affected.
 12. **A validated ticket's lead time freezes at `validated_at`.** Otherwise every finished ticket's
     lead time would keep growing and the lead-time trend would measure the calendar.
 13. **`docs/.factory/run-NNN.md` is not a source** (LTA7). It has no timestamps, no tokens and no
@@ -1048,98 +1450,139 @@ Each slice ends with a running application and green tests.
 15. **Interventions appear in the run list as well**, not only in the separate panel — R4 states
     that an intervention is recorded "like an agent run: it appears in its own lane on the time
     axis, in the run list, in the separate list of interventions".
+16. **A repository counts as "having reported" from its first accepted report of any kind** — a run
+    start, a run finish or an intervention. R3 says "every ticket the dashboard has ever received
+    comes from one and the same repository", and a report that carries a ticket is a ticket
+    received. A report that is dropped for a bad token or a malformed meta does not count, because
+    nothing about it is stored.
+17. **The repository label is the repository's short name, disambiguated only when it has to be**
+    (LTA7). R3 asks for "its name" and for recognition at a glance; `factory` is that name, and the
+    full key is one hover away. Two repositories with the same short name would defeat the purpose,
+    so those — and only those — are shown as `owner/repo`.
+18. **A run reported by the CLI without a session id is matched by `(project, number, actor)`**, the
+    newest open one. A driver that reports over the CLI has no Claude Code session to key on, and
+    two runs of the same agent on the same ticket never overlap (assumption 11).
 
 ## Requirement conflicts
 
-**CR1 – Two repositories both produce a ticket `001`.** R3 ("A ticket is identified by the `NNN`
-number of its requirements document. The dashboard does not show which repository a ticket comes
-from; the operator recognises that from the title.") cannot hold as the *storage* identity once
-R10 and SC3 ("die agenten könnten auch in einem anderen repo laufen sollen aber trotzdem zum
-dashboard reporten") are met, because every repository numbers its documents from `001` and the two
-tickets would merge into one row with two titles and two interleaved histories.
+**None open.**
 
-Resolved by keying the ticket internally on `(repository, number)` while showing only the number
-and the title, so nothing on screen contradicts R3 (ADR-0006). What is lost: two rows can display
-the same id, told apart by their titles. Change request:
-`docs/requirements/.change-requests/001-agent-factory-dashboard.md`.
+**CR1 – Two repositories both produce a ticket `001` (closed).** The previous revision of this
+design resolved the collision between the old R3 (identity is the number; the repository is never
+shown) and R10/SC3 (agents in any repository report to one dashboard) by keying the ticket on
+`(repository, number)` internally and showing only the number. The stakeholder overturned that
+resolution ("Kippen: Repo-Anzeige aus Later holen") and the groomer wrote the answer into the
+requirements: R3 now *is* the pair, D2 is superseded by D14, and D16/D17 say where and when the
+repository is shown. This revision follows the requirements as written, so there is nothing left to
+resolve. The change request
+`docs/requirements/.change-requests/001-agent-factory-dashboard.md` is answered and closed.
+
+Two stakeholder instructions arrived with this revision round, through the coordinator rather than
+through the requirements document. Both are honoured as stated, neither conflicts with a
+requirement, and both are recorded here so they are not silently undone later:
+
+- **SC8, no backup** ("Ich brauch kein backup."). A backup is normally an operational necessity of
+  any design, so its absence is a decision, not an omission: see §Cross-cutting concerns, *Data
+  durability*. R8 (history kept forever) is unaffected — it is a retention rule about what the
+  application deletes, which is nothing.
+- **SC9, newest versions only** ("wir sollen nur das neuste nehmen sodass keine sichheits lucken
+  drin sind"). Honoured for every component; the evidence is §Dependency currency and ADR-0009.
 
 ## Traceability
 
 | Requirement | Design element | Verified by |
 |---|---|---|
 | S1.1 | R11: `GET /` defaults to `tab=attention` | T-INT-A1 |
-| S1.2 | Attention card: id, title, reason badge, note sentence, severity word (§UI Screen 1, §R1) | T-INT-A2, T-UNIT-R1-1…7 |
+| S1.2 | Attention card: `ticketId` partial (id + repository when shown), title, reason badge, note sentence, severity word (§UI Screen 1, §R1, §R3) | T-INT-A2, T-UNIT-R1-1…7, T-REPO-3 |
 | S1.3 | Severity rank, then longest idle, then number (§R1 Ordering) | T-UNIT-R1-ORD, T-INT-A3 |
 | S1.4 | Attention card meta row: status, owner, idle, loops, you (§UI) | T-INT-A2 |
-| S1.5 | `Running on their own · {count}` grid (§UI) | T-INT-A4 |
-| S1.6 | `Nothing needs you.` panel, calm list kept (§UI) | T-INT-A5 |
-| S1.7 | Whole-page empty state, tabs hidden (§UI) | T-INT-A6 |
+| S1.5 | `Running on their own · {count}` grid of chips, each with the `ticketId` partial (§UI) | T-INT-A4, T-REPO-3 |
+| S1.6 | Two repositories reporting a `001` are two tickets, each card carrying its own repository label (§R3, ADR-0006, ADR-0007) | T-CFG-2, T-REPO-3 |
+| S1.7 | `showRepository = false` while one repository has reported: no label, no tooltip, no attribute, and the short link form so not even a URL carries it (§R3) | T-REPO-2, T-REPO-6 |
+| S1.8 | The `repository` table makes the flag flip on the next render; no stored row changes (§Data model, §R3) | T-REPO-3, T-REPO-4 |
+| S1.9 | `Nothing needs you.` panel, calm list kept (§UI) | T-INT-A5 |
+| S1.10 | Whole-page empty state, tabs hidden (§UI) | T-INT-A6 |
 | S2.1 | R7 online count rendered in the header | T-INT-A7 |
 | S2.2 | `no agents running` with the static grey dot (§R7) | T-INT-A7 |
 | S3.1 | Four stage columns with counts (§UI Tab 2) | T-INT-P1 |
-| S3.2 | Pipeline card fields incl. `↻ ◔ ⌁ ☺` (§UI Tab 2, §Ticket metrics) | T-INT-P2 |
+| S3.2 | Pipeline card: `ticketId` partial, title, status, `↻ ◔ ⌁ ☺` (§UI Tab 2, §Ticket metrics) | T-INT-P2, T-REPO-3 |
 | S3.3 | R2 mapping incl. unknown-status fallback | T-UNIT-R2-1, T-INT-P3 |
-| S4.1 | Detail head plus six metric tiles (§UI Screen 2) | T-INT-D1 |
+| S3.4 | Two cards keyed `(project_key, number)`, each with its repository label (§R3) | T-CFG-2, T-REPO-3 |
+| S4.1 | Detail head with the `ticketId` partial, status, agent status, six metric tiles (§UI Screen 2) | T-INT-D1, T-REPO-3 |
 | S4.2 | Swimlanes, five lanes, block position and width, failure marking (§UI Screen 2) | T-INT-D2 |
 | S4.3 | Run log newest first with agent, result, `t+`, duration, tokens, summary | T-INT-D3 |
 | S4.4 | Expanded run: numbered output lines, `Final output`, verdict or `No status change` (§R5/R6) | T-INT-D4, T-UNIT-OUT-1 |
-| S4.5 | `Your involvement` panel (§R4) | T-INT-D5 |
+| S4.5 | `Your involvement` panel fed by `actor='human'` runs (§R4) | T-INT-D5, T-DRV-4 |
 | S4.6 | `Status trail` from `ticket_status_event` | T-INT-D6 |
 | S5.1 | Four trend cards, 26 weekly buckets (§R8) | T-UNIT-TRD-1…4, T-INT-N1 |
 | S5.2 | Delta text with `better` / `worse` / `unchanged` (§R8) | T-UNIT-TRD-3, T-INT-N2 |
 | S5.3 | Buckets start at `dataStart`; period line names the range | T-UNIT-TRD-4, T-INT-N3 |
-| S5.4 | `Per ticket · lifetime` table, ordered by interventions then loops | T-INT-N4 |
+| S5.4 | `Per ticket · lifetime` table, `ticket` cell is the `ticketId` partial, ordered by interventions then loops | T-INT-N4, T-REPO-3 |
 | S5.5 | `Token spend per agent` | T-INT-N5 |
 | S5.6 | `Where tickets bounce back`, five rows incl. failed runs | T-INT-N6 |
-| S6.1 | `PreToolUse` hook → `POST /api/hook/run-start` with ticket and agent | T-HOOK-1, T-INT-1 |
-| S6.2 | `PostToolUse` / `SubagentStop` → `run-finish` with output, result, duration, tokens | T-HOOK-1, T-HOOK-3, T-INT-2 |
+| S6.1 | Start reported on both paths: `PreToolUse` (subagent) and `UserPromptSubmit` of a driven session (§R13) | T-HOOK-1, T-INT-1, T-DRV-1 |
+| S6.2 | Finish reported on both paths: `PostToolUse`/`SubagentStop` and `Stop`/`SessionEnd`, with output, result, duration and tokens | T-HOOK-1, T-HOOK-3, T-INT-2, T-DRV-1, T-DRV-5 |
 | S6.3 | Verbatim storage and line-numbered rendering (§R5/R6) | T-UNIT-OUT-1, T-HOOK-2 |
-| S6.4 | Hooks observe; nothing in the agent path changes (§R5) | T-HOOK-2 |
-| S6.5 | `POST /api/intervention` called by the coordinate skill (§Changes 3, §R4) | T-INT-D5, T-INT-8 |
-| S6.6 | `report.sh` always exits 0; no retry, no queue (§R9) | T-R9-1, T-R9-2, T-R9-3 |
-| S6.7 | Project key per repository; both report to one dashboard (§R10, ADR-0006) | T-CFG-1, T-CFG-2 |
+| S6.4 | Hooks observe and write nothing to stdout; nothing in the agent path changes (§R5) | T-HOOK-2 |
+| S6.5 | Interventions captured by the prompt hook or reported over the CLI (§R13, §R4) | T-DRV-4, T-INT-D5 |
+| S6.6 | The report path lives in the plugin; six hooks cover both ways of running an agent; the CLI covers a driver outside Claude Code; the driver contract is four points (§R13, ADR-0008) | T-DRV-1, T-DRV-2, T-DRV-3 |
+| S6.7 | `report.sh` always exits 0; no retry, no queue (§R9) | T-R9-1, T-R9-2, T-R9-3 |
+| S6.8 | Project key per repository; separate `(project_key, number)` rows; the label appears from the second repository on (§R3, §R10) | T-CFG-1, T-CFG-2, T-REPO-3 |
+| S6.9 | No `FACTORY_DRIVER` and no session state → the prompt hook makes no network call at all (§R13) | T-DRV-2 |
 | S7.1 | `LOOP_THRESHOLD` feeds R1 rule 5 and its note text | T-UNIT-R1-5 |
 | S7.2 | `IDLE_HOURS` feeds R1 rule 7 | T-UNIT-R1-7 |
 | S7.3 | Defaults `3` and `24` validated at startup (ADR-0005) | T-UNIT-R1-5, T-DEPLOY-1 |
 | R1 | §R1 table with note texts, colours and ordering | T-UNIT-R1-1…7, T-UNIT-R1-ORD |
 | R2 | §R2 table plus the unknown-status rule | T-UNIT-R2-1 |
-| R3 | Number and title on screen, `(project, number)` in storage (ADR-0006, CR1) | T-CFG-2 |
-| R4 | Interventions are `run` rows with `actor='human'` (decision 8) | T-INT-D5, T-INT-8 |
-| R5 | Hooks copy; the agent path is untouched | T-HOOK-2 |
+| R3 | `(project_key, number)` identity, `repository` table, `showRepository`, label derivation, the five render places (ADR-0006, ADR-0007) | T-REPO-1…5, T-CFG-2 |
+| R4 | Interventions are `run` rows with `actor='human'`, captured independently of the driver, merged within 120 s | T-DRV-4, T-INT-D5 |
+| R5 | Hooks copy; the agent path is untouched; no hook writes to stdout | T-HOOK-2 |
 | R6 | Verbatim `output`, numbered line split, no classification, no `kind` column | T-UNIT-OUT-1, T-UI-1 |
-| R7 | Open runs younger than `RUN_STALE_HOURS`, counted at render time | T-INT-A7 |
+| R7 | Open runs younger than `RUN_STALE_HOURS`, counted at render time | T-INT-A7, T-DRV-5 |
 | R8 | No deletion anywhere; 26-week buckets; short history named | T-DATA-1, T-UNIT-TRD-1…4 |
 | R9 | `exit 0` on every path, bounded timeouts, no retry | T-R9-1, T-R9-2, T-R9-3 |
 | R10 | Two-level configuration, derived project key (§R10) | T-CFG-1 |
 | R11 | Default and fallback tab `attention` | T-INT-A1 |
-| R12 | No refresh, no `synced`, `Cache-Control: no-store` | T-UI-1 |
+| R12 | No refresh, no `synced`, `Cache-Control: no-store`; the label switch becomes visible on the next load | T-UI-1, T-REPO-3 |
+| R13 | §R13 in full: reporting lives in the plugin, six hooks, CLI mode, the driver contract, the coordinate skill carries none of it (ADR-0008) | T-DRV-1…5 |
 | QE1 (Pi resources) | 256 MB / 1.0 CPU budget, one container, Node heap 192 MB | T-RES-1, T-PERF-1 |
 | QE2 (immediate) | One response holds all three tabs; client-side switching | T-PERF-1, T-PERF-2 |
 | QE3 (desktop browser) | No breakpoint below 1024 px, no touch affordance | T-UI-1 |
 | QE4 (dark only) | The design's palette, no light mode, no `prefers-color-scheme` | T-UI-1 |
 | QE5 (seconds to recognise) | Attention is the landing tab, ordered by severity, with the reason and its sentence on the card | T-INT-A1…A3 |
-| QE6 (factory not slower or less reliable) | Zero tokens, ≤ 2 s + 5 s worst case, deterministic hooks, no LLM step | T-R9-2, T-HOOK-2 |
+| QE6 (factory not slower or less reliable) | Zero tokens, ≤ 2 s + 5 s worst case, deterministic hooks, no LLM step; the three session hooks return without a network call in every session that is not a factory run | T-R9-2, T-R9-3, T-HOOK-2, T-DRV-2 |
 | SC1 (Raspberry Pi) | Resource budget and arm64 build | T-ARCH-1, T-RES-1 |
-| SC2 (dockerized) | One compose service, `docker compose up -d` | T-DEPLOY-1 |
+| SC2 (dockerized) | One compose service, one volume, `docker compose up -d` | T-DEPLOY-1 |
 | SC3 (other repositories) | Project key per repository, hooks installed with the plugin | T-CFG-1, T-CFG-2 |
 | SC4 (others host it elsewhere) | Everything in `.env` and `~/.factory/dashboard.env`; no hard-coded host | T-CFG-1, T-DEPLOY-1 |
-| SC5 (leaning: a skill the agents call) | Decided against, with reasons, in ADR-0003; the need — the agents report — is met by hooks, and the coordinate skill does call the reporter for interventions | ADR-0003, T-HOOK-2 |
-| SC6 (the supplied design is fixed) | ADR-0002: templates keep the design's structure, inline styles and wording; D4, D5, D6 applied | T-UI-1 |
-| LTA1 (how an agent reports) | ADR-0003 | T-HOOK-1 |
-| LTA2 (how output is captured) | ADR-0004, §R5/R6 | T-HOOK-1, T-UNIT-OUT-1 |
-| LTA3 (how a run in progress is known) | `PreToolUse` start report, open runs, §R7 | T-INT-1, T-INT-A7 |
-| LTA4 (the coordinator's reporting) | §Changes 3, `POST /api/intervention` | T-INT-8 |
-| LTA5 (where history lives, how configured) | SQLite in `dashboard-data`, forever; `.env` (ADR-0001, ADR-0005) | T-DATA-1, T-DEPLOY-1 |
-| LTA6 (design file → running UI) | ADR-0002 | T-UI-1 |
-| LTA7 (existing artifacts as a source) | Decision 11 and 12: the requirements document yes, `run-NNN.md` no | T-HOOK-1 |
+| SC5 (the coordinator is temporary) | §R13, ADR-0008: nothing in the report path is the coordinator's | T-DRV-1…3 |
+| SC6 (leaning: a skill the agents call) | Decided against, with reasons, in ADR-0003; the need — the agents report — is met by hooks | ADR-0003, T-HOOK-2 |
+| SC7 (the supplied design is fixed) | ADR-0002: templates keep the design's structure, inline styles and wording; D4, D5, D6 applied, D14 added in the design's own style | T-UI-1 |
+| SC8 (no backup) | No backup job, no backups volume, no `BACKUP_*` variable; durability stated in §Cross-cutting concerns | T-DATA-1 |
+| SC9 (newest versions only) | §Dependency currency: every component verified against its registry on 2026-09-20 and pinned exactly (ADR-0009) | T-DEP-1 |
+| LTA1 (how an agent reports) | ADR-0003, ADR-0008 | T-HOOK-1, T-DRV-1 |
+| LTA2 (how output is captured) | ADR-0004, §R5/R6, the sidechain filter and its inverse | T-HOOK-1, T-UNIT-OUT-1, T-DRV-1 |
+| LTA3 (how a run in progress is known) | Start reports, open runs, §R7 | T-INT-1, T-INT-A7, T-DRV-1 |
+| LTA4 (how interventions get reported) | §R13 prompt hook and CLI, §R4 | T-DRV-4 |
+| LTA5 (how reporting survives the coordinator) | §R13 in full, ADR-0008 | T-DRV-1…3 |
+| LTA6 (how the dashboard knows about a second repository) | The `repository` table and `showRepository` (§Data model, §R3) | T-REPO-2, T-REPO-3, T-REPO-5, T-REPO-6 |
+| LTA7 (what name a repository is shown under) | The label derivation of §R3 (ADR-0007) | T-REPO-1 |
+| LTA8 (where history lives, how configured) | SQLite in `dashboard-data`, forever; `.env` (ADR-0001, ADR-0005) | T-DATA-1, T-DEPLOY-1 |
+| LTA9 (design file → running UI) | ADR-0002 | T-UI-1 |
+| LTA10 (existing artifacts as a source) | Decision 11 and 12: the requirements document yes, `run-NNN.md` no | T-HOOK-1 |
 | D4 | 26 weekly buckets; bar labels adapted (assumption 5) | T-UNIT-TRD-1 |
 | D5 | No `synced`, no self-refresh | T-UI-1 |
 | D6 | No `kind` column in an expanded run | T-UI-1 |
 | D13 | Loop definition in §Ticket metrics | T-UNIT-MET-1 |
+| D14, D16 | The repository is built now and rendered everywhere a ticket appears (§R3) | T-REPO-3 |
+| D15 | Reporting independent of the coordinator (§R13) | T-DRV-1…3 |
+| D17 | Shown only from the second repository on, and then for good | T-REPO-2, T-REPO-3, T-REPO-5 |
+| D18 | A hand-started chat run produces no report | T-DRV-2 |
 | Out of scope: any action from the dashboard | No write route reachable from the browser; no form, no input | T-INT-9, T-UI-1 |
 | Out of scope: the dashboard changing the factory | The dashboard makes no outbound connection at all | T-UI-1 review item |
 | Out of scope: login, accounts, roles, permissions | No user table, no session, no auth on reads | T-UI-1 review item |
 | Out of scope: cost in a currency | Tokens only; no price, no currency anywhere | T-UI-1 |
 | Out of scope: light mode, phone layout | One dark stylesheet, no media query below 1024 px | T-UI-1 |
+| Out of scope: hand-started chat runs (D18) | The prompt hook's decision table does nothing without a driver marker or a session state file | T-DRV-2 |
+| Out of scope: a repository indicator while one repository has reported (D17) | `showRepository` is false | T-REPO-2 |
 | Later: notifications | Not built | – |
-| Later: repository indicator | Not built; the data model holds the repository for the day it is (CR1) | – |

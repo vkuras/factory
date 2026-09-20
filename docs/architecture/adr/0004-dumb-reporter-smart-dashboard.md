@@ -1,8 +1,8 @@
 # 0004 – The reporter ships raw payloads; the dashboard parses them, and tokens are a cumulative delta
 
-- Status: Accepted
+- Status: Accepted (extended 2026-09-20 to main-session runs, see ADR-0008)
 - Date: 2026-09-20
-- Requirements: 001 S6.2, S6.3, R6, R9, QE6, LTA2
+- Requirements: 001 S6.2, S6.3, R6, R9, R13, QE6, LTA2
 
 ## Context
 
@@ -49,6 +49,11 @@ Option B.
   `awk`. The dashboard stores the last value seen per `(session_id, transcript_path)` and charges
   the run the difference, clamped at ≥ 0. This is correct whether the transcript is per-subagent
   (previous value 0) or shared (counters accumulate).
+
+For a stage that runs as the session's main agent (ADR-0008) the same rule applies with the
+sidechain filter inverted: the counters of non-sidechain lines are the run's own, and its
+subagents' lines are excluded. The output text comes from the last non-sidechain assistant entry
+for the same reason.
 
 A run's tokens are the sum of all four counters, i.e. total tokens processed including cache reads.
 When no source yields a number, tokens are stored as `NULL` and the UI shows `—`; such runs are

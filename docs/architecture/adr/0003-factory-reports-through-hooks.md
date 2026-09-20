@@ -1,8 +1,8 @@
 # 0003 – The factory reports through Claude Code hooks, not through a skill the agents call
 
-- Status: Accepted
+- Status: Accepted (revised 2026-09-20 for R13; the driver-independent part is ADR-0008)
 - Date: 2026-09-20
-- Requirements: 001 S6, R5, R6, R9, R10, QE6, SC5, LTA1–LTA4
+- Requirements: 001 S6, R5, R6, R9, R10, R13, QE6, SC5, SC6, LTA1–LTA5
 
 ## Context
 
@@ -48,27 +48,32 @@ remembers to do something and copies text without touching it; option B meets bo
 construction, at zero token cost. The stakeholder's leaning was a preference, explicitly handed
 over, and the need behind it — "the agents must report" — is met.
 
-Three hooks, registered by the plugin in `plugins/factory/hooks/hooks.json`:
+Six hooks, registered by the plugin in `plugins/factory/hooks/hooks.json`:
 
 | Hook | Matcher | Purpose |
 |---|---|---|
-| `PreToolUse` | `Agent\|Task` | run start: ticket, agent, start time, status before |
-| `PostToolUse` | `Agent\|Task` | run finish for foreground runs, including the tool's own usage numbers |
-| `SubagentStop` | – | run finish for background runs, from the subagent's transcript |
+| `PreToolUse` | `Agent\|Task` | run start of a subagent: ticket, agent, start time, status before |
+| `PostToolUse` | `Agent\|Task` | run finish for foreground subagents, including the tool's own usage numbers |
+| `SubagentStop` | – | run finish for background subagents, from the subagent's transcript |
+| `UserPromptSubmit` | – | run start of a stage that is the session's main agent, or an operator intervention |
+| `Stop` | – | run finish of such a main-session run |
+| `SessionEnd` | – | closes a main-session run that never finished, and cleans up the session state |
 
-All three call the same POSIX shell script, which always exits 0 and never writes to stdout.
-Interventions (R4) are the one thing no hook can attribute to a ticket, so the coordinate skill
-reports them by calling the same script with `intervention` (see design §Changes to the factory
-plugin).
+All six call the same POSIX shell script, which always exits 0 and never writes to stdout. Which of
+the six fire depends only on how the agent was started, not on who started it; ADR-0008 covers the
+three session-level hooks, the operator's interventions and the command-line mode for a driver that
+never touches Claude Code. Interventions are *not* reported by the coordinate skill: the first
+revision of this design did that, and R13 made it the one part of reporting that would disappear
+with the coordinator.
 
 ## Consequences
 
-- The factory's agent files stay almost unchanged; the coordinate skill gains one guaranteed line
-  in every task message (`Requirements: NNN (docs/requirements/NNN-<slug>.md)`) and the
-  intervention call.
-- Only runs the coordinator spawns through the Agent tool are reported. A stage invoked by hand in
-  the main session produces no run row; its effect on the ticket's status is picked up by the next
-  reported run. Recorded as an assumption in the design.
+- The factory's agent files stay unchanged; the coordinate skill gains one guaranteed line in every
+  task message (`Requirements: NNN (docs/requirements/NNN-<slug>.md)`), which improves the ticket
+  detection but is not what makes reporting work.
+- A stage the operator types into a chat by hand is deliberately not reported (D18, S6.9); its
+  effect on the ticket's status is picked up by the next reported run. See ADR-0008 for how that is
+  told apart from a stage a script started the same way.
 - The hook payload field names are an external contract the product does not own. Build slice 1
   captures real payloads and commits them as test fixtures; every parser has a defined fallback and
   a defined "unknown" outcome.

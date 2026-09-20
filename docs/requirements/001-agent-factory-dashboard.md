@@ -1,7 +1,7 @@
 # 001 – Agent Factory Dashboard
 
 - Type: MVP
-- Status: Groomed – ready for architecture
+- Status: Designed – ready for implementation
 - Date: 2026-09-20 (change-request passes: CR1 and the coordinator's future, then the
   stakeholder's answers to the open points of that pass, all the same day)
 - Product context: docs/product.md

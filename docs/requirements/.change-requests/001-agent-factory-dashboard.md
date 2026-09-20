@@ -2,8 +2,10 @@
 
 - Raised by: architect, 2026-09-20
 - Design: docs/architecture/001-agent-factory-dashboard.md §Requirement conflicts, ADR-0006
-- Status: Answered – CR1 overturned by the stakeholder on 2026-09-20, groomed into requirements 001
-  (D14). The design must be revised.
+- Status: Closed – CR1 overturned by the stakeholder on 2026-09-20, groomed into requirements 001
+  (D14), and the design was revised accordingly the same day (revision 2 of
+  `docs/architecture/001-agent-factory-dashboard.md`: R3 display rule, ADR-0006 revised, ADR-0007
+  added). Nothing is open here.
 
 ## CR1 – Two repositories both produce a ticket `001`
 

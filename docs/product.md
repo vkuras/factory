@@ -60,4 +60,4 @@ Two things, in this order:
 
 | # | Title | Type | Status |
 |---|---|---|---|
-| 001 | Agent Factory Dashboard | MVP | Groomed (re-groomed after CR1; design to be revised) |
+| 001 | Agent Factory Dashboard | MVP | Designed |

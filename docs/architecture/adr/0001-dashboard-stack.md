@@ -1,8 +1,8 @@
 # 0001 – The dashboard is one Node + SQLite container that renders HTML on the server
 
-- Status: Accepted
+- Status: Accepted (revised 2026-09-20: runtime moved from Node 22 to Node 26, backups removed)
 - Date: 2026-09-20
-- Requirements: 001 QE1 (Raspberry Pi), QE2 (immediate), SC1, SC2 (dockerized), R8 (history forever), R12 (snapshot)
+- Requirements: 001 QE1 (Raspberry Pi), QE2 (immediate), SC1, SC2 (dockerized), R8 (history forever), R12 (snapshot), SC8 (no backup), SC9 (newest versions)
 
 ## Context
 
@@ -21,8 +21,9 @@ Numbers that decide: ≤ 256 MB RAM for the whole product, `GET /` p95 < 300 ms 
 ### A – Node.js + Express + EJS + SQLite (better-sqlite3), server-rendered HTML, one container
 One process, one image, one volume. No database server, no build step for the client. Synchronous
 SQLite calls in-process; the read path is a handful of indexed queries over a small table. Idle
-RSS ≈ 60 MB, under load ≈ 110 MB. better-sqlite3 is a native module and needs a compile stage in
-the image for arm64 if no prebuild matches.
+RSS ≈ 60 MB, under load ≈ 110 MB. better-sqlite3 is a native module, but version 13 ships N-API
+prebuilds for `linux-arm64` inside its npm package, so nothing is compiled when the image is
+built.
 
 ### B – Node/Python + Postgres, SPA frontend (React/Vite)
 Two containers plus a node_modules build stage and a bundler. Postgres alone asks for ~200 MB on
@@ -41,18 +42,43 @@ framework would each cost more RAM than the whole application and buy nothing th
 ask for. Server-rendered HTML also matches R12 exactly: the page is a snapshot of the moment it
 was requested, with no client state to keep fresh.
 
-Production dependencies are exactly three (`express`, `ejs`, `better-sqlite3`). The image is
-multi-stage on `node:22-bookworm-slim` (glibc, so better-sqlite3's arm64 prebuild applies; a
-compiler is available in the build stage as a fallback).
+Production dependencies are exactly three (`express` 5.2.1, `ejs` 6.0.1, `better-sqlite3` 13.0.3).
+The image is multi-stage on `node:26.9.0-trixie-slim` (glibc, so better-sqlite3's `linux-arm64`
+prebuild applies; no compiler in either stage).
+
+### Why Node 26 and not Node 22, 24 or 25
+
+The first revision of this design said "Node 22 LTS" without a reason, which was wrong twice over:
+22 is not the newest line, and it is no longer the freshest LTS either. Checked against
+`nodejs.org/dist/index.json` and the Node release schedule on 2026-09-20:
+
+| Line | Newest release | State today | Supported until |
+|---|---|---|---|
+| 22 (Jod) | 22.23.2 | **Maintenance** since 2025-10-21 — critical fixes only | 2027-04-30 |
+| 24 (Krypton) | 24.21.0 | Active LTS, enters maintenance on 2026-10-20 | 2028-04-30 |
+| 25 | 25.9.0 | **Ended** 2026-06-01 | – |
+| 26 | **26.9.0** (2026-09-16) | Current; becomes Active LTS on 2026-10-28 | 2029-04-30 |
+
+Node 26 is chosen. It is the newest line, which is what the stakeholder asked for ("wir sollen nur
+das neuste nehmen sodass keine sichheits lucken drin sind", SC9), and it is also the *longest
+supported*: it becomes Active LTS five weeks after this design and carries security fixes until
+April 2029, while 24 drops to maintenance in four weeks and 22 has been on critical-only fixes for
+a year. A maintenance-only line is the opposite of what "no security holes" means. The one price is
+that Node 26 is Current rather than LTS for another five weeks; the two things that could have
+objected do not: `better-sqlite3` 13 declares `node >= 22` and loads an ABI-independent N-API
+binary, and Vitest 5 lists `>= 26` in its own `engines`.
 
 ## Consequences
 
-- One service in the compose file, one named volume for the database and one for backups. No
-  `depends_on` chain, nothing to wait for at startup.
-- Migrations and the nightly backup run inside the same process; there is no second container and
-  no host cron.
+- One service in the compose file and one named volume, for the database. No `depends_on` chain,
+  nothing to wait for at startup. There is no backups volume: the stakeholder decided against
+  backups (SC8), so the durability of that volume is the operator's.
+- Migrations and the abandoned-run sweeper run inside the same process; there is no second
+  container and no host cron.
 - Writes are serialized by a single process: no locking strategy, no connection pool, no race
   between ingest and rendering beyond SQLite's WAL.
 - Adding a second reader process later (or a second machine) would need this revisited, because
   better-sqlite3 assumes one writer in one process.
 - Developers must keep the render path free of N+1 queries; the perf test (T-PERF-1) is the guard.
+- Node 26 becomes Active LTS on 2026-10-28 without any action here; the pin is the exact patch tag
+  `node:26.9.0-trixie-slim` and moving it is a deliberate commit (ADR-0009).
