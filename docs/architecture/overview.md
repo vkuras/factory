@@ -23,7 +23,7 @@ flowchart LR
     subgraph cc["Claude Code session"]
       main["main agent"]
       agents["groom / architect /<br/>implementer / validator<br/>(subagents)"]
-      hooks["plugin hooks<br/>PreToolUse · PostToolUse · SubagentStop<br/>UserPromptSubmit · Stop · SessionEnd"]
+      hooks["plugin hooks<br/>PreToolUse · PostToolUse · PostToolUseFailure · SubagentStop<br/>UserPromptSubmit · Stop · SessionEnd"]
       main -->|Agent tool| agents
       main -.->|payload| hooks
       agents -.->|payload| hooks
@@ -71,7 +71,7 @@ container makes no outbound connection at all.
 | Language | TypeScript 7.0.2, compiled to ESM | ADR-0001, ADR-0009 |
 | HTTP | Express 5.2.1 | ADR-0001 |
 | Templating | EJS 6.0.1, auto-escaping `<%= %>` | ADR-0001, ADR-0002 |
-| Database | SQLite via `better-sqlite3` 13.0.3 (N-API prebuilds, no compile step), file in a named volume | ADR-0001, ADR-0009 |
+| Database | SQLite via `better-sqlite3` 13.0.3 (N-API prebuilds, no compile step — the image installs with `npm ci --ignore-scripts`, because the package would otherwise run `node-gyp` and fail), file in a named volume | ADR-0001, ADR-0009 |
 | Client code | One hand-written `app.js` (~40 lines) plus native `<details>`; no framework, no bundler | ADR-0002 |
 | Fonts | IBM Plex Sans + IBM Plex Mono, self-hosted `woff2` from pinned `@fontsource/*` dev dependencies | 001 design decision 7 |
 | Tests | Vitest 5.0.1, supertest 7.2.2, cheerio 1.2.0, shellcheck v0.11.0 | ADR-0001, ADR-0009 |
@@ -94,8 +94,8 @@ its evidence is in `001-agent-factory-dashboard.md` §Dependency currency (ADR-0
 | `dashboard/src/views/` | EJS templates: layout, overview with its three tabs, detail, empty, error | `dashboard/src/views/` |
 | `dashboard/src/public/` | `app.js`, `app.css`, `fonts/` | `dashboard/src/public/` |
 | `dashboard/src/jobs/` | Abandoned-run sweeper (the only job) | `dashboard/src/jobs/` |
-| `plugins/factory/hooks/hooks.json` | Registers `PreToolUse(Agent\|Task)`, `PostToolUse(Agent\|Task)`, `SubagentStop`, `UserPromptSubmit`, `Stop`, `SessionEnd` | `plugins/factory/hooks/` |
-| `plugins/factory/hooks/report.sh` | The reporter, hook mode and CLI mode: `run-start`, `run-finish`, `prompt`, `session-finish`, `session-end`, `intervention`; always exits 0 | `plugins/factory/hooks/` |
+| `plugins/factory/hooks/hooks.json` | Registers `PreToolUse(Agent\|Task)`, `PostToolUse(Agent\|Task)`, `PostToolUseFailure(Agent\|Task)`, `SubagentStop`, `UserPromptSubmit`, `Stop`, `SessionEnd`. The plugin manifest carries no `hooks` key: Claude Code loads this file from its conventional location and rejects the key as a duplicate | `plugins/factory/hooks/` |
+| `plugins/factory/hooks/report.sh` | The reporter, hook mode and CLI mode: `run-start`, `run-finish`, `run-failed`, `prompt`, `session-finish`, `session-end`, `intervention`; always exits 0 | `plugins/factory/hooks/` |
 
 ## Data model
 
@@ -177,7 +177,7 @@ docker compose up -d
 
 | # | Title | Status |
 |---|---|---|
-| 001 | Agent Factory Dashboard | Designed (revision 2, 2026-09-20) |
+| 001 | Agent Factory Dashboard | Designed (revision 3, 2026-09-20: gaps G1 and G2 answered) |
 
 ## ADR index
 

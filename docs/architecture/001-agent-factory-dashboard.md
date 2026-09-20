@@ -3,7 +3,10 @@
 - Requirements: docs/requirements/001-agent-factory-dashboard.md
 - Status: Designed – ready for implementation
 - Date: 2026-09-20 (revision 2: R3/D14–D17 repository display, R13 driver independence, no backup,
-  all dependencies moved to their newest stable version)
+  all dependencies moved to their newest stable version. Revision 3 answers the implementer's gaps
+  G1 and G2: a seventh hook `PostToolUseFailure`, the chip truncation rule, and three corrections
+  the first build round proved necessary — the transcript delta leads the token resolution, the
+  plugin manifest carries no `hooks` key, and `npm ci` runs with `--ignore-scripts`)
 - Architecture: docs/architecture/overview.md
 
 ## Summary
@@ -13,7 +16,7 @@ that stores what the factory reports in a SQLite file and renders it as server-s
 tabs (Attention, Pipeline, Analytics) and a ticket detail page, in the supplied dark design. It is
 one Docker container with one named volume, started by the repository's `docker-compose.yml` on
 the operator's Raspberry Pi, and it never writes anything back to the factory. **The reporting
-side** is six Claude Code hooks shipped with the `factory` plugin plus one POSIX shell script that
+side** is seven Claude Code hooks shipped with the `factory` plugin plus one POSIX shell script that
 posts the raw hook payload to the dashboard with `curl`. The hooks cover both ways an agent can be
 run: as a subagent (the coordinator today) and as the main agent of a session (a shell script
 tomorrow, R13). The same script is also a command-line reporter, so a driver that never touches
@@ -77,7 +80,7 @@ flowchart LR
     subgraph cc["Claude Code session"]
       main["main agent<br/>(driven agent run or<br/>the operator's chat)"]
       agents["factory:groom / architect /<br/>implementer / validator<br/>(subagents)"]
-      hooks["plugin hooks<br/>PreToolUse · PostToolUse · SubagentStop<br/>UserPromptSubmit · Stop · SessionEnd"]
+      hooks["plugin hooks<br/>PreToolUse · PostToolUse · PostToolUseFailure · SubagentStop<br/>UserPromptSubmit · Stop · SessionEnd"]
       main -->|Agent tool| agents
       main -.->|payload| hooks
       agents -.->|payload| hooks
@@ -113,8 +116,8 @@ flowchart LR
 | `dashboard/src/views/*.ejs` | `layout`, `overview`, `attention`, `pipeline`, `analytics`, `detail`, `empty`, `error` | `dashboard/src/views/` |
 | `dashboard/src/public/` | `app.js` (tab switching), `app.css` (shared rules, `@font-face`, `:hover`), `fonts/*.woff2` | `dashboard/src/public/` |
 | `dashboard/src/jobs/` | Abandoned-run sweeper | `dashboard/src/jobs/` |
-| `plugins/factory/hooks/hooks.json` | Registers the six hooks | `plugins/factory/hooks/` |
-| `plugins/factory/hooks/report.sh` | The reporter, in hook mode and in CLI mode: `run-start`, `run-finish`, `intervention`, `prompt`, `session-end` | `plugins/factory/hooks/` |
+| `plugins/factory/hooks/hooks.json` | Registers the seven hooks | `plugins/factory/hooks/` |
+| `plugins/factory/hooks/report.sh` | The reporter, in hook mode and in CLI mode: `run-start`, `run-finish`, `run-failed`, `intervention`, `prompt`, `session-finish`, `session-end` | `plugins/factory/hooks/` |
 
 Nothing in `domain/` reads the clock, the database or the environment: every function takes plain
 data plus `now` and the thresholds, so each rule is unit-testable with a fixed clock.
@@ -196,7 +199,7 @@ tool_use_id IS NOT NULL` (unique).
 | Value | When |
 |---|---|
 | the agent's own `STATUS:` value (`groomed`, `in-grooming`, `designed`, `designed-with-conflicts`, `ready-for-validation`, `needs-architect`, `validated`, `changes-requested`, `needs-groomer`, `blocked-environment`, `escalated`, `nothing-to-do`) | a `STATUS:` line was parsed from the output |
-| `failed` | the tool payload flags an error, or the parsed `STATUS:` is `failed` |
+| `failed` | the tool payload flags an error — a `PostToolUseFailure` delivery, or an error flag inside `tool_response` — or the parsed `STATUS:` is `failed` |
 | `unreported` | the run finished but carried no parsable output |
 | `interrupted` | the Claude Code session ended while this run was still open (`SessionEnd`) |
 | `abandoned` | no finish arrived within `RUN_STALE_HOURS` (default 12) |
@@ -329,16 +332,32 @@ Resolves which run this finishes, in this order:
 3. the newest open run for `(project, number)`.
 
 If none of the three matches, the report is dropped and logged as `report_drop` — a finish without
-a start is never turned into a run, because its actor is unknown. If the resolved run is already
-finished, only fields that are still `NULL` are filled (`tokens`, `output`, `summary`,
-`agent_status`, `status_after`); `ended_at` and `result` are never overwritten. That makes the
-double delivery of `PostToolUse` and `SubagentStop` harmless in any order.
+a start is never turned into a run, because its actor is unknown. A `PostToolUseFailure` for an
+Agent call the start filter never reported (a non-factory subagent, an unknown `subagent_type`) is
+therefore dropped like any other unmatched finish; nothing invents a run out of it.
+
+If the resolved run is already finished, only fields that are still `NULL` are filled (`tokens`,
+`output`, `summary`, `agent_status`, `status_after`); `ended_at` is never overwritten, and `result`
+is never overwritten **except by one upgrade**: a later delivery whose error flag is set replaces a
+`result` of `unreported` (or a `result` that is still `NULL`) with `failed`, and changes nothing
+otherwise. An error flag is a statement that the run ended badly, while `unreported` is only the
+absence of a statement; an agent that managed to print its own `STATUS:` keeps it, because that is
+the agent's own word about its work (R6). The upgrade is idempotent.
+
+Together with the matching rules this makes every order of the three possible finish deliveries for
+one subagent run — `PostToolUse`, `PostToolUseFailure`, `SubagentStop` — produce the same row, and
+the dashboard accepts any of them as the finish. Which ones a given Claude Code version fires is
+not the dashboard's business: a subagent that dies mid-run may surface as a `SubagentStop` with a
+half-finished message or as a `PostToolUseFailure`, and both end the run.
 
 A payload that yields neither output text nor an error flag is **ignored** (answered `204`, logged
 as `report_ignored`): that is what a `PostToolUse` acknowledgement of a backgrounded agent looks
 like, and the real finish arrives later through `SubagentStop`. Two exceptions, because both are a
 real end of a run and not an acknowledgement: `meta.event = "session-end"` and a `cli` finish that
-carries `meta.result`. Both close the run with no output rather than being ignored.
+carries `meta.result`. Both close the run with no output rather than being ignored. A
+`PostToolUseFailure` body is never ignored either, because its `error` string always sets the error
+flag. An ignored payload writes nothing at all, **including `hook_cursor`**: an acknowledgement must
+not consume the token interval that the real finish of the same run is charged for.
 
 For a run reported from the main session (`source = session-hook`, `meta.origin = "main"`), the
 output text is taken from the transcript tail with the sidechain filter **inverted**: the last
@@ -350,9 +369,9 @@ Extraction from the body, in this order, all implemented in `ingest/payload.ts`:
 
 | Field | Resolution order | When nothing matches |
 |---|---|---|
-| output text | `tool_response.content[]` text blocks joined with `\n` → `tool_response.content` as a string → `tool_response.text` → `tool_response` as a string → last transcript entry with `type = "assistant"` and `isSidechain = true`, else the last `type = "assistant"` entry, text blocks joined | the payload is *ignored* (see above) unless an error flag was found |
-| error flag | `tool_response.is_error` \| `tool_response.isError` \| `is_error` is truthy, or `tool_response` is a string starting with `Error:` | `false` |
-| usage | `tool_response.usage` (sum of `input_tokens`, `output_tokens`, `cache_creation_input_tokens`, `cache_read_input_tokens`) → `tool_response.totalTokens` → `tool_response.total_tokens` → `meta.cum_tokens` minus `hook_cursor.cum_tokens` for `(session_id, transcript_path)`, clamped at ≥ 0 | `NULL` |
+| output text | `tool_response.content[]` text blocks joined with `\n` → `tool_response.content` as a string → `tool_response.text` → `tool_response` as a string → `last_assistant_message` → last transcript entry with `type = "assistant"` and `isSidechain = true`, else the last `type = "assistant"` entry, text blocks joined. **The transcript steps are skipped when the body carries no `tool_response` and the error flag is set** (the `PostToolUseFailure` case): the agent produced nothing, and the transcript's last assistant entry then belongs to the calling session, not to the failed run | the top-level `error` string when there is one, else the payload is *ignored* (see above) unless an error flag was found |
+| error flag | `tool_response.is_error` \| `tool_response.isError` \| `is_error` is truthy, or `tool_response` is a string starting with `Error:`, or the payload has a non-empty top-level `error` string (`PostToolUseFailure`) | `false` |
+| usage | `meta.cum_tokens` minus `hook_cursor.cum_tokens` for `(session_id, transcript_path)`, clamped at ≥ 0, whenever the meta carries `cum_tokens` → `tool_response.usage` (sum of `input_tokens`, `output_tokens`, `cache_creation_input_tokens`, `cache_read_input_tokens`) → `tool_response.totalTokens` → `tool_response.total_tokens` | `NULL` |
 
 Then:
 
@@ -366,9 +385,13 @@ Then:
   trimmed; else the first non-empty line of the output, truncated to 200 characters with `…`;
   else `NULL`.
 - `output` = the extracted text, unchanged, truncated to 64 KiB at a character boundary with
-  `output_truncated = 1` (R6: no reformatting, no normalising, no reordering).
+  `output_truncated = 1` (R6: no reformatting, no normalising, no reordering). For a failure with no
+  agent text that is the harness's `error` string, stored the same way, verbatim: it is what the
+  operator would have seen in Claude Code, it is not a sentence the dashboard composed, and without
+  it a failed run would show a badge and nothing else.
 - `ended_at = meta.ts`, `status_after = meta.req_status`.
-- `hook_cursor` is upserted to `meta.cum_tokens` whenever the meta carries one.
+- `hook_cursor` is upserted to `meta.cum_tokens` whenever the meta carries one — on a stored finish
+  only, never on an ignored payload and never on a dropped one.
 - The ticket is updated as in `run-start`, plus `agent_status` and a status event for
   `status_after`.
 
@@ -561,8 +584,10 @@ resolving afterwards, so nothing that was bookmarked breaks.
 The partial renders `<span class="af-id">001</span>` when `showRepository` is false, and
 `<span class="af-id">001</span><span class="af-repo"> · factory</span>` when it is true. `af-repo`
 is IBM Plex Mono 11 px, colour `#6E7887` (the design's muted mono colour), `title="{project_key}"`
-so the full key is available on hover, and it never wraps: it is truncated with `text-overflow:
-ellipsis` at 14 characters of width inside a chip. This is the fourth deviation from the supplied
+so the full key is available on hover, and it never wraps: in every one of the five places, the
+chip included, it is `max-width: 14ch` and is truncated with `text-overflow: ellipsis`. One rule in
+one partial, so a long repository name can never widen a card, push a title out of a chip or wrap a
+row, and the full key is one hover away (G2). This is the fourth deviation from the supplied
 design file (D14), which has no such element; it is added in the design's own style and takes no
 element away.
 
@@ -610,6 +635,9 @@ Claude Code transcript is byte-identical.
 
 What "output" means for a Claude Code subagent is its final message: that is the only thing the
 operator sees in Claude Code today, which is what R6 measures the dashboard against (assumption A8).
+When there is no final message because the Agent call itself failed (§`POST /api/hook/run-finish`),
+the stored output is Claude Code's own `error` string, again verbatim — the same rule applied to the
+only text that run produced (assumption 19).
 
 ### R7 – Agents online
 
@@ -743,7 +771,7 @@ agents themselves come from — so they have the reporting with it.
 
 | | How the agent runs | Who does it | Start | Finish |
 |---|---|---|---|---|
-| A | as a **subagent**, spawned with the Agent tool | the coordinate skill today; any driver that asks a session to spawn a stage | `PreToolUse(Agent\|Task)` | `PostToolUse(Agent\|Task)` and `SubagentStop` |
+| A | as a **subagent**, spawned with the Agent tool | the coordinate skill today; any driver that asks a session to spawn a stage | `PreToolUse(Agent\|Task)` | `PostToolUse(Agent\|Task)`, `PostToolUseFailure(Agent\|Task)` and `SubagentStop` — whichever the harness fires, in any order |
 | B | as the **main agent** of its own session, e.g. `claude -p "…"` | a shell script that runs one stage per session | `UserPromptSubmit` | `Stop`, with `SessionEnd` as the net |
 
 Case A is what the factory does today and needs nothing from the driver. Case B is the shell-script
@@ -892,8 +920,9 @@ entirely when there is no ticket at all.
 - Below: `Running on their own · {count}` and a responsive grid of compact chips (owner dot, the
   `ticketId` partial, title, ellipsised) for every ticket that matches no rule, ordered by
   `last_activity_at` descending. Each chip links to the detail page with `from=attention`. The chip
-  keeps its width when the repository is shown: the title is what gets ellipsised, the id and the
-  repository are never truncated.
+  keeps its width when the repository is shown: the id is never truncated, the repository label is
+  capped and ellipsised at 14 characters of width by the partial's own rule (§R3), and the title is
+  what gives way beyond that.
 - **Empty state (S1.9)**: when tickets exist but none needs attention, the card list is replaced by
   one panel in the card style: `Nothing needs you.` (18 px, `#E6E9EE`) and, underneath,
   `All {n} tickets are running on their own.` (13 px, `#A6B0BE`). The `Running on their own`
@@ -1044,9 +1073,9 @@ panels are visible one below the other and every link still works. Run expansion
 
 ## Changes to the factory plugin (S6, R13)
 
-Six files: `hooks/hooks.json` (new), `hooks/report.sh` (new),
-`.claude-plugin/plugin.json` (one key), `skills/coordinate/SKILL.md` (two formatting lines),
-`.env.example` (new) and `README.md`. The four agent files are untouched. Nothing changes in what an
+Five files: `hooks/hooks.json` (new), `hooks/report.sh` (new),
+`skills/coordinate/SKILL.md` (two formatting lines), `.env.example` (new) and `README.md`.
+`.claude-plugin/plugin.json` is **not** changed (see below). The four agent files are untouched. Nothing changes in what an
 agent does or writes (R5), and nothing that reports lives outside the plugin (R13).
 
 ### 1. `plugins/factory/hooks/hooks.json` (new)
@@ -1063,6 +1092,11 @@ agent does or writes (R5), and nothing that reports lives outside the plugin (R1
       { "matcher": "Agent|Task",
         "hooks": [ { "type": "command", "timeout": 15,
                      "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-finish" } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "Agent|Task",
+        "hooks": [ { "type": "command", "timeout": 15,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-failed" } ] }
     ],
     "SubagentStop": [
       { "hooks": [ { "type": "command", "timeout": 15,
@@ -1084,17 +1118,30 @@ agent does or writes (R5), and nothing that reports lives outside the plugin (R1
 }
 ```
 
-The first three cover a stage that runs as a subagent (case A of §R13), the last three cover a
+The first four cover a stage that runs as a subagent (case A of §R13), the last three cover a
 stage that runs as the main agent of its own session and the operator's interventions (case B).
 `UserPromptSubmit` and `Stop` write nothing to stdout, so they add nothing to the model's context
 and cannot influence what an agent does (R5); every one of them exits 0 (R9).
 
-`plugins/factory/.claude-plugin/plugin.json` gains `"hooks": "./hooks/hooks.json"`. The implementer
-verifies in slice 1 that the installed plugin registers all six (`claude plugin details factory`)
-and, if the manifest key is rejected by the installed Claude Code version, keeps only the
-conventional `hooks/hooks.json` location and records that in the implementation report. If an event
-name is not supported by the installed Claude Code version, the implementer reports it as a design
-gap rather than dropping it: `UserPromptSubmit`, `Stop` and `SessionEnd` are how R13 is met.
+**`PostToolUseFailure` is how a failed Agent call arrives** (G1). Measured against Claude Code
+2.1.278: an Agent call that fails fires `UserPromptSubmit`, `PreToolUse`, `PostToolUseFailure`,
+`Stop`, `SessionEnd` — no `PostToolUse` and no `SubagentStop` — and its payload carries
+`tool_use_id`, `tool_input` and a top-level `error` string instead of a `tool_response` (fixture
+`post-tool-use-failure.json`). Without this hook the start reported by `PreToolUse` is never
+finished, the run counts as an agent online for `RUN_STALE_HOURS` and ends up `abandoned`, which
+R1 rule 3 deliberately does not count — so S4.2 ("a run that failed is marked as such"), S5.6 and
+R1 rule 3 would all miss exactly the case they exist for. The hook uses the same matcher and the
+same script as `PostToolUse`; only the script argument differs, because a failure body has no
+agent output and no tokens of its own (§2, step 9a).
+
+`plugins/factory/.claude-plugin/plugin.json` gets **no** `hooks` key. Claude Code 2.1.278 loads
+`hooks/hooks.json` from the conventional location by itself and rejects the manifest key as a
+duplicate (`Duplicate hooks file detected … hook-load-failed`), while `claude plugin validate`
+passes either way. The conventional location is therefore the only registration, and the implementer
+verifies that the installed plugin registers all seven hooks (`claude plugin details factory`). If
+an event name is not supported by the installed Claude Code version, the implementer reports it as a
+design gap rather than dropping it: `PostToolUseFailure` is how S4.2's failed half is met, and
+`UserPromptSubmit`, `Stop` and `SessionEnd` are how R13 is met.
 
 ### 2. `plugins/factory/hooks/report.sh` (new)
 
@@ -1114,12 +1161,22 @@ POSIX `sh`, no bashisms, uses only `cat`, `grep`, `sed`, `awk`, `date`, `base64`
 4b. Decide what this invocation is, by the decision table of §R13. `prompt`, `session-finish` and
    `session-end` that resolve to "nothing" `exit 0` right here, before any file is read and before
    any network call — that is the D18 case and the ordinary-chat case.
+4c. `run-failed` is a `run-finish` with two differences, both because the Agent call never produced
+   anything: the transcript is not read at all (no output source, no token counter — step 9 is
+   skipped and the meta carries no `cum_tokens`, so the run's tokens stay `NULL` and the session's
+   own tokens are never charged to it), and the body is the payload alone. Everything else — the
+   endpoint `/api/hook/run-finish`, `meta.event = "run-finish"`, the matching by `tool_use_id` — is
+   identical.
 5. `TICKET` = `--ticket`, else `$FACTORY_TICKET`, else a `Factory-Run:` marker in the prompt, else
    the first match of `grep -oE 'docs\\?/requirements\\?/[0-9]{3,}'` over the payload (which also
    catches the JSON-escaped `docs\/requirements\/001`), else a standalone three-digit number in the
    prompt, reduced to its digits. For `run-finish` and `session-finish` the transcript file is
-   searched as well, and for an intervention the state file's `TICKET` is the fallback. No ticket →
-   `exit 0`. This is also the filter that keeps non-factory subagents out of the dashboard.
+   searched as well, and for an intervention and for `run-failed` the state file's `TICKET` is the
+   fallback — a failed Agent call still carries the coordinator's `Requirements:` line in
+   `tool_input.prompt`, and the `MODE=observe` state file of the same session is the net under it.
+   No ticket → `exit 0`. This is also the filter that keeps non-factory subagents out of the
+   dashboard: an Agent call whose `subagent_type` is not one of the four never produced a start, so
+   its failure finds no run and is dropped by the dashboard.
 6. For a start: `AGENT` = `--agent`, else `$FACTORY_AGENT`, else the first match of
    `grep -oE '"subagent_type"[ ]*:[ ]*"(factory:)?(groom|architect|implementer|validator)"'`
    (case A), else the first match of `grep -oE '(factory:|/)(groom|architect|implementer|validator)'`
@@ -1130,7 +1187,8 @@ POSIX `sh`, no bashisms, uses only `cat`, `grep`, `sed`, `awk`, `date`, `base64`
    back to the ticket number as the title.
 8. `PROJECT` = `$FACTORY_PROJECT_KEY`, else `git -C "$REPO" remote get-url origin` normalised to
    `host/owner/repo`, else `basename "$REPO"`.
-9. For `run-finish` and `session-finish`: `TRANSCRIPT` = the `"transcript_path"` value; `CUM` = the
+9. For `run-finish` and `session-finish`, and never for `run-failed` (step 4c):
+   `TRANSCRIPT` = the `"transcript_path"` value; `CUM` = the
    cumulative token counter. For a subagent finish the counter lines are
    `grep '"isSidechain":true' "$TRANSCRIPT"` (falling back to the whole file when that yields
    nothing); for a main-session finish they are `grep -v '"isSidechain":true' "$TRANSCRIPT"`, so a
@@ -1140,8 +1198,8 @@ POSIX `sh`, no bashisms, uses only `cat`, `grep`, `sed`, `awk`, `date`, `base64`
    and summed with `awk -F: '{s+=$2} END{print s+0}'`.
 10. Build the meta JSON by hand, escaping `\` and `"` in `TITLE`, `REQ_STATUS` and `WHAT`
     (`sed 's/\\/\\\\/g; s/"/\\"/g'`), then `base64 | tr -d '\n'`.
-11. POST: body = the payload for a start, the payload plus the last
-    `FACTORY_TRANSCRIPT_TAIL_BYTES` of the transcript for any finish (sent as the body of
+11. POST: body = the payload alone for a start and for `run-failed`, the payload plus the last
+    `FACTORY_TRANSCRIPT_TAIL_BYTES` of the transcript for any other finish (sent as the body of
     `/api/hook/run-finish` with the transcript tail appended after a `\n---8<---\n` separator line,
     which the dashboard splits on), the contents of `--output-file` for a CLI finish that has one,
     nothing for `intervention`.
@@ -1152,12 +1210,13 @@ POSIX `sh`, no bashisms, uses only `cat`, `grep`, `sed`, `awk`, `date`, `base64`
     status or a `curl` failure appends one line to `$FACTORY_REPORT_LOG`, which is then trimmed to
     its last 200 lines. Then `exit 0`.
 
-The five events the script accepts, and what each one does (the full decision logic is §R13):
+The six events the script accepts, and what each one does (the full decision logic is §R13):
 
 | Argument | Fired by | Does |
 |---|---|---|
 | `run-start` | `PreToolUse(Agent\|Task)` | reports the start of a subagent run; writes `MODE=observe` for the session |
 | `run-finish` | `PostToolUse`, `SubagentStop` | reports the finish of a subagent run |
+| `run-failed` | `PostToolUseFailure(Agent\|Task)` | reports the same finish for an Agent call that failed: payload only, no transcript, no token counter (step 4c) |
 | `prompt` | `UserPromptSubmit` | starts a driven main-session run, or records an intervention, or does nothing |
 | `session-finish` | `Stop` | finishes a driven main-session run; does nothing in any other session |
 | `session-end` | `SessionEnd` | closes a still-open driven run as `interrupted`, removes the state file |
@@ -1241,13 +1300,15 @@ in the product is the optional ingest token; it exists only in `.env` and in eac
 **Dockerfile.** Two stages on `node:26.9.0-trixie-slim`, pinned to that exact patch tag (§Dependency
 currency).
 
-- *builder*: `npm ci`, `npm run build` (TypeScript → ESM in `dist/`), copy the IBM Plex `woff2`
-  files out of the `@fontsource/*` dev dependencies into `dist/public/fonts/`, then
-  `npm prune --omit=dev`. No compiler and no `python3`: `better-sqlite3` 13 ships prebuilt N-API
-  binaries for `linux-arm64` and `linux-x64` inside its npm package, so nothing is compiled at
-  image build time. `npm ci` runs with `--foreground-scripts` so a silent fall-back to a source
-  build shows up in the build log, and T-ARCH-1 fails the build if the prebuilt binary is not the
-  one that gets loaded.
+- *builder*: `npm ci --ignore-scripts`, `npm run build` (TypeScript → ESM in `dist/`), copy the IBM
+  Plex `woff2` files out of the `@fontsource/*` dev dependencies into `dist/public/fonts/`, then
+  `npm prune --omit=dev --ignore-scripts`. No compiler and no `python3`: `better-sqlite3` 13 ships
+  prebuilt N-API binaries for `linux-arm64` and `linux-x64` inside its npm package, so nothing has
+  to be compiled at image build time. `--ignore-scripts` is what makes that true rather than
+  hopeful: the package still declares a `binding.gyp` and an `install` script (`node-gyp rebuild`),
+  which npm would run, and which fails in a slim image with no compiler. With the scripts off, the
+  prebuilt `linux-arm64.node` is the binary that gets loaded, and T-ARCH-1 fails the build if it is
+  not — the build log must show no `node-gyp` and the final image must contain no compiler.
 - *runtime*: copy `dist/`, `node_modules/`, `migrations/`, `package.json`; `mkdir -p /data &&
   chown node:node /data`; `USER node`; `EXPOSE 8787`; `CMD ["node","dist/server.js"]`. No shell
   entrypoint, no init system, no compiler in the final image.
@@ -1322,9 +1383,12 @@ need Docker; `npm run test:stack` runs the ones that do. Every domain function t
 | T-UNIT-TRD-1…4 | unit | Weekly bucketing over 26 weeks, each of the four series, `null` lead-time weeks, delta, the three improvement words, the period line with 1, 3 and 26 weeks of data (S5.1–S5.3) |
 | T-UNIT-FMT-1 | unit | `fmtH`, `fmtTok`, `pct` reproduce the design's output for a table of inputs including `0`, `59 m`, `9.9 h`, `10 h`, `24 h`, `999`, `1 000`, `9 999`, `10 000`, `1 000 000` |
 | T-UNIT-OUT-1 | unit | Output handling: verbatim storage, the numbered split (blank lines dropped, order kept, no classification), `SUMMARY:` extraction and its fallback, `STATUS:` extraction, the 64 KiB cap (R6) |
-| T-HOOK-1 | unit | `ingest/payload.ts` against **real captured payloads** — `PreToolUse`, a foreground `PostToolUse`, a background `PostToolUse` acknowledgement, a `SubagentStop` with a transcript tail, and an error case — committed as fixtures in slice 1 |
+| T-HOOK-1 | unit | `ingest/payload.ts` against **real captured payloads** — `PreToolUse`, a foreground `PostToolUse`, a background `PostToolUse` acknowledgement, a `SubagentStop` with a transcript tail, and a `PostToolUseFailure` — committed as fixtures in slice 1 |
 | T-HOOK-2 | manual, scripted | One coordinator round with and without a reachable dashboard: the Claude Code output is identical (R5) and the run appears in the dashboard (S6.1–S6.4) |
-| T-HOOK-3 | integration | The token delta: two consecutive runs in one shared transcript are charged their own share; a per-subagent transcript charges the full sum; a missing counter stores `NULL` |
+| T-HOOK-3 | integration | The token delta: two consecutive runs in one shared transcript are charged their own share; a per-subagent transcript charges the full sum; a missing counter stores `NULL`; the delta wins over a `tool_response.usage` block in the same body, and an *ignored* payload leaves `hook_cursor` untouched so the real finish still gets the whole interval (ADR-0004) |
+| T-HOOK-4 | integration | The failed Agent call (G1), driven with the captured `pre-tool-use.json` and `post-tool-use-failure.json`: the run started by `PreToolUse` is finished by the failure with `result = failed`, `ended_at` set, `tokens` `NULL`, `output` the `error` string verbatim; the ticket then appears in Attention under R1 rule 3 and in the `agent run failed` row of S5.6, and it is no longer counted as an agent online (S4.2, S5.6, R1, R7) |
+| T-HOOK-5 | integration | Order independence of the three finish deliveries for one run: failure then `SubagentStop`, `SubagentStop` (no `STATUS:`, `result = unreported`) then failure — both end as one run with `result = failed` and one `ended_at`; a failure arriving after a finish that parsed `STATUS: designed` changes nothing; the same failure delivered twice changes nothing |
+| T-HOOK-6 | shell | `report.sh run-failed` with the captured failure payload on stdin: it posts to `/api/hook/run-finish`, the body is the payload alone (no `---8<---`, no transcript tail), the meta carries no `cum_tokens`, the transcript file is never opened, and the ticket is taken from the payload, or from the session state file when the payload has none; exit 0 on every path |
 | T-INT-1…9 | integration | Ingest: start creates ticket and run; finish fills it; duplicate start and duplicate finish change nothing; finish before start is dropped and logged; both hooks delivering a finish merge; `400` on bad meta; `401` with a token set; `413` over 2 MiB; `GET` is the only verb the browser can use (T-INT-9) |
 | T-INT-A1…A7 | integration | The Attention tab: every S1 criterion, both empty states, the calm list and its count |
 | T-INT-P1…P3 | integration | The Pipeline tab: four columns, counts, card fields, placement per R2 |
@@ -1368,7 +1432,8 @@ Each slice ends with a running application and green tests.
    one `claude -p` run with `FACTORY_DRIVER` set, with a hook that dumps its payloads to `/tmp`, and
    commit the captured payloads as the fixtures of T-HOOK-1 and T-DRV-1 — one `PreToolUse`, one
    foreground `PostToolUse`, one backgrounded `PostToolUse` acknowledgement, one `SubagentStop` with
-   a transcript tail, one error case, one `UserPromptSubmit`, one `Stop` and one `SessionEnd`. Every
+   a transcript tail, one `PostToolUseFailure`, one `UserPromptSubmit`, one `Stop` and one
+   `SessionEnd`. Every
    parser in `ingest/payload.ts` is written against them, not against a guess. Done when a real
    subagent run and a real main-session run both appear in the database.
 2. **Domain and the Attention tab.** `domain/`, the `ticketId` partial and `domain/repository.ts`,
@@ -1462,6 +1527,16 @@ Each slice ends with a running application and green tests.
 18. **A run reported by the CLI without a session id is matched by `(project, number, actor)`**, the
     newest open one. A driver that reports over the CLI has no Claude Code session to key on, and
     two runs of the same agent on the same ticket never overlap (assumption 11).
+19. **A failed Agent call ends the run, and its `error` string is that run's output** (G1, S4.2).
+    The requirements say a failed run is marked as such but say nothing about what a failure
+    contains, because from the operator's side it is simply a run that did not work. Claude Code
+    delivers it as a `PostToolUseFailure` with a top-level `error` string and no agent message, so
+    the design stores that string as the run's output rather than leaving the run empty or letting
+    the transcript's last main-session message be mistaken for it. Two consequences are accepted:
+    such a run has no token count (`—`, because its share of the session's tokens is not knowable
+    from the payload and charging it the session's counter would be worse than saying nothing), and
+    if a future Claude Code stops firing the event, the run falls back to `abandoned` after
+    `RUN_STALE_HOURS` — the same degradation R9 prescribes for every lost report.
 
 ## Requirement conflicts
 
@@ -1509,7 +1584,7 @@ requirement, and both are recorded here so they are not silently undone later:
 | S3.3 | R2 mapping incl. unknown-status fallback | T-UNIT-R2-1, T-INT-P3 |
 | S3.4 | Two cards keyed `(project_key, number)`, each with its repository label (§R3) | T-CFG-2, T-REPO-3 |
 | S4.1 | Detail head with the `ticketId` partial, status, agent status, six metric tiles (§UI Screen 2) | T-INT-D1, T-REPO-3 |
-| S4.2 | Swimlanes, five lanes, block position and width, failure marking (§UI Screen 2) | T-INT-D2 |
+| S4.2 | Swimlanes, five lanes, block position and width, failure marking (§UI Screen 2); a failed Agent call reaches `result = failed` through the `PostToolUseFailure` hook (§Changes to the factory plugin 1, §`POST /api/hook/run-finish`) | T-INT-D2, T-HOOK-4, T-HOOK-5 |
 | S4.3 | Run log newest first with agent, result, `t+`, duration, tokens, summary | T-INT-D3 |
 | S4.4 | Expanded run: numbered output lines, `Final output`, verdict or `No status change` (§R5/R6) | T-INT-D4, T-UNIT-OUT-1 |
 | S4.5 | `Your involvement` panel fed by `actor='human'` runs (§R4) | T-INT-D5, T-DRV-4 |
@@ -1519,20 +1594,20 @@ requirement, and both are recorded here so they are not silently undone later:
 | S5.3 | Buckets start at `dataStart`; period line names the range | T-UNIT-TRD-4, T-INT-N3 |
 | S5.4 | `Per ticket · lifetime` table, `ticket` cell is the `ticketId` partial, ordered by interventions then loops | T-INT-N4, T-REPO-3 |
 | S5.5 | `Token spend per agent` | T-INT-N5 |
-| S5.6 | `Where tickets bounce back`, five rows incl. failed runs | T-INT-N6 |
+| S5.6 | `Where tickets bounce back`, five rows incl. failed runs, which the failure hook actually produces | T-INT-N6, T-HOOK-4 |
 | S6.1 | Start reported on both paths: `PreToolUse` (subagent) and `UserPromptSubmit` of a driven session (§R13) | T-HOOK-1, T-INT-1, T-DRV-1 |
-| S6.2 | Finish reported on both paths: `PostToolUse`/`SubagentStop` and `Stop`/`SessionEnd`, with output, result, duration and tokens | T-HOOK-1, T-HOOK-3, T-INT-2, T-DRV-1, T-DRV-5 |
+| S6.2 | Finish reported on both paths: `PostToolUse`/`PostToolUseFailure`/`SubagentStop` and `Stop`/`SessionEnd`, with output, result, duration and tokens | T-HOOK-1, T-HOOK-3, T-HOOK-4, T-HOOK-5, T-HOOK-6, T-INT-2, T-DRV-1, T-DRV-5 |
 | S6.3 | Verbatim storage and line-numbered rendering (§R5/R6) | T-UNIT-OUT-1, T-HOOK-2 |
 | S6.4 | Hooks observe and write nothing to stdout; nothing in the agent path changes (§R5) | T-HOOK-2 |
 | S6.5 | Interventions captured by the prompt hook or reported over the CLI (§R13, §R4) | T-DRV-4, T-INT-D5 |
-| S6.6 | The report path lives in the plugin; six hooks cover both ways of running an agent; the CLI covers a driver outside Claude Code; the driver contract is four points (§R13, ADR-0008) | T-DRV-1, T-DRV-2, T-DRV-3 |
+| S6.6 | The report path lives in the plugin; seven hooks cover both ways of running an agent; the CLI covers a driver outside Claude Code; the driver contract is four points (§R13, ADR-0008) | T-DRV-1, T-DRV-2, T-DRV-3 |
 | S6.7 | `report.sh` always exits 0; no retry, no queue (§R9) | T-R9-1, T-R9-2, T-R9-3 |
 | S6.8 | Project key per repository; separate `(project_key, number)` rows; the label appears from the second repository on (§R3, §R10) | T-CFG-1, T-CFG-2, T-REPO-3 |
 | S6.9 | No `FACTORY_DRIVER` and no session state → the prompt hook makes no network call at all (§R13) | T-DRV-2 |
 | S7.1 | `LOOP_THRESHOLD` feeds R1 rule 5 and its note text | T-UNIT-R1-5 |
 | S7.2 | `IDLE_HOURS` feeds R1 rule 7 | T-UNIT-R1-7 |
 | S7.3 | Defaults `3` and `24` validated at startup (ADR-0005) | T-UNIT-R1-5, T-DEPLOY-1 |
-| R1 | §R1 table with note texts, colours and ordering | T-UNIT-R1-1…7, T-UNIT-R1-ORD |
+| R1 | §R1 table with note texts, colours and ordering; rule 3 is fed by real failures, not only by a `STATUS: failed` line | T-UNIT-R1-1…7, T-UNIT-R1-ORD, T-HOOK-4 |
 | R2 | §R2 table plus the unknown-status rule | T-UNIT-R2-1 |
 | R3 | `(project_key, number)` identity, `repository` table, `showRepository`, label derivation, the five render places (ADR-0006, ADR-0007) | T-REPO-1…5, T-CFG-2 |
 | R4 | Interventions are `run` rows with `actor='human'`, captured independently of the driver, merged within 120 s | T-DRV-4, T-INT-D5 |
@@ -1544,7 +1619,7 @@ requirement, and both are recorded here so they are not silently undone later:
 | R10 | Two-level configuration, derived project key (§R10) | T-CFG-1 |
 | R11 | Default and fallback tab `attention` | T-INT-A1 |
 | R12 | No refresh, no `synced`, `Cache-Control: no-store`; the label switch becomes visible on the next load | T-UI-1, T-REPO-3 |
-| R13 | §R13 in full: reporting lives in the plugin, six hooks, CLI mode, the driver contract, the coordinate skill carries none of it (ADR-0008) | T-DRV-1…5 |
+| R13 | §R13 in full: reporting lives in the plugin, seven hooks, CLI mode, the driver contract, the coordinate skill carries none of it (ADR-0008) | T-DRV-1…5 |
 | QE1 (Pi resources) | 256 MB / 1.0 CPU budget, one container, Node heap 192 MB | T-RES-1, T-PERF-1 |
 | QE2 (immediate) | One response holds all three tabs; client-side switching | T-PERF-1, T-PERF-2 |
 | QE3 (desktop browser) | No breakpoint below 1024 px, no touch affordance | T-UI-1 |

@@ -1,6 +1,7 @@
 # 0004 – The reporter ships raw payloads; the dashboard parses them, and tokens are a cumulative delta
 
-- Status: Accepted (extended 2026-09-20 to main-session runs, see ADR-0008)
+- Status: Accepted (extended 2026-09-20 to main-session runs, see ADR-0008; the token resolution
+  order was corrected the same day with the evidence from the first build round)
 - Date: 2026-09-20
 - Requirements: 001 S6.2, S6.3, R6, R9, R13, QE6, LTA2
 
@@ -49,6 +50,21 @@ Option B.
   `awk`. The dashboard stores the last value seen per `(session_id, transcript_path)` and charges
   the run the difference, clamped at ≥ 0. This is correct whether the transcript is per-subagent
   (previous value 0) or shared (counters accumulate).
+- **The delta leads the resolution order; `tool_response.usage` is only the fallback.** The first
+  build round measured what that block contains: 34 098 tokens against the run's real 55 345 in the
+  same capture, because `usage` describes the *last API response* of the agent, not the agent. The
+  transcript sum is the whole run. Whenever the body carries a transcript tail and the meta a
+  cumulative counter, the delta wins; `tool_response.usage`, `totalTokens` and `total_tokens` are
+  used only for a body that has no transcript behind it, where a low number still beats none.
+  Ordering it this way also makes the stored number independent of which finish event Claude Code
+  happens to deliver first (`SubagentStop` today), which the previous order was not.
+- **An ignored payload writes nothing, including the cursor.** A backgrounded agent's `PostToolUse`
+  acknowledgement must not advance `hook_cursor`, or the real finish of that same run would be
+  charged only the remainder.
+- **A failed Agent call has no token count at all.** Its `PostToolUseFailure` payload carries no
+  usage and no transcript of its own, and the session's counter is not the failed run's (ADR-0003,
+  gap G1). The reporter sends no counter for it and the run stores `NULL`, which the UI shows as
+  `—`. Inventing a number there would corrupt S5.5's per-agent spend.
 
 For a stage that runs as the session's main agent (ADR-0008) the same rule applies with the
 sidechain filter inverted: the counters of non-sidechain lines are the run's own, and its
