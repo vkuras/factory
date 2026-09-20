@@ -3,7 +3,8 @@
 - Type: MVP
 - Status: Designed – ready for implementation
 - Date: 2026-09-20 (change-request passes: CR1 and the coordinator's future, then the
-  stakeholder's answers to the open points of that pass, all the same day)
+  stakeholder's answers to the open points of that pass, then D19 taken together with the design
+  approval, all the same day)
 - Product context: docs/product.md
 
 ## Summary
@@ -233,6 +234,21 @@ ticket whoever or whatever drives the pipeline at the time (R13), like an agent 
 its own lane on the time axis, in the run list, in the separate list of interventions, and it counts towards the ticket's intervention count. It consumes
 no tokens.
 
+What counts as an intervention (D19): **every message the operator types into a session in which
+the pipeline is already running** is one intervention on that session's ticket, and the text of
+that message is what the dashboard shows as what the operator did. It does not matter what the
+message is about: answering a question the factory asked, correcting an agent, or just telling it
+to carry on — all of it counts, and all of it counts the same. Nothing judges whether a message was
+"really" an answer.
+
+Two boundaries follow from this and from rules already set:
+
+- A message typed in a session where the pipeline is not running is not an intervention; in
+  particular the message that first starts the pipeline in a session is not one, because no run of
+  that session has been reported yet.
+- Runs the operator starts by hand in a Claude Code chat reach the dashboard not at all (D18), so
+  messages in such a chat are no interventions either.
+
 **R5 – Reporting is a copy, never a move.** Everything an agent reports to the dashboard still
 appears in Claude Code exactly as it does today.
 
@@ -394,6 +410,23 @@ stakeholder and answered:
   says "or an agent started by hand"; hand-started runs are listed under Out of scope with that
   consequence spelled out.
 
+### Decision taken with the design approval (2026-09-20)
+
+- **D19 – Every message in a running session is an intervention.** Asked, because R4 could be read
+  in two ways and the approved design had settled on one of them: "Was soll im Dashboard als
+  Eingriff ('your calls') zählen?" — A, only answers to questions the factory asks, which is how
+  the stakeholder's earlier sentence "Jedesmal wenn der coordinator mich frage" (L11) could be
+  read; or B, every message typed in the running session, as the design's ADR-0008 and its
+  assumption 10b have it. Stakeholder: **"B das design ist abgenommen"**. So every message the
+  operator types into a session in which the pipeline is already running counts as one intervention
+  on that ticket, and its text is what the dashboard shows as what they did — regardless of whether
+  it answers a question, corrects an agent or only says carry on. This overrides the "only answers"
+  reading of L11. R4 now says it explicitly, and the glossary entry in `docs/product.md` follows.
+  No acceptance criterion changed: S4 and S6 already say interventions are reported and listed
+  "with what I did and when" and take from R4 what an intervention is. The approved design
+  (`docs/architecture/001-agent-factory-dashboard.md`, ADR-0008, assumption 10b) stays correct —
+  this decision is what it assumed, now a requirement instead of an assumption.
+
 ## Stakeholder technical constraints
 
 Verbatim, as givens for the architect:
@@ -478,7 +511,7 @@ None.
 | L8 | "Erstmal nur ich aber das repo ist offentlich könnte also jeder selbst aufsetzen" | Users and roles, docs/product.md |
 | L9 | "in factory" (the dashboard is built in the factory repo) | This document's location |
 | L10 | "Das feature muss selbst nichts verbessern. Wenn ich das dashboard offne und sehe das ich zum beispiel viel eingreifen muss oder agenten fehlen, dann werde ich selbst die factory anpassen mussen." | S5, Out of scope, docs/product.md non-goals |
-| L11 | "Jedesmal wenn der coordinator mich frage. Zum beispiel wenn ich requirements besser geben muss" | R1 rules 1 and 6, S1 |
+| L11 | "Jedesmal wenn der coordinator mich frage. Zum beispiel wenn ich requirements besser geben muss" | R1 rules 1 and 6, S1 — as a definition of an intervention it is superseded by L36/D19 |
 | L12 | "ich mochte die architectur selbst abnehmen befor der implementer started" | Process instruction for this pipeline run; not a product requirement |
 | L13 | "ja genau ich das dient nur der ubersicht. ich mache actions in claude code" | D1, Out of scope |
 | L14 | "Aktuell gar nicht ... da die anzahl an projekten uber schaubar ist und ich auch von der ticket description das weis" | R3, D2, Later — superseded by L31 |
@@ -503,3 +536,4 @@ None.
 | L33 | "Überall, wo ein Ticket vorkommt" (where the repository label belongs) | R3, D16 — confirms the groomer's decision, nothing changed |
 | L34 | "Erst ab dem zweiten Repo" (when the label is shown) | R3, D17, S1, S3, S4, S5, S6, In scope, Out of scope, Left to architecture — overturns the groomer's "always" |
 | L35 | "nein" (must a hand-started agent, e.g. `/architect` in a chat, reach the dashboard?), after "das raff ich nicht fuer das mehr aus" and a plainer explanation | R13, D18, S6, Out of scope, Left to architecture |
+| L36 | "B das design ist abgenommen" (what counts as an intervention: only answers to the factory's questions, or every message in the running session?), after an earlier "ja" that picked neither option | R4, D19, docs/product.md glossary — sharpens L11; no acceptance criterion changed |

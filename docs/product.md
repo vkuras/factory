@@ -53,7 +53,10 @@ Two things, in this order:
   numbers its documents from `001`.
 - **Agent run** — one execution of one agent on one ticket. A ticket usually has several.
 - **Loop** — every run of an agent on a ticket beyond its first one.
-- **Intervention** — a point where the operator themselves acted on a ticket.
+- **Intervention** — every message the operator types into a session in which the pipeline is
+  already running. Each one is an intervention on that session's ticket, whatever it is about:
+  answering a question the factory asked, correcting an agent, or just telling it to carry on. The
+  message text is what the dashboard shows as what the operator did.
 - **Attention** — the state of a ticket that needs the operator, with the reason why.
 
 ## Requirements index
