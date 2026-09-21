@@ -136,13 +136,31 @@ const MUTED = '#6E7887';
 const BETTER = '#9EE84B';
 const WORSE = '#FF6B6B';
 
+/** A rounded whole number without a negative zero. */
 function whole(d: number): string {
   const text = d.toFixed(0);
   return text === '-0' ? '0' : text;
 }
 
-/** First vs last bucket with a value, S5.2. Every series is better when lower. */
-export function deltaOf(values: readonly (number | null)[], labels: readonly string[]): Delta {
+/** The value in the card's own format (`digits` decimals), without a negative zero. */
+function inCardFormat(a: number, digits: number): string {
+  const text = a.toFixed(digits);
+  return /^-0(\.0+)?$/.test(text) ? text.slice(1) : text;
+}
+
+/**
+ * First vs last rendered bucket with a value, S5.2. Every series is better when lower.
+ *
+ * The change is stated relatively while the first value is not 0 and absolutely, in the card's own
+ * format and unit and without a percent sign, when it is 0: a percentage of zero is undefined, the
+ * change is not (design §R8, gap G3). `no comparison yet` is left for fewer than two buckets with a
+ * value, where there is no change to state.
+ */
+export function deltaOf(
+  values: readonly (number | null)[],
+  labels: readonly string[],
+  digits: number,
+): Delta {
   let firstIdx = -1;
   let lastIdx = -1;
   values.forEach((v, i) => {
@@ -151,16 +169,25 @@ export function deltaOf(values: readonly (number | null)[], labels: readonly str
       lastIdx = i;
     }
   });
-  const none: Delta = { text: 'no comparison yet', color: MUTED, improvement: null };
-  if (firstIdx === -1 || firstIdx === lastIdx) return none;
+  if (firstIdx === -1 || firstIdx === lastIdx) {
+    return { text: 'no comparison yet', color: MUTED, improvement: null };
+  }
   const first = values[firstIdx]!;
   const last = values[lastIdx]!;
-  if (first === 0) return none;
-  const d = ((last - first) / first) * 100;
   const label = labels[firstIdx]!;
+  const unchanged: Delta = { text: `0% vs ${label} · unchanged`, color: MUTED, improvement: 'unchanged' };
+
+  if (first === 0) {
+    const a = last - first;
+    if (a > 0) return { text: `+${inCardFormat(a, digits)} vs ${label} · worse`, color: WORSE, improvement: 'worse' };
+    if (a < 0) return { text: `${inCardFormat(a, digits)} vs ${label} · better`, color: BETTER, improvement: 'better' };
+    return unchanged;
+  }
+
+  const d = ((last - first) / first) * 100;
   if (d < 0) return { text: `${whole(d)}% vs ${label} · better`, color: BETTER, improvement: 'better' };
   if (d > 0) return { text: `+${whole(d)}% vs ${label} · worse`, color: WORSE, improvement: 'worse' };
-  return { text: `0% vs ${label} · unchanged`, color: MUTED, improvement: 'unchanged' };
+  return unchanged;
 }
 
 export function periodLine(weeks: readonly Week[]): string {
@@ -197,7 +224,7 @@ export function computeTrendCards(
   return CARDS.map((def) => {
     const values = series.find((s) => s.key === def.key)!.values;
     const max = Math.max(0, ...values.filter((v): v is number => v !== null));
-    const delta = deltaOf(values, labels);
+    const delta = deltaOf(values, labels, def.digits);
     const bars: Bar[] = values.map((v, i) => {
       const text = v === null ? 'no data' : v.toFixed(def.digits);
       return {

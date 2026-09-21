@@ -128,25 +128,79 @@ describe('the four series', () => {
 describe('delta and improvement (S5.2)', () => {
   const labels = ['w36', 'w37', 'w38'];
   it('lower is better', () => {
-    expect(deltaOf([2, 1.5, 1], labels)).toEqual({ text: '-50% vs w36 · better', color: '#9EE84B', improvement: 'better' });
+    expect(deltaOf([2, 1.5, 1], labels, 1)).toEqual({ text: '-50% vs w36 · better', color: '#9EE84B', improvement: 'better' });
   });
   it('higher is worse', () => {
-    expect(deltaOf([1, 1.5, 2], labels)).toEqual({ text: '+100% vs w36 · worse', color: '#FF6B6B', improvement: 'worse' });
+    expect(deltaOf([1, 1.5, 2], labels, 1)).toEqual({ text: '+100% vs w36 · worse', color: '#FF6B6B', improvement: 'worse' });
   });
   it('the same is unchanged', () => {
-    expect(deltaOf([2, 5, 2], labels)).toEqual({ text: '0% vs w36 · unchanged', color: '#6E7887', improvement: 'unchanged' });
+    expect(deltaOf([2, 5, 2], labels, 1)).toEqual({ text: '0% vs w36 · unchanged', color: '#6E7887', improvement: 'unchanged' });
   });
   it('compares the first and the last week that have a value', () => {
-    expect(deltaOf([null, 4, null], labels).text).toBe('no comparison yet');
-    expect(deltaOf([null, 4, 2], labels).text).toBe('-50% vs w37 · better');
+    expect(deltaOf([null, 4, null], labels, 1).text).toBe('no comparison yet');
+    expect(deltaOf([null, 4, 2], labels, 1).text).toBe('-50% vs w37 · better');
   });
-  it('has no comparison for a single bucket, an empty series or a zero start', () => {
-    expect(deltaOf([3], ['w38'])).toMatchObject({ text: 'no comparison yet', color: '#6E7887', improvement: null });
-    expect(deltaOf([null, null], ['w37', 'w38']).text).toBe('no comparison yet');
-    expect(deltaOf([0, 2], ['w37', 'w38']).text).toBe('no comparison yet');
+  it('has no comparison for a single bucket or an empty series', () => {
+    expect(deltaOf([3], ['w38'], 1)).toMatchObject({ text: 'no comparison yet', color: '#6E7887', improvement: null });
+    expect(deltaOf([null, null], ['w37', 'w38'], 1).text).toBe('no comparison yet');
   });
   it('never prints a negative zero', () => {
-    expect(deltaOf([1000, 999], ['w37', 'w38']).text).toBe('0% vs w37 · better');
+    expect(deltaOf([1000, 999], ['w37', 'w38'], 1).text).toBe('0% vs w37 · better');
+  });
+});
+
+// T-UNIT-TRD-5: the first = 0 bases of the delta (design §R8, gap G3).
+describe('a first week of 0 states the change absolutely (T-UNIT-TRD-5, S5.2)', () => {
+  const labels = ['w14', 'w15', 'w16', 'w39'];
+  it('0 to 0.7 rises: the change in the card\'s own format, no percent sign, worse', () => {
+    expect(deltaOf([0, 0, 0, 0.7], labels, 1)).toEqual({ text: '+0.7 vs w14 · worse', color: '#FF6B6B', improvement: 'worse' });
+  });
+  it('0 to 1.8 over a 26-bucket window with one decimal', () => {
+    const weeks = Array.from({ length: 26 }, (_, i) => `w${14 + i}`);
+    const values = weeks.map((_, i) => (i === 25 ? 1.8 : 0));
+    expect(deltaOf(values, weeks, 1).text).toBe('+1.8 vs w14 · worse');
+  });
+  it('uses the card\'s digit count: 0 to 12 with none reads +12, 0 to 0.66 with one reads +0.7', () => {
+    expect(deltaOf([0, 12], ['w20', 'w21'], 0).text).toBe('+12 vs w20 · worse');
+    expect(deltaOf([0, 0.66], ['w20', 'w21'], 1).text).toBe('+0.7 vs w20 · worse');
+    expect(deltaOf([0, 0.66], ['w20', 'w21'], 1).text).not.toContain('%');
+  });
+  it('0 to 0 is a zero change: 0% and unchanged, the same wording as the relative case', () => {
+    expect(deltaOf([0, 0, 0, 0], labels, 1)).toEqual({ text: '0% vs w14 · unchanged', color: '#6E7887', improvement: 'unchanged' });
+    expect(deltaOf([0, 3, 0], ['w1', 'w2', 'w3'], 1).text).toBe('0% vs w1 · unchanged');
+  });
+  it('a fall from 0 is stated with its minus sign and is better (no series can produce it, but the rule is total)', () => {
+    expect(deltaOf([0, -0.7], ['w1', 'w2'], 1)).toEqual({ text: '-0.7 vs w1 · better', color: '#9EE84B', improvement: 'better' });
+    expect(deltaOf([0, -0.04], ['w1', 'w2'], 1).text).toBe('0.0 vs w1 · better');
+  });
+  it('starts at the first bucket with a value: nulls before a 0 do not count', () => {
+    expect(deltaOf([null, null, 0, 2.4], labels, 1).text).toBe('+2.4 vs w16 · worse');
+  });
+  it('the relative rule is untouched while the first value is not 0', () => {
+    expect(deltaOf([0.5, 0, 1], ['w1', 'w2', 'w3'], 1).text).toBe('+100% vs w1 · worse');
+    expect(deltaOf([2, 0], ['w1', 'w2'], 1).text).toBe('-100% vs w1 · better');
+  });
+  it('no comparison yet remains for exactly one bucket with a value and for an all-null series, and for nothing else', () => {
+    expect(deltaOf([null, 0, null], labels, 1).text).toBe('no comparison yet');
+    expect(deltaOf([0], ['w38'], 1).text).toBe('no comparison yet');
+    expect(deltaOf([null, null, null], labels, 1).text).toBe('no comparison yet');
+    expect(deltaOf([null, 0, 0.5], labels, 1).text).not.toBe('no comparison yet');
+    expect(deltaOf([0, null, 0], labels, 1).text).toBe('0% vs w14 · unchanged');
+  });
+  it('the cards use their own digits: Lead time (h) has none, the other three one', () => {
+    const now = Date.UTC(2026, 8, 20, 12);
+    const weekStart = (ago: number): number => Date.UTC(2026, 8, 14, 10) - ago * 7 * 86_400_000;
+    const runs = [
+      { id: 'a', projectKey: 'p', number: '001', actor: 'groom' as const, startedAt: weekStart(30), endedAt: weekStart(30) + 3_600_000, result: null, agentStatus: null, tokens: 1 },
+      { id: 'b', projectKey: 'p', number: '002', actor: 'groom' as const, startedAt: weekStart(0), endedAt: weekStart(0) + 2 * 3_600_000, result: null, agentStatus: null, tokens: 1 },
+    ];
+    const tickets = [
+      { projectKey: 'p', number: '001', title: 't', slug: null, requirementsStatus: null, agentStatus: null, firstSeenAt: weekStart(30), lastActivityAt: 0, validatedAt: null },
+    ];
+    const cards = computeTrendCards(runs, tickets, now, 'Europe/Berlin');
+    expect(cards[3]!.deltaText).toBe('+2.0 vs w13 · worse'); // Compute (h): 0.0 -> 2.0
+    expect(cards[0]!.deltaText).toBe('0% vs w13 · unchanged'); // Human calls: 0 -> 0
+    expect(cards[2]!.deltaText).toBe('no comparison yet'); // Lead time: no validated week at all
   });
 });
 

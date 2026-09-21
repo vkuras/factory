@@ -498,6 +498,50 @@ describe('the Analytics tab (T-INT-N1…N6)', () => {
     expect(first.find('span[style*="color:#9EE84B"]').text()).toContain('better');
   });
 
+  it('T-INT-N7: over the full 26-bucket window with an empty first week, every card still states a change and an improvement word (S5.2, G3)', async () => {
+    // a ticket whose history reaches 40 weeks back fills the window; the first rendered week has no activity
+    await reportRun(t, { ticket: '011', title: 'Very old', agent: 'groom', startedAt: T0 - 40 * 7 * DAY, endedAt: T0 - 40 * 7 * DAY + H, statusBefore: S.GROOMING, statusAfter: S.GROOMED });
+    // a ticket validated 20 weeks ago and one validated last week, so Lead time (h) has two weeks with a value
+    await reportRun(t, { ticket: '012', title: 'Validated early', agent: 'validator', startedAt: T0 - 20 * 7 * DAY, endedAt: T0 - 20 * 7 * DAY + H, statusBefore: S.IMPLEMENTED, statusAfter: S.VALIDATED });
+    await reportRun(t, { ticket: '013', title: 'Validated late', agent: 'validator', startedAt: T0 - 2 * DAY, endedAt: T0 - 2 * DAY + H, statusBefore: S.IMPLEMENTED, statusAfter: S.VALIDATED });
+    // a loop and working time in the last week, and no intervention anywhere
+    await reportRun(t, { ticket: '014', title: 'Looping', agent: 'implementer', startedAt: T0 - 5 * DAY, endedAt: T0 - 5 * DAY + 2 * H, statusBefore: S.DESIGNED, statusAfter: S.DESIGNED });
+    await reportRun(t, { ticket: '014', title: 'Looping', agent: 'implementer', startedAt: T0 - 3 * DAY, endedAt: T0 - 3 * DAY + 2 * H, statusBefore: S.DESIGNED, statusAfter: S.IMPLEMENTED });
+
+    const $ = await page('/?tab=analytics');
+    const cards = $('section[data-panel=analytics] > div > div').first().children();
+    expect(cards).toHaveLength(4);
+    const seen = cards.map((_, el) => ({
+      label: $(el).find('span').first().text(),
+      delta: $(el).children().first().children().first().children().eq(1).text(),
+      period: $(el).find('div').filter((_, d) => /weeks of data/.test($(d).text()) && $(d).children().length === 0).first().text(),
+      bars: $(el).find('div[title]').length,
+      first: $(el).find('div[title]').first().attr('title'),
+    })).get();
+    for (const c of seen) {
+      expect(c.bars, c.label).toBe(26);
+      expect(c.period, c.label).toMatch(/^w\d+ – w\d+ · 26 weeks of data$/);
+      expect(c.delta, c.label).not.toBe('no comparison yet');
+      expect(c.delta, c.label).toMatch(/ vs w\d+ · (better|worse|unchanged)$/);
+    }
+    const byLabel = Object.fromEntries(seen.map((c) => [c.label, c]));
+    // the first rendered week is w13, empty: the three per-ticket series are 0 there and the change is absolute
+    expect(byLabel['Human calls / ticket']!.first).toBe('w13 · 0.0');
+    expect(byLabel['Human calls / ticket']!.delta).toBe('0% vs w13 · unchanged');
+    expect(byLabel['Loops / ticket']!.first).toBe('w13 · 0.0');
+    expect(byLabel['Loops / ticket']!.delta).toMatch(/^\+\d\.\d vs w13 · worse$/);
+    expect(byLabel['Compute (h)']!.first).toBe('w13 · 0.0');
+    expect(byLabel['Compute (h)']!.delta).toMatch(/^\+\d\.\d vs w13 · worse$/);
+    expect(byLabel['Compute (h)']!.delta).not.toContain('%');
+    // Lead time (h) is null in empty weeks and compares the first and last week that have a value, relatively
+    expect(byLabel['Lead time (h)']!.first).toBe('w13 · no data');
+    expect(byLabel['Lead time (h)']!.delta).toMatch(/^[+-]?\d+% vs w\d+ · (better|worse|unchanged)$/);
+    // the colour follows the verdict
+    const colours = cards.map((_, el) => $(el).children().first().children().first().children().eq(1).attr('style') ?? '').get();
+    expect(colours[1]).toContain('color:#FF6B6B');
+    expect(colours[0]).toContain('color:#6E7887');
+  });
+
   it('T-INT-N4: one row per ticket ordered by your calls, then loops, then number (S5.4)', async () => {
     await seedFactory(t);
     const $ = await page('/?tab=analytics');
