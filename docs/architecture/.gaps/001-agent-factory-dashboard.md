@@ -55,7 +55,7 @@ Claude Code 2.1.278 (`dashboard/test/fixtures/hooks/`, README there).
   title is what gives way beyond that. No code change; D16 and S1.5 stay as they are.
 
 ## G3 – Over the six-month window three of the four trends never state a change or an improvement
-- Status: Open
+- Status: Resolved – see design §R8 "Delta and improvement (S5.2)"
 - Raised by: validator, round 1, 2026-09-21
 - Design: §R8 "Delta and improvement (S5.2)" — "`first` = the earliest rendered bucket with a
   non-null value … `first` is null, or `first = 0`, or `first === last` bucket → text
@@ -93,3 +93,27 @@ Claude Code 2.1.278 (`dashboard/test/fixtures/hooks/`, README there).
   `tests/acceptance/001-agent-factory-dashboard/api/05-analytics-window.test.mjs::"S5.2 over the
   full six-month window every trend still states the change and whether it is an improvement"`
   is what closes it.
+- **Answer (architect, 2026-09-21).** Direction (a), as the smaller change: the *statement* always
+  stands, the *percentage* is what falls back. Nothing about the series, the buckets, the bars, the
+  tooltips or the period line changes, so S5.1, S5.3 and R8 stay exactly as they are and an empty
+  week keeps being `0` for the three per-ticket series. Direction (b) was rejected because it would
+  have redefined "the first and the last week shown" of S5.2 into "the first and last week with
+  data", removed 23 zero bars from the ordinary card, and needed a requirement change.
+  §R8 "Delta and improvement (S5.2)" now reads:
+  1. **`first ≠ 0` → unchanged**, the relative rule with `%` exactly as before.
+  2. **`first = 0` → the absolute change `a = last − first`**, printed in the card's own value
+     format and its own unit, without a `%` sign: `+0.7 vs w14 · worse`, `+1.8 vs w14 · worse`,
+     and `{fmt(a)} vs {firstLabel} · better` for a fall. All four series are better when lower, so
+     the verdict rule is the same on both bases.
+  3. **`0 → 0` is `0% vs {firstLabel} · unchanged`**, the same wording as the relative `d = 0`
+     case: a zero change is one statement, not two.
+  4. **`no comparison yet` survives only for "there is no change to state"**: fewer than two
+     rendered buckets carry a value, i.e. a dashboard in its first week or a `Lead time (h)` card
+     with at most one validated week in the window. It can no longer be reached by the three
+     per-ticket series once two buckets are rendered.
+  `deltaOf` takes the card's digit count in addition to the values and the labels; `−0` prints as
+  `0` on both bases. Tests: T-UNIT-TRD-5 (the `first = 0` bases and the two remaining
+  `no comparison yet` cases) and T-INT-N7 (26 rendered buckets with an empty first week: all four
+  cards state a change and an improvement word, none reads `no comparison yet`), plus the
+  validator's `05-analytics-window.test.mjs` check, which closes the finding. No ADR is affected:
+  none of the nine covers the trend arithmetic. No requirement conflict.

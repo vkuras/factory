@@ -6,7 +6,9 @@
   all dependencies moved to their newest stable version. Revision 3 answers the implementer's gaps
   G1 and G2: a seventh hook `PostToolUseFailure`, the chip truncation rule, and three corrections
   the first build round proved necessary — the transcript delta leads the token resolution, the
-  plugin manifest carries no `hooks` key, and `npm ci` runs with `--ignore-scripts`)
+  plugin manifest carries no `hooks` key, and `npm ci` runs with `--ignore-scripts`. Revision 4
+  answers the validator's gap G3: §R8 states the change absolutely when the first rendered week is
+  `0`, so all four trends keep stating a change and an improvement over the full six-month window)
 - Architecture: docs/architecture/overview.md
 
 ## Summary
@@ -669,15 +671,39 @@ started in `W`:
 | `Compute (h)` | `sum over runs in W with actor != 'human' and ended_at not null of (ended_at − started_at)/3.6e6 / |active(W)|`; `0` if `active(W)` is empty | `toFixed(1)` |
 
 **Delta and improvement (S5.2).** `first` = the earliest rendered bucket with a non-null value,
-`last` = the latest one. `d = (last − first) / first * 100`.
+`last` = the latest one, `firstLabel` = the week label of the `first` bucket. `fmt` = the card's own
+value format (`toFixed(1)`, and `toFixed(0)` for `Lead time (h)`).
 
-- `first` is null, or `first = 0`, or `first === last` bucket → text `no comparison yet`, colour
-  `#6E7887`, no improvement word.
-- `d < 0` → `{d.toFixed(0)}% vs {firstLabel} · better`, colour `#9EE84B`.
-- `d > 0` → `+{d.toFixed(0)}% vs {firstLabel} · worse`, colour `#FF6B6B`.
-- `d = 0` → `0% vs {firstLabel} · unchanged`, colour `#6E7887`.
+The change is stated **relatively while `first ≠ 0` and absolutely when `first = 0`**. A percentage
+of zero is undefined, but the change is not, and S5.2 asks for the change and for a verdict, not for
+a percentage. This matters in the ordinary case, not in an exotic one: three of the four series are
+`0` (never `null`) in a week without activity, and with a history older than six months the window
+always starts 26 weeks back, so the earliest rendered week is empty far more often than not. Sending
+that case to `no comparison yet` cost S5.2 permanently for `Human calls / ticket`, `Loops / ticket`
+and `Compute (h)` (gap G3). All four metrics are better when lower, so one improvement rule covers
+both bases: fell → `better`, rose → `worse`, equal → `unchanged`.
 
-All four metrics are better when lower, which is what makes one improvement rule enough.
+- Fewer than two rendered buckets carry a value (`first` is null, or `first` and `last` are the same
+  bucket) → text `no comparison yet`, colour `#6E7887`, no improvement word. This is the only case
+  left without a statement: a dashboard in its first week, and a `Lead time (h)` card whose window
+  contains at most one week with a validated ticket. There is no change to state there.
+- `first ≠ 0` → `d = (last − first) / first * 100`:
+  - `d < 0` → `{d.toFixed(0)}% vs {firstLabel} · better`, colour `#9EE84B`.
+  - `d > 0` → `+{d.toFixed(0)}% vs {firstLabel} · worse`, colour `#FF6B6B`.
+  - `d = 0` → `0% vs {firstLabel} · unchanged`, colour `#6E7887`.
+- `first = 0` → `a = last − first`, stated without a `%` sign, in the card's own unit:
+  - `a > 0` → `+{fmt(a)} vs {firstLabel} · worse`, colour `#FF6B6B`. Example from the acceptance
+    dataset: `Loops / ticket` with `w14 = 0.0` and `w39 = 0.7` reads `+0.7 vs w14 · worse`,
+    `Compute (h)` with `w39 = 1.8` reads `+1.8 vs w14 · worse`.
+  - `a = 0` → `0% vs {firstLabel} · unchanged`, colour `#6E7887` — the same wording as the
+    relative `d = 0` case, because a zero change is the same statement on either basis. This is
+    what `Human calls / ticket` reads with `w14 = 0.0` and `w39 = 0.0`.
+  - `a < 0` → `{fmt(a)} vs {firstLabel} · better`, colour `#9EE84B` (`fmt` carries the minus sign).
+
+`deltaOf` therefore takes the card's digit count alongside the values and the labels; `−0` is
+printed as `0` in both bases. The bars, the tooltips, the period line and the series definitions
+above are untouched by this rule: an empty week is still `0` for the three per-ticket series and
+still `null` for `Lead time (h)`, and every rendered bucket keeps its bar.
 
 **Naming the period (S5.3).** Each card carries the line
 `{firstLabel} – {lastLabel} · {n} weeks of data` under the card label. With a full window that
@@ -1381,6 +1407,7 @@ need Docker; `npm run test:stack` runs the ones that do. Every domain function t
 | T-UNIT-R2-1 | unit | All eight statuses map to the right stage and owner; an unknown status falls back as specified |
 | T-UNIT-MET-1 | unit | loops (D13), interventions, tokens with `NULL`s, working time, lead time frozen at `validated_at`, idle |
 | T-UNIT-TRD-1…4 | unit | Weekly bucketing over 26 weeks, each of the four series, `null` lead-time weeks, delta, the three improvement words, the period line with 1, 3 and 26 weeks of data (S5.1–S5.3) |
+| T-UNIT-TRD-5 | unit | The `first = 0` bases of the delta (G3): `0 → 0.7` is `+0.7 vs {firstLabel} · worse`, `0 → 0` is `0% vs {firstLabel} · unchanged`, `0 → 1.8` in a 26-bucket window with `toFixed(1)` and `0 → 12` with `toFixed(0)`; `no comparison yet` remains for exactly one rendered bucket and for an all-`null` series, and for nothing else (S5.2) |
 | T-UNIT-FMT-1 | unit | `fmtH`, `fmtTok`, `pct` reproduce the design's output for a table of inputs including `0`, `59 m`, `9.9 h`, `10 h`, `24 h`, `999`, `1 000`, `9 999`, `10 000`, `1 000 000` |
 | T-UNIT-OUT-1 | unit | Output handling: verbatim storage, the numbered split (blank lines dropped, order kept, no classification), `SUMMARY:` extraction and its fallback, `STATUS:` extraction, the 64 KiB cap (R6) |
 | T-HOOK-1 | unit | `ingest/payload.ts` against **real captured payloads** — `PreToolUse`, a foreground `PostToolUse`, a background `PostToolUse` acknowledgement, a `SubagentStop` with a transcript tail, and a `PostToolUseFailure` — committed as fixtures in slice 1 |
@@ -1393,7 +1420,7 @@ need Docker; `npm run test:stack` runs the ones that do. Every domain function t
 | T-INT-A1…A7 | integration | The Attention tab: every S1 criterion, both empty states, the calm list and its count |
 | T-INT-P1…P3 | integration | The Pipeline tab: four columns, counts, card fields, placement per R2 |
 | T-INT-D1…D6 | integration | The detail page: six metrics, lanes with a failed run marked, run list newest first, expansion with the numbered list and the verdict, interventions panel, status trail |
-| T-INT-N1…N6 | integration | The Analytics tab: four trends, delta and improvement word, the short-history period line, the per-ticket table and its order, per-agent spend, the five bounce rows |
+| T-INT-N1…N7 | integration | The Analytics tab: four trends, delta and improvement word, the short-history period line, the per-ticket table and its order, per-agent spend, the five bounce rows, and (T-INT-N7, G3) a dataset whose history reaches beyond the window so all 26 buckets render with an empty first week: each of the four cards states a change and one of `better` / `worse` / `unchanged`, and none of them reads `no comparison yet` |
 | T-UI-1 | integration | The rendered HTML contains the design's literal captions (`Control room`, `Agent Factory`, `Running on their own`, `Route · swimlanes over time`, `Agent output log`, `Tokens per agent`, `Your involvement`, `Status trail`, `Per ticket · lifetime`, `Token spend per agent`, `Where tickets bounce back`) and its palette (`#0A0C0F`, `#12151A`, `#9EE84B`, `#FF7AB6`, `#5BC8F5`, `#A78BFA`, `#F5A524`, `#FF6B6B`); no `synced`, no `prefers-color-scheme`, no media query below 1024 px, no step-kind label, no form, no input, no POST target in any page (D5, D6, QE4, OS1) |
 | T-R9-1 | shell | `report.sh` exits 0 with: no configuration, an unreachable URL, a closed port, a malformed payload, an empty stdin, a missing transcript, a `401` answer. `shellcheck -s sh` is clean |
 | T-R9-2 | shell | With the dashboard unreachable, `run-start` returns within 2.5 s and `run-finish` within 5.5 s, measured over 5 runs |
@@ -1590,7 +1617,7 @@ requirement, and both are recorded here so they are not silently undone later:
 | S4.5 | `Your involvement` panel fed by `actor='human'` runs (§R4) | T-INT-D5, T-DRV-4 |
 | S4.6 | `Status trail` from `ticket_status_event` | T-INT-D6 |
 | S5.1 | Four trend cards, 26 weekly buckets (§R8) | T-UNIT-TRD-1…4, T-INT-N1 |
-| S5.2 | Delta text with `better` / `worse` / `unchanged` (§R8) | T-UNIT-TRD-3, T-INT-N2 |
+| S5.2 | Delta text with `better` / `worse` / `unchanged` (§R8), relative while the first rendered week is not `0` and absolute when it is (G3) | T-UNIT-TRD-3, T-UNIT-TRD-5, T-INT-N2, T-INT-N7 |
 | S5.3 | Buckets start at `dataStart`; period line names the range | T-UNIT-TRD-4, T-INT-N3 |
 | S5.4 | `Per ticket · lifetime` table, `ticket` cell is the `ticketId` partial, ordered by interventions then loops | T-INT-N4, T-REPO-3 |
 | S5.5 | `Token spend per agent` | T-INT-N5 |
