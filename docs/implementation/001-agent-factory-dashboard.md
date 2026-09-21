@@ -3,7 +3,7 @@
 - Requirements: docs/requirements/001-agent-factory-dashboard.md
 - Design: docs/architecture/001-agent-factory-dashboard.md
 - Status: Ready for validation
-- Branch: feature/001-agent-factory-dashboard, commits 95c95af..(the round 3 report commit, see the final message)
+- Branch: feature/001-agent-factory-dashboard, commits 95c95af..ab555ce
 - Date: 2026-09-21
 - Round: 3 (round 1: `needs-architect`, gaps G1 and G2, resolved in design revision 3; round 2: ready for validation; the validator's round 1 found F1 = gap G3, resolved in design revision 4; this round builds it)
 
