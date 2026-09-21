@@ -3,12 +3,32 @@
 - Requirements: docs/requirements/001-agent-factory-dashboard.md
 - Design: docs/architecture/001-agent-factory-dashboard.md
 - Status: Ready for validation
-- Branch: feature/001-agent-factory-dashboard, commits 95c95af..f49feaf
-- Date: 2026-09-20
-- Round: 2 (round 1 ended in `needs-architect` with gaps G1 and G2; the architect resolved both in design revision 3)
+- Branch: feature/001-agent-factory-dashboard, commits 95c95af..(the round 3 report commit, see the final message)
+- Date: 2026-09-21
+- Round: 3 (round 1: `needs-architect`, gaps G1 and G2, resolved in design revision 3; round 2: ready for validation; the validator's round 1 found F1 = gap G3, resolved in design revision 4; this round builds it)
 
 The requirements status line is `Implemented – ready for validation` and `docs/product.md` lists 001 as
 `Implemented`. No gap is open.
+
+## Round 3: validator finding F1 (gap G3)
+
+| Finding | Classification | Answer | Evidence |
+|---|---|---|---|
+| F1 – three of the four trends never state a change or an improvement over the six-month window | Design gap, resolved by the architect (G3, design revision 4, §R8 "Delta and improvement (S5.2)") | Built as answered, commit 09b2946: `deltaOf(values, labels, digits)` states the change relatively while the first rendered value is not 0 and absolutely, in the card's own format and unit with no percent sign, when it is 0; `0 → 0` reads `0% vs {firstLabel} · unchanged`; `no comparison yet` remains only when fewer than two rendered buckets carry a value. Bars, tooltips, the period line and the series are untouched | T-UNIT-TRD-5 (9 tests; 8 of them, which state the new rule) and T-INT-N7 fail on the round 2 code (9 red) and all pass now; against the validator's own dataset (`seed.mjs main`, then `old`) the cards read `0% vs w14 · unchanged`, `+0.7 vs w14 · worse`, `+30% vs w35 · worse`, `+1.8 vs w14 · worse`, the design's examples |
+
+**An acceptance check contradicts the design (not edited, reported).**
+`tests/acceptance/001-agent-factory-dashboard/api/05-analytics-window.test.mjs::"S5.2 over the full six-month window
+every trend still states the change and whether it is an improvement"` (and the same pattern in
+`api/04-analytics.test.mjs`) recognises a statement with the regular expression
+`/>([+-]?\d+% vs w\d+ · (?:better|worse|unchanged)|no comparison yet)</`, which requires a percent sign. The
+design's resolved rule says, in §R8: "`first = 0` → `a = last − first`, stated **without a `%` sign**, in the card's
+own unit: `a > 0` → `+{fmt(a)} vs {firstLabel} · worse` … Example from the acceptance dataset: `Loops / ticket` with
+`w14 = 0.0` and `w39 = 0.7` reads `+0.7 vs w14 · worse`". The dashboard prints exactly that, so the check answers
+"Loops / ticket says nothing at all about the change" (its `assert.ok(delta, …)` finds no match) although the card
+says `+0.7 vs w14 · worse`. The rest of the acceptance suite passes: I ran `sh tests/acceptance/run.sh` (evidence
+directed to a scratch directory, `ACC_EVIDENCE`, so the validator's files are untouched) from the committed state:
+85 of 86 checks pass, the one red is this check, and its verdict on the content is only a matter of the pattern. The
+pattern needs to accept `[+-]?\d+(\.\d+)?%? vs w\d+ · (better|worse|unchanged)`; the validator owns that change.
 
 ## Round 2: what changed since round 1
 
@@ -54,7 +74,7 @@ docker compose up -d          # http://localhost:8787, healthy after about 5 s
 # a machine that reports:
 mkdir -p ~/.factory && echo 'FACTORY_DASHBOARD_URL=http://localhost:8787' > ~/.factory/dashboard.env
 # tests
-cd dashboard && npm ci && npm test && npm run test:stack   # Node 26; the stack tests need Docker
+cd dashboard && npm ci --ignore-scripts && npm test && npm run test:stack   # Node 26; the stack tests need Docker
 sh plugins/factory/hooks/test/run.sh --slow                # the reporter (macOS sh and Debian dash both pass)
 sh plugins/factory/hooks/test/lint.sh                      # shellcheck v0.11.0 in a container
 ```
@@ -84,7 +104,7 @@ Test names are `file::describe > it`; "shell" is `plugins/factory/hooks/test/run
 | S4.5, R4 | `actor = 'human'` runs | pages.test > T-INT-D5 (4); ingest.test > T-DRV-4 (5) | Passed |
 | S4.6 | `ticket_status_event` | pages.test > T-INT-D6; ingest.test::run-start (status events) | Passed |
 | S5.1 | `domain/trends.ts` | trends.test (T-UNIT-TRD-1…4); pages.test > T-INT-N1 | Passed |
-| S5.2 | `deltaOf` | trends.test::delta; pages.test > T-INT-N2 | Passed |
+| S5.2 | `deltaOf` (relative while the first value is not 0, absolute when it is, G3) | trends.test::delta and T-UNIT-TRD-5; pages.test > T-INT-N2, T-INT-N7 | Passed (the validator's `05-analytics-window` check is red on its own pattern, see Round 3) |
 | S5.3 | `weekBuckets`, `periodLine` | trends.test::naming the period; pages.test > T-INT-N3 | Passed |
 | S5.4 | table in `analytics.ejs` | pages.test > T-INT-N4 (2) | Passed |
 | S5.5 | agent spend | pages.test > T-INT-N5 | Passed |
@@ -147,10 +167,21 @@ numbers are kept where they were not affected). Project names of my own: `selfch
 | 8 | Own diff review | `git diff c49506b..HEAD` | Passed | no debug output, TODO, commented-out code or secrets (`.env` untracked; the zip and `todo` not committed); one addition beyond the delta, named above (per-agent tokens `—`) |
 | 9 | Tear down | `docker compose -p selfcheck-001 down -v`, volume and image removed | Done | no leftover containers or volumes |
 
+### Round 3 self-validation
+
+Only the trend arithmetic changed (`src/domain/trends.ts`, its tests), so the checks that could be affected were
+rerun, spaced more than a minute apart: `npx vitest run` in Node 26 (host `node_modules`): **300 passed**, 12
+files, 0 failed, 0 skipped; `run.sh --slow`: **135 passed**; shellcheck clean; `npm run test:stack`: 7 passed
+(T-PERF-1 p95 87 ms, T-PERF-2 p95 29 ms, T-RES-1 peak 112 MiB of 256); `sh tests/acceptance/run.sh`: 85 of 86 (the
+one red is described in Round 3). In Chrome 153 against the validator's dataset (26 buckets): the four delta lines
+are `0% vs w14 · unchanged` (`rgb(110, 120, 135)`), `+0.7 vs w14 · worse`, `+30% vs w35 · worse`, `+1.8 vs w14 ·
+worse` (`rgb(255, 107, 107)`), 11 px, 26 bars on every card, no horizontal overflow at 1440 and 1024 px; at 1440 px
+every header is one row, at 1024 px the first one wraps (see above).
+
 ### 5. Use it like a user
 
-**API** against the running container (curl): `run-start` 204; missing meta 400; hook finish with a non-JSON
-body 400; 3 MB body 413 (the limit is 2 MiB); `GET` on an ingest path 404; `PUT /` 404; unknown ticket 404
+**API** against the running container (curl): `run-start` 204; missing meta 400; hook finish (`source` `subagent-hook`) with a non-JSON
+body 400 (a body without `source` counts as a `cli` finish, whose body is the output text, and is answered 204); 3 MB body 413 (the limit is 2 MiB); `GET` on an ingest path 404; `PUT /` 404; unknown ticket 404
 with the dark page; `/` sends `Cache-Control: no-store`, the CSP of the design, `nosniff`, no `X-Powered-By`.
 Token 401 and "ignored without a token": ingest.test (curl against a token-less stack). Configuration error:
 `LOOP_THRESHOLD=0` and `TZ=Mars/Olympus` make the container exit 1 with one line naming the variable.
@@ -282,12 +313,27 @@ Two tests written in round 1 encoded what design revision 3 replaced; both are c
 - `ingest.test`: "the tool payload's own usage wins over the delta" became "the delta leads: it wins over a
   tool_response.usage block" (ADR-0004), plus a test of the fallback order.
 - `metrics.test`: an agent whose runs have no token count now has `tokens: null`, not `0` (the `—` fix above).
+- `trends.test` (round 3): "has no comparison for a single bucket, an empty series or a zero start" lost its third
+  case, because a zero start is now a statement (`+2.0 vs w37 · worse`, T-UNIT-TRD-5); every existing `deltaOf`
+  call gained the digit-count argument.
 
 ## Open gaps
 
-None. `docs/architecture/.gaps/001-agent-factory-dashboard.md` holds G1 and G2, both marked resolved by the
+None. `docs/architecture/.gaps/001-agent-factory-dashboard.md` holds G1, G2 and G3, all marked resolved by the
 architect and built as answered.
 
 ## Validator findings
 
-None yet (round 1 of validation).
+### Round 1
+| Finding | Classification | Answer | Evidence |
+|---|---|---|---|
+| F1 | Design gap → G3 (resolved) | Built in 09b2946, see "Round 3" above | T-UNIT-TRD-5, T-INT-N7; the validator's check is red on its own regular expression, which contradicts §R8 (quoted in Round 3) |
+
+Observations of the validator's report, answered: *"All 1 tickets are running on their own."* – a text of this design
+(no requirement covers the plural), left as designed. *`npm ci` needs `--ignore-scripts` on a machine without a C
+compiler* – the "How to run" line now says so. *A finish for a ticket with no run is answered 204 even with a body
+that is not JSON* – true for a `cli` finish (no `source` in the meta), whose body is the output text and is never
+parsed; a hook finish with a non-JSON body is answered 400. *`Lead time (h)` can read `-100%`* – arithmetic of the
+design, unchanged. *"26 weeks of data" with mostly empty weeks* – the design's period line, unchanged. At 1024 px the
+`Human calls / ticket` card header wraps onto two lines when it reads `0% vs wNN · unchanged` (measured: no overflow,
+nothing clipped); the same string existed before this round.
