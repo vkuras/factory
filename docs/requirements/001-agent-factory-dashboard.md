@@ -1,7 +1,7 @@
 # 001 – Agent Factory Dashboard
 
 - Type: MVP
-- Status: Implemented – ready for validation
+- Status: Validated
 - Date: 2026-09-20 (change-request passes: CR1 and the coordinator's future, then the
   stakeholder's answers to the open points of that pass, then D19 taken together with the design
   approval, all the same day)

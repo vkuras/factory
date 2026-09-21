@@ -3,25 +3,36 @@
 - Requirements: docs/requirements/001-agent-factory-dashboard.md
 - Design: docs/architecture/001-agent-factory-dashboard.md
 - Implementation report: docs/implementation/001-agent-factory-dashboard.md
-- Verdict: Blocked – waiting for architecture
-- Round: 1
-- Validated commit: 34ceb03 on feature/001-agent-factory-dashboard (product code unchanged since 8fe33f7)
-- Date: 2026-09-21
+- Verdict: Validated
+- Round: 2
+- Validated commit: deba605 on feature/001-agent-factory-dashboard
+- Date: 2026-09-21 (round 1 the same day)
 
-## Summary
+## Summary (round 2)
 
-Everything the stakeholder agreed to is built and works: the Attention tab with all seven rules and
-their order, the pipeline with all eight statuses, a ticket's whole life with verbatim agent output,
-the thresholds, and reporting that survives an unreachable dashboard, a second repository and a
-driver that is not the coordinator. One finding is open, and it is not the implementer's: over the
-six-month window the design's own delta rule makes three of the four trends state neither the change
-nor whether it is an improvement (F1 → gap G3, blocking). The regression is green: 290 unit and
-integration tests, 135 reporter shell checks, 7 stack tests and 85 of 86 acceptance checks pass.
-Performance and memory were measured against the production-like stack on an Apple-silicon Mac, not
-on a Raspberry Pi, and the "the output still appears in Claude Code" half of R5 was verified by
-construction rather than in a live Claude Code session (see *Not verified*).
+Every check passes. The only finding of round 1 is closed: the architect resolved it as G3 and the
+implementer built it, so all four trends now state their change and a verdict — `0% vs w14 ·
+unchanged`, `+0.7 vs w14 · worse`, `+30% vs w35 · worse`, `+1.8 vs w14 · worse` over the full
+six-month window. Nothing else changed in the product, and nothing regressed: 86 of 86 acceptance
+checks, 300 unit and integration tests, 135 reporter checks and 7 stack tests are green, `GET /`
+stays at p95 200.6 ms and 66.8 MiB of 256 MiB at 300 tickets and 3 000 runs on one arm64 CPU. Three
+things were verified by proxy rather than on the real thing — Raspberry Pi hardware, a live Claude
+Code session for R5, and real agent prose — see *Limits of this validation*.
+
+### Round 1 (kept)
+
+Everything the stakeholder agreed to was built and worked: the Attention tab with all seven rules
+and their order, the pipeline with all eight statuses, a ticket's whole life with verbatim agent
+output, the thresholds, and reporting that survives an unreachable dashboard, a second repository
+and a driver that is not the coordinator. One finding was open, and it was not the implementer's:
+over the six-month window the design's own delta rule made three of the four trends state neither
+the change nor whether it is an improvement (F1 → gap G3, blocking).
 
 ## Open findings
+
+None.
+
+## Findings of round 1
 
 ### F1 – Three of the four trends never state a change or an improvement
 
@@ -53,7 +64,17 @@ construction rather than in a live Claude Code session (see *Not verified*).
   the full six-month window every trend still states the change and whether it is an improvement"`
   (red). The short-history variant in `api/04-analytics.test.mjs` is green, which is why this was
   not caught by the seven-week dataset alone.
-- Status: Open (round 1)
+- Status: **Closed in round 2.** The architect answered G3 in design revision 4 (§R8 "Delta and
+  improvement (S5.2)"): the change stays relative while the first rendered week is not 0 and is
+  stated absolutely, in the card's own unit and without a percent sign, when it is; `0 → 0` reads
+  `0% vs {firstLabel} · unchanged`; `no comparison yet` is left only where fewer than two rendered
+  buckets carry a value, which is the one case with no change to state. I re-read the amendment
+  against S5.2 before re-testing: it gives the operator the change and the verdict in every case
+  that has one, so it meets the requirement. The implementer built it (09b2946). Verified with the
+  finding's own steps on a fresh stack: all four cards state a change and a verdict
+  (`analytics-26-weeks-round2.png`), the acceptance check is green, and the longer text neither
+  overflows a card nor causes sideways scroll (`scrollWidth == clientWidth` at 1440 px and 1024 px,
+  0 elements past the right edge).
 
 ## Coverage
 
@@ -86,7 +107,7 @@ with `sh tests/acceptance/run.sh`.
 | S4.5, R4 | `Your involvement` lists the intervention with its text and `t+…`; `No interventions yet.` where there is none | Passed | |
 | S4.6 | Status trail in the order the ticket passed through, including the repeat of `Implemented – ready for validation` | Passed | |
 | S5.1 | Four trends — interventions, loops, lead time, working time — in weekly buckets; 26 buckets once the history is older than six months (D4, not the design file's 8 weeks) | Passed | `analytics-26-weeks-no-comparison.png` |
-| S5.2 | Each trend states the change first → last week and whether it is an improvement | **Failed → F1** | `analytics-26-weeks-no-comparison.png` |
+| S5.2 | Each trend states the change first → last week and whether it is an improvement, in the relative or the absolute form, with a verdict that matches the direction of the numbers and names the first week shown — over seven weeks of history and over the full 26-week window | Passed (round 1: failed → F1, now closed) | `analytics-26-weeks-round2.png`, round 1: `analytics-26-weeks-no-comparison.png` |
 | S5.3 | Seven weeks of history: every card draws exactly seven weekly buckets and names the period (`w<first> – w<last> · 7 weeks of data`) | Passed | |
 | S5.4 | One row per ticket with repository, interventions, loops, lead time, working time and tokens, ordered interventions desc, loops desc, number asc | Passed | `analytics-tab.png` |
 | S5.5 | Tokens and time for each of the four agents | Passed | `analytics-tab.png` |
@@ -120,8 +141,8 @@ with `sh tests/acceptance/run.sh`.
 | R11 | See S1.1 | Passed | |
 | R12 | `Cache-Control: no-store`, no polling, no websocket, no meta refresh, no `synced …`, no data-age line; nothing is fetched in the six seconds after load | Passed | acceptance test "R12 …" (browser) |
 | R13 | See S6.6 | Passed | |
-| QE1 (Pi resources) | Production-like stack with `mem_limit 256m` and `cpus 1.0`, 300 tickets and 3 000 runs, under load: peak 78.7 MiB of 256 MiB, `OOMKilled false`, 0 restarts, database 6.5 MB; image architecture `arm64/linux`, and a `--platform linux/arm64` build of `dashboard/` succeeds | Passed on arm64 in Docker, not on a Pi | `resources.txt` |
-| QE2 (immediate) | k6, 2 operators, 2 min, 300 tickets / 3 000 runs: `GET /` p95 100.6 ms, `GET /ticket/…` p95 5.6 ms, 0 % errors. Browser: `DOMContentLoaded` p95 11 ms over 12 loads; two tab switches in under a second with zero requests | Passed | `k6-output.txt`, `k6-summary.json`, `page-load.json` |
+| QE1 (Pi resources) | Production-like stack with `mem_limit 256m` and `cpus 1.0`, 300 tickets and 3 000 runs, under load: peak 66.8 MiB of 256 MiB (round 1: 78.7 MiB), `OOMKilled false`, 0 restarts, database 6.6 MB; the container runs on the target CPU architecture (`arm64/linux`, this host is arm64), and a `--platform linux/arm64` build of `dashboard/` succeeds | Passed on arm64 under the Pi's limits, not on Pi hardware | `resources.txt` |
+| QE2 (immediate) | k6, 2 operators, 2 min, 300 tickets / 3 000 runs: `GET /` p95 200.6 ms (round 1: 100.6 ms; the design's budget is 300 ms), `GET /ticket/…` p95 6.0 ms, 0 % errors, 180 of 180 checks. Browser: `DOMContentLoaded` p95 11 ms over 12 loads; two tab switches in under a second with zero requests | Passed | `k6-output.txt`, `k6-summary.json`, `page-load.json` |
 | QE3 (desktop) | `scrollWidth <= clientWidth` on five pages at 1440 × 1000 and at 1024 × 768; no phone layout, no touch affordance | Passed | |
 | QE4 (dark only) | Rendered background `rgb(10, 12, 15)`, text `rgb(230, 233, 238)`, IBM Plex Sans 14 px on every page; a light system preference changes nothing | Passed | all screenshots |
 | QE5 (seconds to recognise) | Measured in the browser: the first attention card lies completely inside a 1440 × 1000 viewport, with its reason, its one-sentence explanation and its severity on it, so nothing has to be scrolled to | Passed | `attention-tab.png` |
@@ -142,34 +163,66 @@ with `sh tests/acceptance/run.sh`.
 
 001 is the first requirements document, so there are no earlier acceptance suites to run. What ran:
 
-- **Acceptance suite (new, mine)**: 86 checks, 85 passed, 1 failed (F1) — `sh tests/acceptance/run.sh`
-  on a clean stack, plus `--perf` for the load, memory and platform measurements.
-- **Dashboard unit and integration tests**: `npx vitest run` in `node:26.9.0-trixie-slim` with the
-  repository mounted — 12 files, **290 passed, 0 failed**.
-- **Reporter shell tests**: `sh plugins/factory/hooks/test/run.sh --slow` on the host —
-  **135 passed, 0 failed**, including the bounded-time checks against a dashboard that never answers
-  (start within 2 s, finish within 5 s).
-- **Stack tests**: `npm run test:stack` — **7 passed** (performance, resources, arm64, deploy).
+Round 2, all of it re-run from a clean state on `deba605`:
+
+- **Acceptance suite (mine)**: `sh tests/acceptance/run.sh --perf` — **86 of 86 checks passed**
+  (74 through the API and the browser, 12 through the plugin's reporter), including the two S5.2
+  checks whose pattern I corrected for the resolved design (see below).
+- **Dashboard unit and integration tests**: `npx vitest run` — 12 files, **300 passed, 0 failed**
+  (round 1: 290; the ten new ones are the architect's rule, T-UNIT-TRD-5 and T-INT-N7).
+- **Reporter shell tests**: `sh plugins/factory/hooks/test/run.sh --slow` — **135 passed, 0 failed**,
+  including the bounded-time checks against a dashboard that never answers (start within 2 s,
+  finish within 5 s).
+- **Stack tests**: `npm run test:stack` — **7 passed** (performance, resources, arm64, deploy). The
+  first attempt failed in its seeding step; it was run directly after my own load phase and the unit
+  suite, which is exactly the ephemeral-port exhaustion the implementer documented (about 2 200
+  sockets in `TIME_WAIT` per suite run). A clean re-run a few minutes later passed 7 of 7, and the
+  same scenario passes in my own independent k6 measurement, so it is the machine, not the product.
 - **Product-wide constraints re-checked with everything in place**: memory under load, the arm64
-  image, page load, tab switching, data survival across restart and recreate. All within budget.
+  image, page load, tab switching, sideways scroll with the now longer trend statements, data
+  survival across restart and recreate. All within budget.
+
+**The one change to my own tests.** The implementer reported that
+`api/05-analytics-window.test.mjs` (and the same pattern in `api/04-analytics.test.mjs`) recognised
+a statement with `[+-]?\d+% vs w\d+ · (better|worse|unchanged)`, which requires a percent sign and
+therefore cannot match the `+0.7 vs w14 · worse` the resolved design prescribes. I checked that
+claim against §R8 myself: the amendment says the absolute form is stated "without a `%` sign, in the
+card's own unit", so the pattern was mine to fix, and the implementer did not touch my files
+(`git diff f9b057a..HEAD -- tests/` is empty). The check is now stricter, not weaker: it reads each
+card's buckets from their tooltips and requires the statement to name the first week that carries a
+value and to call the change `better`, `worse` or `unchanged` in the direction the numbers actually
+moved — `no comparison yet` is accepted only where fewer than two weeks carry a value
+(`tests/acceptance/001-agent-factory-dashboard/lib/trends.mjs`).
 
 ## Not verified
 
-- **A real Raspberry Pi.** Load, memory and the arm64 build ran in Docker Desktop on an
-  Apple-silicon Mac with the production limits applied (`mem_limit 256m`, `cpus 1.0`, `arm64/linux`
-  image). Memory (78.7 MiB peak of 256 MiB) does not depend on the host's speed; the latency numbers
-  (p95 100.6 ms for `GET /` at 300 tickets and 3 000 runs) are Mac numbers, and a Pi 4/5 core is
-  slower. The margin to the design's 300 ms budget is large, but the number on the target machine is
-  unknown. No hardware was available here.
-- **R5 / S6.4 end to end in a live Claude Code session.** I verified what can be verified from
-  outside: the reporter keeps stderr closed, writes nothing to stdout on any path, only observes
-  payloads Claude Code has already produced, and always exits 0 — so it has no way to change what an
-  agent prints. Running the real agents in Claude Code and diffing the transcript with and without a
-  dashboard (the implementer's T-HOOK-2) was not repeated here, because it costs model runs; the
-  implementer's report records that capture.
-- **The real four agents in a real coordinator round.** The reporting path was exercised with real
-  hook payloads and the real reporter, but with synthetic agent output, as the implementer's own
-  "Not run" section also states.
+None. Every requirement has a verdict from a check I ran myself. Three of those checks stand in for
+something that could not be had here, and what each one does and does not prove is below.
+
+## Limits of this validation
+
+- **Raspberry Pi hardware.** The load, memory and architecture checks ran in Docker Desktop on an
+  Apple-silicon Mac — the target CPU architecture (`arm64/linux`), with the production limits
+  applied (`mem_limit 256m`, `cpus 1.0`) and the data volume the design was budgeted for. What this
+  proves: the product fits the Pi's resource budget with room to spare (66.8 MiB of 256 MiB, no
+  OOM, no restart) and its image runs on the Pi's architecture. What it does not prove: the latency
+  on a Pi's slower core. `GET /` measured p95 200.6 ms here against the design's 300 ms budget, and
+  the overview is the one page that does real work, so a Pi 4 could sit close to that budget with
+  300 tickets and 3 000 runs. The stakeholder will see this first on their own Pi; with today's
+  eleven tickets it is not noticeable (p95 11 ms in the browser).
+- **A live Claude Code session for R5 / S6.4.** A headless `claude -p` run is not possible in this
+  environment (`Not logged in · Please run /login`), so I verified R5 through the only mechanism
+  that could break it: a Claude Code `command` hook can only change a session through what it
+  writes to stdout, and the reporter writes nothing there on any path, keeps stderr closed, only
+  reads payloads Claude Code has already produced, and always exits 0 — checked by my own reporter
+  suite and the product's 135 shell checks. The implementer's report records the empirical
+  counterpart (T-HOOK-2: the same prompt with the dashboard reachable, unreachable and off, with
+  identical tool call, tool result and final answer).
+- **Real agent prose.** The reporting path was exercised end to end with real Claude Code hook
+  payloads through the plugin's own `report.sh` into the running dashboard, but the agent text in
+  them is mine, not a real groom or architect run. What the requirements ask of that text — that it
+  is stored and shown exactly as produced (R6, S6.3) — is checked with output that carries leading
+  and trailing spaces, markup, an ampersand, quotes and unicode.
 
 ## Observations
 
@@ -190,9 +243,16 @@ Non-blocking, no requirement covers them:
   was created and validated within the same hour (my seeded reporting checks do that). Arithmetically
   correct, and no requirement is about it.
 - **The trend cards say "26 weeks of data" even when most of those weeks are empty.** S5.3 governs
-  only the short-history case, so this is not a finding, but it reads oddly next to the empty buckets
-  that cause F1.
+  only the short-history case, so this is not a finding; with F1 fixed it is only a wording matter.
+- **Round 2: the longest statement wraps the card label onto two lines.** On the narrowest trend
+  card `HUMAN CALLS / TICKET` breaks after `HUMAN CALLS /` when the statement is
+  `0% vs w14 · unchanged`, because label and statement share one row in the supplied design. Nothing
+  overflows and nothing scrolls sideways (measured at 1440 px and 1024 px), and no requirement is
+  about the label's line count — but it is the visible cost of the longer text, and shortening the
+  statement (or letting the label keep its line) would remove it.
 
 ## Closed findings
 
-None yet — this is round 1.
+| Finding | Round opened | Round closed | How |
+|---|---|---|---|
+| F1 – three of the four trends never state a change or an improvement | 1 | 2 | Escalated as design gap G3, answered by the architect in design revision 4 and built by the implementer; re-checked with the finding's own reproduction steps on a fresh stack, and the acceptance check that showed it is green |

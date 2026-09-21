@@ -3,9 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { page } from '../lib/report.mjs';
 import { panel, ticketNumbers, between } from '../lib/dom.mjs';
+import { TREND_LABELS as LABELS, trendCard as cardOf, readTrend, complaintsAbout } from '../lib/trends.mjs';
 import { EXPECTED_TABLE_ORDER } from '../seed/dataset.mjs';
-
-const LABELS = ['Human calls / ticket', 'Loops / ticket', 'Lead time (h)', 'Compute (h)'];
 
 async function analytics() {
   return panel((await page('/?tab=analytics')).html, 'analytics');
@@ -14,12 +13,7 @@ async function analytics() {
 /** tags become separators, so "<span>Groom</span> <span>143k · 18h</span>" reads as one line. */
 const flat = (html) => html.replace(/<[^>]+>/g, '|').replace(/\s+/g, ' ').replace(/\|[\s|]*/g, '|');
 
-function trendCard(html, label) {
-  const start = html.indexOf(`>${label}<`);
-  assert.ok(start > -1, `the trend "${label}" is on the page`);
-  const next = LABELS.map((l) => html.indexOf(`>${l}<`)).filter((i) => i > start).sort((a, b) => a - b)[0];
-  return html.slice(start, next ?? html.indexOf('Per ticket'));
-}
+const trendCard = (html, label) => cardOf(html, label);
 
 test('S5.1 four trends in weekly steps: interventions, loops, lead time and agent working time', async () => {
   const html = await analytics();
@@ -45,15 +39,8 @@ test('S5.3 with less than six months of history a trend covers only the period t
 
 test('S5.2 each trend states the change between the first and the last week, and whether it is an improvement', async () => {
   const html = await analytics();
-  const silent = [];
-  for (const label of LABELS) {
-    const card = trendCard(html, label);
-    const delta = card.match(/>([+-]?\d+% vs w\d+ · (?:better|worse|unchanged)|no comparison yet)</);
-    assert.ok(delta, `${label} says nothing at all about the change`);
-    const bars = [...card.matchAll(/title="(w\d+) · ([^"]*)"/g)].map((m) => `${m[1]}=${m[2]}`);
-    if (delta[1] === 'no comparison yet') silent.push(`${label}: ${bars.join(' ')}`);
-  }
-  assert.deepEqual(silent, [], 'a trend that is drawn over seven weeks must state the change and whether it is an improvement');
+  const complaints = LABELS.flatMap((label) => complaintsAbout(readTrend(html, label)));
+  assert.deepEqual(complaints, [], 'every trend drawn over seven weeks states its change and whether it is an improvement');
 });
 
 test('S5.4 one row per ticket over its lifetime, the tickets that cost me most first', async () => {

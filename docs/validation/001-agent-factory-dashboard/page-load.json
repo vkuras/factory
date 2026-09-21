@@ -2,7 +2,7 @@
  "samples": [
   {
    "ttfb": 3,
-   "loaded": 13
+   "loaded": 12
   },
   {
    "ttfb": 3,
@@ -10,31 +10,7 @@
   },
   {
    "ttfb": 2,
-   "loaded": 10
-  },
-  {
-   "ttfb": 3,
-   "loaded": 10
-  },
-  {
-   "ttfb": 3,
-   "loaded": 10
-  },
-  {
-   "ttfb": 3,
-   "loaded": 11
-  },
-  {
-   "ttfb": 3,
-   "loaded": 10
-  },
-  {
-   "ttfb": 3,
-   "loaded": 10
-  },
-  {
-   "ttfb": 3,
-   "loaded": 10
+   "loaded": 9
   },
   {
    "ttfb": 3,
@@ -47,7 +23,31 @@
   {
    "ttfb": 3,
    "loaded": 9
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
   }
  ],
- "p95": 11
+ "p95": 10
 }

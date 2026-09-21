@@ -14,7 +14,7 @@ test('D16 every ticket on every tab carries its repository, and the two 001s are
       for (const t of texts) {
         assert.ok(t.includes(REPO_A_LABEL) || t.includes(REPO_B_LABEL), `${selector}: "${t.split('\n')[0]}" names its repository`);
       }
-      await shot(page, `two-repositories-${tab}-${selector.replace(/\W/g, '')}`);
+      await shot(page, `two-repositories-${tab}`);
     }
 
     await page.click('button[data-tab="pipeline"]');
