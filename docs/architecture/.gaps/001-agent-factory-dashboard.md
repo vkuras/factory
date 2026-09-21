@@ -53,3 +53,43 @@ Claude Code 2.1.278 (`dashboard/test/fixtures/hooks/`, README there).
   out of a chip. The chip sentence in §User interface, Tab 1 is rewritten accordingly: the id is
   never truncated, the repository is capped at 14 characters by the partial's own rule, and the
   title is what gives way beyond that. No code change; D16 and S1.5 stay as they are.
+
+## G3 – Over the six-month window three of the four trends never state a change or an improvement
+- Status: Open
+- Raised by: validator, round 1, 2026-09-21
+- Design: §R8 "Delta and improvement (S5.2)" — "`first` = the earliest rendered bucket with a
+  non-null value … `first` is null, or `first = 0`, or `first === last` bucket → text
+  `no comparison yet`, colour `#6E7887`, no improvement word"; together with §R8 "The four series",
+  where `Human calls / ticket`, `Loops / ticket` and `Compute (h)` are defined as `0` for a week
+  with no activity (`0 if active(W) is empty`), never `null`; and §R8 "Buckets", where the window is
+  the last 26 weeks whenever the history reaches that far back (D4).
+- Requirement: S5.2 – "Given a trend is shown, when I look at it, then it also states the change
+  between the first and the last week shown, and whether that change is an improvement or not."
+  (Product value 2, `docs/product.md`: "Over weeks, they can see whether the factory needs them
+  less, loops less and finishes faster — so they know when to go and change the factory itself.")
+- Problem: the three series that are `0` rather than `null` in an empty week make `first = 0`
+  whenever the earliest rendered week had no activity of that kind. With a history older than six
+  months the window always starts 26 weeks back, so that week is empty far more often than not —
+  and then the card falls into the `first = 0` branch and prints `no comparison yet` instead of a
+  change and an improvement word, for good. Measured on a fresh stack with the acceptance dataset
+  plus a ticket whose history reaches 40 weeks back (26 buckets rendered, the window full):
+  `Human calls / ticket` first `w14 = 0.0`, last `w39 = 0.0`; `Loops / ticket` first `w14 = 0.0`,
+  last `w39 = 0.7`; `Compute (h)` first `w14 = 0.0`, last `w39 = 1.8` — all three say
+  `no comparison yet`, only `Lead time (h)` states `+30% vs w35 · worse`
+  (`docs/validation/001-agent-factory-dashboard/analytics-26-weeks-no-comparison.png`). The
+  implementation follows the design exactly; the rule itself loses the requirement.
+- Blocks: S5.2 for `Human calls / ticket`, `Loops / ticket` and `Compute (h)` in the ordinary case,
+  and with it the operator's answer to "is the factory getting better", which is what the Analytics
+  tab exists for. S5.1, S5.3, S5.4, S5.5 and S5.6 are met.
+- Suggestion: the requirement asks for "the change" and for a verdict, not for a percentage, so the
+  percentage is what needs a fallback rather than the statement. Two directions, the architect's
+  choice: (a) when `first = 0` and `last > 0`, state the absolute change instead
+  (`+0.7 vs w14 · worse`, and `-0.7 vs w14 · better` in the mirror case), keeping
+  `no comparison yet` only for a single rendered bucket or an all-null series; or (b) compare the
+  first and the last week **that have data**, i.e. treat a week with no runs at all as `null` for
+  these three series the way `Lead time (h)` already does, and name those two weeks in the delta
+  text. Either way, `0 → 0` is `0% · unchanged`, not "no comparison". Whatever is chosen, the period
+  line and the bars stay as they are, and the acceptance check
+  `tests/acceptance/001-agent-factory-dashboard/api/05-analytics-window.test.mjs::"S5.2 over the
+  full six-month window every trend still states the change and whether it is an improvement"`
+  is what closes it.

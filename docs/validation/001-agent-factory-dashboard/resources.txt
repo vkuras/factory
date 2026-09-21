@@ -1,0 +1,10 @@
+image architecture: arm64/linux
+limits: 268435456 bytes memory, 1000000000 cpus
+
+peak memory and cpu during the load test (docker stats, every 5 s):
+76.27MiB / 256MiB 0.01%
+77.34MiB / 256MiB 0.00%
+78.69MiB / 256MiB 0.02%
+OOMKilled: false, restarts: 0
+database size: 6.5M	/data
+linux/arm64 build: ok

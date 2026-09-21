@@ -1,0 +1,53 @@
+{
+ "samples": [
+  {
+   "ttfb": 3,
+   "loaded": 13
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 2,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 11
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 10
+  },
+  {
+   "ttfb": 3,
+   "loaded": 9
+  }
+ ],
+ "p95": 11
+}
