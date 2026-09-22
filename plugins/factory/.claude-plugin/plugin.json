@@ -1,6 +1,6 @@
 {
   "name": "factory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Software factory pipeline: groom, architect, implementer and validator as skills plus the autonomous agents that run them.",
   "author": {
     "name": "vicokuras"
