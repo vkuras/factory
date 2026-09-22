@@ -8,8 +8,8 @@
 # is attached, and only main is pushed.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-root="$(cd "$here/.." && pwd)"
-seed="$root/.factory-evals/seeds/coord-validated"
+evals="$(cd "$here/../.." && pwd)"
+seed="$evals/fixtures/seeds/coord-validated"
 dest="$here/iteration-3-sonnet/eval-5-merge-request"
 
 for run in with_skill without_skill; do

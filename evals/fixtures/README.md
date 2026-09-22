@@ -31,14 +31,14 @@ what an earlier round left behind:
 After a run has written into a seed, put it back with:
 
 ```bash
-.factory-evals/restore.sh
+evals/fixtures/restore.sh
 ```
 
 When a seed changes on purpose, commit inside the seed and re-cut its bundle:
 
 ```bash
-git -C .factory-evals/seeds/val-defects bundle create ../../bundles/val-defects.bundle --all
+git -C evals/fixtures/seeds/val-defects bundle create ../../bundles/val-defects.bundle --all
 ```
 
-The grading keys for these seeds live in `../.validator-workspace/keys/`, next to
+The grading keys for these seeds live in `../runs/validator/keys/`, next to
 the runs they grade.

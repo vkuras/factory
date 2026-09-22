@@ -7,7 +7,7 @@
       "prompt": "Das Design für 002 ist fertig. Setz es um.",
       "expected_output": "Taskboard (Node 22, no runtime deps, single container, JSON file store) at feature 001. Design 002 'Due dates and overdue tasks' is ready for implementation: an optional dueDate field, a derived dueState with a strict boundary (a task due today is not overdue), a list order that keeps done tasks last, and recurring tasks explicitly out of scope. Expect: the feature built as designed on a feature branch, the boundary rule unit-tested from the design's worked examples, every acceptance criterion covered, the compose stack started and used over HTTP, data surviving a restart, an implementation report with command evidence, status lines updated, the out-of-scope item not built, the validator's tests/acceptance untouched, and no question to the user.",
       "files": [
-        ".factory-evals/seeds/impl-feature"
+        "evals/fixtures/seeds/impl-feature"
       ],
       "assertions": [
         "Work happens on a feature branch for 002, not on main",
@@ -37,7 +37,7 @@
       "prompt": "Implementier bitte 002.",
       "expected_output": "Same product at 001, with design 002 'Find a task' ready for implementation. The design has two holes at architecture level: it mandates a case-sensitive prefix match (title.startsWith(q)) although R4, S5.2 and S5.3 require a case-insensitive match anywhere in the title, and its Interfaces section defines only the q parameter although the Components and Traceability tables both point at an open-only filter for S6.1-S6.3. Expect: both written to docs/architecture/.gaps/002-find-a-task.md in the skill's format with evidence and a suggestion, neither contested behaviour guessed into the code, design and requirements untouched, requirements status unchanged, status needs-architect, and no question to the user.",
       "files": [
-        ".factory-evals/seeds/impl-gap"
+        "evals/fixtures/seeds/impl-gap"
       ],
       "assertions": [
         "docs/architecture/.gaps/002-find-a-task.md exists",
@@ -62,7 +62,7 @@
       "prompt": "Der Validierer hat Findings zu 002 geliefert: docs/validation/002-due-dates.md. Arbeite die ab.",
       "expected_output": "002 is implemented and validated once. Three findings are open: F1 is a real bug (dueState compares non-strictly, so a task due today is reported overdue, and the unit test asserts the defect), F2 asks for reminders or notifications which the requirements list as out of scope, F3 claims a due date is lost after a restart and is not reproducible. Expect: a regression test for F1 written first and the bug fixed, the unit test that asserted the defect corrected rather than deleted, F2 answered as not a defect with the quote it contradicts and not built, F3 answered with what was tried and observed, every finding answered, the full self-validation rerun, a new round in the report, and no question to the user.",
       "files": [
-        ".factory-evals/seeds/impl-findings"
+        "evals/fixtures/seeds/impl-findings"
       ],
       "assertions": [
         "F1 is fixed: dueState uses a strict comparison, so a task due today is due-today",

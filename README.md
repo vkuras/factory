@@ -21,10 +21,11 @@ factory installs on any machine without absolute paths.
 plugins/factory/
   .claude-plugin/plugin.json        the plugin manifest
   agents/                           groom, architect, implementer, validator
-  skills/                           the same four, as skills with references/ and evals/
+  skills/                           the same four, as skills with references/
   hooks/                            hooks.json and report.sh: the factory's reporting
 dashboard/                          the dashboard application (Node, SQLite)
 docker-compose.yml                  starts it
+evals/                              every skill eval: cases, fixtures, runs (see evals/README.md)
 ```
 
 ## Install on a machine
@@ -149,5 +150,6 @@ sh plugins/factory/hooks/test/lint.sh     # shellcheck v0.11.0 in a container
 
 ## Evaluating a skill
 
-Each skill has `evals/evals.json`. Runs and their benchmarks live in `.<skill>-workspace/`
-at the repository root, together with the fixtures in `.factory-evals/`. Both are untracked.
+Everything that evaluates a skill lives in [`evals/`](evals/README.md), and nowhere else: the
+cases, the fixtures they run against, and every run with its benchmark. New evals, for an
+existing skill or a new one, go there too.

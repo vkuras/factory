@@ -2,8 +2,8 @@
 
 What each run of the `coordinate` skill decided, kept so a later iteration can be
 compared against it. The fixtures the runs read are not here: they are git
-repositories, so they travel as bundles in `.factory-evals/bundles/coord-*.bundle`
-and `.factory-evals/restore.sh` clones them into `.factory-evals/seeds/`.
+repositories, so they travel as bundles in `evals/fixtures/bundles/coord-*.bundle`
+and `evals/fixtures/restore.sh` clones them into `evals/fixtures/seeds/`.
 
 ```
 iteration-1/         first draft, run on opus and (in iteration-1-sonnet) on sonnet
