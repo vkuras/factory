@@ -1,0 +1,181 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: perf/load.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 2 max VUs, 2m30s max duration (incl. graceful stop):
+              * operator: 2 looping VUs for 2m0s (gracefulStop: 30s)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  █ THRESHOLDS 
+
+    http_req_duration{page:detail}
+    ✓ 'p(95)<200' p(95)=5.97ms
+
+    http_req_duration{page:overview}
+    ✓ 'p(95)<300' p(95)=200.59ms
+
+    http_req_failed
+    ✓ 'rate==0' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 180     1.466491/s
+    checks_succeeded...: 100.00% 180 out of 180
+    checks_failed......: 0.00%   0 out of 180
+
+    ✓ the overview answers 200
+    ✓ it carries all three tabs
+    ✓ the ticket answers 200
+
+    HTTP
+    http_req_duration..............: avg=37.83ms min=1.34ms  med=25.82ms max=478.42ms p(90)=55.12ms p(95)=78.22ms 
+      { expected_response:true }...: avg=37.83ms min=1.34ms  med=25.82ms max=478.42ms p(90)=55.12ms p(95)=78.22ms 
+      { page:detail }..............: avg=4.11ms  min=1.34ms  med=3.88ms  max=9.58ms   p(90)=5.69ms  p(95)=5.97ms  
+      { page:overview }............: avg=71.54ms min=42.06ms med=52.71ms max=478.42ms p(90)=83.38ms p(95)=200.59ms
+    http_req_failed................: 0.00%  0 out of 120
+    http_reqs......................: 120    0.977661/s
+
+    EXECUTION
+    iteration_duration.............: avg=4.08s   min=4.05s   med=4.06s   max=4.49s    p(90)=4.09s   p(95)=4.22s   
+    iterations.....................: 60     0.48883/s
+    vus............................: 2      min=2        max=2
+    vus_max........................: 2      min=2        max=2
+
+    NETWORK
+    data_received..................: 97 MB  787 kB/s
+    data_sent......................: 9.0 kB 73 B/s
+
+
+
+

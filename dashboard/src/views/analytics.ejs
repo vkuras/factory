@@ -1,0 +1,91 @@
+  <div style="display:flex;flex-direction:column;gap:22px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+<% for (const c of m.trends) { %>
+      <div style="background:#12151A;border:1px solid #1E242C;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6E7887"><%= c.label %></span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:<%= c.deltaColor %>"><%= c.deltaText %></span>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4B5360"><%= c.period %></div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:96px">
+<% for (const b of c.bars) { %>
+          <div title="<%= b.title %>" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5D6673"><%= b.showValue ? b.text : '' %></div>
+<% if (b.heightPx !== null) { %>
+            <div style="width:100%;border-radius:3px 3px 0 0;background:<%= b.fill %>;height:<%= b.heightPx %>px"></div>
+<% } %>
+          </div>
+<% } %>
+        </div>
+        <div style="display:flex;gap:6px">
+<% for (const b of c.bars) { %>
+          <div style="flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#4B5360"><%= b.showLabel ? b.label : '' %></div>
+<% } %>
+        </div>
+      </div>
+<% } %>
+    </div>
+
+    <div style="background:#12151A;border:1px solid #1E242C;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6E7887">Per ticket · lifetime</div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1.4fr) 92px 92px 108px 108px 96px;gap:10px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#5D6673;padding-bottom:8px;border-bottom:1px solid #1E242C">
+        <div>ticket</div><div>title</div><div>your calls</div><div>loops</div><div>lead time</div><div>compute</div><div>tokens</div>
+      </div>
+<% for (const r of m.table) { %>
+      <a href="<%= r.card.href %>" class="af-h-row" style="cursor:pointer;color:#E6E9EE;display:grid;grid-template-columns:120px minmax(0,1.4fr) 92px 92px 108px 108px 96px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid #161B21">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#8A94A3;white-space:nowrap"><%- include('partials/ticketId', { c: r.card }) %></div>
+        <div style="font-size:12px;color:#C6CEDA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= r.card.title %></div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="height:6px;border-radius:3px;background:#FF7AB6;width:<%= r.wInt %>"></div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A6B0BE"><%= r.interventions %></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="height:6px;border-radius:3px;background:#F5A524;width:<%= r.wLoop %>"></div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A6B0BE"><%= r.loops %></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="height:6px;border-radius:3px;background:#5BC8F5;width:<%= r.wLead %>"></div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A6B0BE"><%= r.leadLabel %></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="height:6px;border-radius:3px;background:#9EE84B;width:<%= r.wComp %>"></div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A6B0BE"><%= r.computeLabel %></span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A6B0BE;text-align:right"><%= r.tokensLabel %></div>
+      </a>
+<% } %>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+      <div style="background:#12151A;border:1px solid #1E242C;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6E7887">Token spend per agent</div>
+<% for (const a of m.agentSpend) { %>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px">
+            <span style="color:<%= a.color %>"><%= a.label %></span>
+            <span style="color:#8A94A3"><%= a.value %></span>
+          </div>
+          <div style="height:8px;border-radius:4px;background:#191E25;overflow:hidden">
+            <div style="height:100%;border-radius:4px;background:<%= a.color %>;width:<%= a.width %>"></div>
+          </div>
+        </div>
+<% } %>
+      </div>
+      <div style="background:#12151A;border:1px solid #1E242C;border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6E7887">Where tickets bounce back</div>
+<% for (const b of m.bounces) { %>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px">
+            <span style="color:#A6B0BE"><%= b.label %></span>
+            <span style="color:#8A94A3"><%= b.value %></span>
+          </div>
+          <div style="height:8px;border-radius:4px;background:#191E25;overflow:hidden">
+            <div style="height:100%;border-radius:4px;background:<%= b.color %>;width:<%= b.width %>"></div>
+          </div>
+        </div>
+<% } %>
+      </div>
+    </div>
+  </div>

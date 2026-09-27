@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Agent|Task",
+        "hooks": [ { "type": "command", "timeout": 10,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-start" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Agent|Task",
+        "hooks": [ { "type": "command", "timeout": 15,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-finish" } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "Agent|Task",
+        "hooks": [ { "type": "command", "timeout": 15,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-failed" } ] }
+    ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "command", "timeout": 15,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" run-finish" } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "timeout": 10,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" prompt" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "timeout": 15,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" session-finish" } ] }
+    ],
+    "SessionEnd": [
+      { "hooks": [ { "type": "command", "timeout": 10,
+                     "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/report.sh\" session-end" } ] }
+    ]
+  }
+}

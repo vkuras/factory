@@ -65,6 +65,8 @@ Requirements: 002 (docs/requirements/002-<slug>.md)
 <stage-specific input: stakeholder input and answers, gaps, findings, resume>
 ```
 
+The first two lines of every task message are exactly these two, in this order and in this form. Nothing reads them but the factory's reporter, which finds the ticket faster with them; it still works without them.
+
 - **groom** needs the stakeholder input — the idea, the change request, or the answers to its own previous open questions, quoted as the stakeholder said them.
 - **architect** needs the requirements number, and the gaps file when it is being run to resolve gaps.
 - **implementer** needs the requirements number, plus the findings file when fixing findings, or a note that the architect resolved its gaps when resuming.
@@ -208,3 +210,4 @@ When you quote the stakeholder's answer into a task message, keep their sentence
 - Never rerun an agent that returned `nothing-to-do` hoping for a different answer. The statuses disagree; show them to the stakeholder.
 - Never report a document as done while a change request or a gap is still open.
 - Never push and never open a merge request without the stakeholder's explicit yes in this conversation, and never merge one.
+- Never describe the dashboard's state to the stakeholder as if you had read it: you report to it, you do not read from it.

@@ -1,0 +1,30 @@
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;align-items:start">
+<% for (const s of m.pipeline) { %>
+    <div style="display:flex;flex-direction:column;gap:10px;background:#0E1115;border:1px solid #191E25;border-radius:10px;padding:12px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:<%= s.color %>"><%= s.label %></span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#E6E9EE"><%= s.count %></span>
+        </div>
+        <div style="height:2px;border-radius:2px;background:<%= s.color %>;opacity:.5"></div>
+        <div style="font-size:11px;color:#6E7887"><%= s.hint %></div>
+      </div>
+<% for (const t of s.tickets) { %>
+      <a href="<%= t.href %>" class="af-h-pcard" style="cursor:pointer;color:#E6E9EE;background:#14181E;border:1px solid #232932;border-radius:8px;padding:11px 12px;display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6E7887"><%- include('partials/ticketId', { c: t }) %></span>
+          <span style="width:7px;height:7px;border-radius:50%;background:<%= t.statusColor %>"></span>
+        </div>
+        <div style="font-size:13px;font-weight:500;color:#DCE2EA;text-wrap:pretty"><%= t.title %></div>
+        <div style="font-size:11px;color:#8A94A3;font-family:'IBM Plex Mono',monospace"><%= t.statusText %></div>
+        <div style="display:flex;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5D6673">
+          <span>↻ <%= t.loops %></span>
+          <span>◔ <%= t.elapsedLabel %></span>
+          <span>⌁ <%= t.tokensLabel %></span>
+          <span style="color:<%= t.interventions > 0 ? '#FF7AB6' : '#5D6673' %>">☺ <%= t.interventions %></span>
+        </div>
+      </a>
+<% } %>
+    </div>
+<% } %>
+  </div>

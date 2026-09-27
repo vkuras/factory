@@ -1,0 +1,18 @@
+  <div role="tablist" style="display:flex;gap:4px;border-bottom:1px solid #1E242C;padding-bottom:0">
+<% for (const t of m.tabs) { const on = t.key === m.activeTab; %>
+    <button type="button" role="tab" class="af-tab af-h-tab" data-tab="<%= t.key %>" aria-selected="<%= on %>" style="appearance:none;border:none;background:transparent;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:.01em;padding:10px 16px 12px;cursor:pointer;color:<%= on ? '#E6E9EE' : '#6E7887' %>;border-bottom:2px solid <%= on ? '#9EE84B' : 'transparent' %>;display:flex;align-items:center;gap:8px">
+      <span><%= t.label %></span>
+      <span class="af-badge" style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:1px 6px;border-radius:5px;background:<%= on ? '#9EE84B22' : '#191E25' %>;color:<%= on ? '#9EE84B' : '#6E7887' %>"><%= t.count %></span>
+    </button>
+<% } %>
+  </div>
+
+<section data-panel="attention"<%- m.activeTab === 'attention' ? '' : ' hidden' %>>
+<%- include('attention', { m }) %>
+</section>
+<section data-panel="pipeline"<%- m.activeTab === 'pipeline' ? '' : ' hidden' %>>
+<%- include('pipeline', { m }) %>
+</section>
+<section data-panel="analytics"<%- m.activeTab === 'analytics' ? '' : ' hidden' %>>
+<%- include('analytics', { m }) %>
+</section>
