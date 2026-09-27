@@ -36,7 +36,8 @@ The user wants a good film, not a questionnaire. Find the answers yourself befor
 
 - **The problem, the audience and the product's name:** read `README*`, `docs/product.md`, `docs/requirements/`, the landing page and the release notes.
 - **Getting access:** read the install instructions, `docker-compose.yml`, `package.json` scripts, the plugin or marketplace manifests and the sign-in setup.
-- **The flow worth showing:** start the product (use its own run command, for example `docker compose up -d` or `npm start`) and open it with Playwright. Click through it and take screenshots. Find the one path that takes a viewer from the problem to the result in under a minute, using realistic data. If the product cannot run locally, look for a staging URL in the docs.
+- **The flows worth showing:** start the product (use its own run command, for example `docker compose up -d` or `npm start`) and open it with Playwright. Click through it and take screenshots. For each capability worth showing, find the path that takes a viewer from the problem to the result, using realistic data. If the product cannot run locally, look for a staging URL in the docs.
+- **The size of the film:** count the capabilities a viewer has to see to understand the product, and pick the size from the table in `references/script.md`. That gives one continuous story (45–90 s), a chaptered film (2–5 min), or an overview plus deep dives. A length the user names always wins.
 - **Names to pronounce:** product names, tools and acronyms. Test anything unusual with `say -v "Zoe (Premium)" "…"`.
 
 Ask the user only what you cannot find out, and ask it together with the script in step 3.
@@ -53,16 +54,16 @@ Every film uses this structure:
 |---|---|---|
 | 1 · Problem | always | Makes clear which problem the product solves: the situation, in the words of the people who have it, shown where it happens today |
 | 2 · Access | optional | What someone has to do to get it: install, onboarding, sign-up or getting access. Skip it when there is nothing to do |
-| 3 · Product | always | The real product, recorded live, solving the problem from scene 1 |
+| 3 · Product | always | The real product, recorded live, solving the problem from scene 1. One continuous story, or one chapter per capability for bigger products |
 | 4 · Summary | always | A quick summary of what it solves, and where to get it |
 
-Show the user the whole draft in one message: each scene with its spoken lines, which voice speaks them, what is on screen and the estimated length. Then ask for approval in a single round of **at most three** questions, and only about what you could not work out yourself (for example a staging URL, or which of two flows matters more). Make your draft the default, so that "looks good" is a complete answer. If the user has said to just do it, or nobody is there to answer, go ahead with the draft and list your assumptions in the final message.
+Show the user the whole draft in one message: the size you chose and why, the target length, and each scene (or chapter) with its spoken lines, which voice speaks them, what is on screen and its estimated length. Then ask for approval in a single round of **at most three** questions, and only about what you could not work out yourself (for example a staging URL, or which of two flows matters more). Make your draft the default, so that "looks good" is a complete answer. If the user has said to just do it, or nobody is there to answer, go ahead with the draft and list your assumptions in the final message.
 
 ### 4. Build the film
 
 Read `references/engine.md` for the engine API and the look rules. In short:
 
-1. Copy `<skill-dir>/engine/` to `videos/<product-slug>/` in the product's repo, and set `"name"` in its `package.json` to the slug. Run `npm install` and `npx playwright install chromium`. All product videos live under `videos/`, so a team finds every one of them in one place.
+1. Copy `<skill-dir>/engine/` to `videos/<product-slug>/` in the product's repo, and set `"name"` in its `package.json` to the slug and `"video": { "target": [min, max] }` to the target length from the approved draft. Run `npm install` and `npx playwright install chromium`. All product videos live under `videos/`, so a team finds every one of them in one place.
 2. Write `lines.mjs`, then run `node tts.mjs` and read its output. Every line is printed with the pauses it will get and its duration.
 3. Write `flows/product.mjs` and run `node record.mjs product`, then do the same for any other live recording. The product has to be running.
 4. Write the scene files in `scenes/`. Scene 3 is mostly `clip('product', t)`.
@@ -78,7 +79,7 @@ Watch your own output before the user does. Extract stills at every scene and at
 - [ ] Typing runs at human speed: no `speed` above 1, and no text that appears all at once where someone is supposed to type it.
 - [ ] No voice overlaps another. Every line has its pauses (check the `tts.mjs` printout), and no premium voice is missing.
 - [ ] Scene 4 repeats the problem from scene 1 as solved, and says where to get the product.
-- [ ] The total length is 45–120 s, unless the user asked for something else.
+- [ ] The length is inside the target from the draft (`render.mjs` warns when it is not). The target is set as `"video": { "target": [min, max] }` in `package.json`.
 - [ ] Scene 3 and any terminal are sized so that their text is readable (look at a full-size still).
 - [ ] No window is empty or white at a scene transition. Take stills 0.5 s before and after every clip.
 
@@ -93,10 +94,10 @@ The video is the first thing a reader sees. Put it in `README.md` directly under
 ```markdown
 # <Product>
 
-[![<Product> in 90 seconds: watch the product video](videos/<slug>.jpg)](videos/<slug>.mp4)
+[![<Product> in <length>: watch the product video](videos/<slug>.jpg)](videos/<slug>.mp4)
 ```
 
-A poster image that links to the MP4 works on GitHub and GitLab alike. If the README already has a product video at that spot, replace it.
+A poster image that links to the MP4 works on GitHub and GitLab alike. If the README already has a product video at that spot, replace it. For an overview plus deep dives, the overview goes under the headline, followed directly by one line per deep dive (`- [<Capability> (1:40)](videos/<slug>-<capability>.mp4)`). Each deep dive is its own project in `videos/<slug>-<capability>/`.
 
 ### 7. Deliver
 

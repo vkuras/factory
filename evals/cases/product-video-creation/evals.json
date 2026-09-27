@@ -6,7 +6,9 @@
       "name": "taskboard-product-video",
       "prompt": "can you make a product video for our taskboard app? something we can show new people so they get what it's for. repo is right here",
       "expected_output": "A 45-120 s 1080p MP4 in videos/, narrated with premium voices, scene 1 names the lost-whiteboard/chat problem, scene 3 is the real Taskboard recorded live with real-time typing, scene 4 summarises; README links the video right under the headline.",
-      "files": ["evals/fixtures/base"],
+      "files": [
+        "evals/fixtures/base"
+      ],
       "assertions": [
         "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
         "Total length is between 45 and 120 seconds",
@@ -25,7 +27,9 @@
       "name": "release-video-with-setup",
       "prompt": "Wir brauchen fürs Release ein kurzes Video, max 60 Sekunden, das neuen Teams zeigt wie sie Taskboard zum Laufen bringen und benutzen. Mach einfach, ich schau's mir dann an.",
       "expected_output": "An English-narrated MP4 of at most 60 s in videos/ with a scene 2 that shows the real setup commands (cp .env.example .env, docker compose up -d or npm start) with real output, then the live product, then the summary. No questions asked because the user said to just do it.",
-      "files": ["evals/fixtures/base"],
+      "files": [
+        "evals/fixtures/base"
+      ],
       "assertions": [
         "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
         "Total length is at most 60 seconds (plus 2 s tolerance)",
@@ -42,13 +46,30 @@
       "name": "no-premium-voices",
       "prompt": "make a short product video of the taskboard in this repo please",
       "expected_output": "The run detects that no premium voice is installed, stops before producing audio or video, and tells the user how to install them: System Settings → Accessibility → Spoken Content → ⓘ next to System voice → Voice → search Premium → download all.",
-      "files": ["evals/fixtures/base", "evals/fixtures/no-premium-voices"],
+      "files": [
+        "evals/fixtures/base",
+        "evals/fixtures/no-premium-voices"
+      ],
       "assertions": [
         "Detects that no premium voice is installed",
         "Produces no audio file and no video file",
         "Does not fall back to a standard or Enhanced voice",
         "Tells the user the install path: Spoken Content, the i button next to System voice, Voice, search for Premium",
         "Asks the user to download all premium voices and to say when they are done"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "multi-capability-sizing",
+      "prompt": "make a product video for the factory itself, the whole thing: plugin install, coordinate, the four stages, the merge request. repo is this one",
+      "expected_output": "The draft sizes the film by capabilities: a chaptered film of 2-5 min (or an overview plus deep dives), not a 45-120 s clip. Scene 3 has one chapter per capability (groom, architect, implementer, validator, merge request), each opening with a line tied to the scene 1 problem; the target is written into package.json.",
+      "files": [],
+      "assertions": [
+        "The draft names a size (chapters or overview + deep dives) and says why, based on the capabilities counted",
+        "The target length is at least 120 s (or an overview of 2-3 min plus deep dives)",
+        "Scene 3 has one chapter per capability, and each chapter opens with a line tied to a scene 1 problem",
+        "package.json of the video project contains \"video\": { \"target\": [min, max] } matching the draft",
+        "The final length is inside the target (no length warning from render.mjs)"
       ]
     }
   ]

@@ -82,3 +82,7 @@ execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', video, '-i', wav, '-map', '0:
 const posterAt = clips.length ? clips[0].at + clips[0].dur * 0.55 : total * 0.5;
 execFileSync('ffmpeg', ['-v', 'error', '-y', '-ss', posterAt.toFixed(2), '-i', outFile, '-frames:v', '1', '-q:v', '3', PREVIEW ? 'out/preview-poster.jpg' : `out/${NAME}.jpg`]);
 console.log(`done → ${outFile} in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+// The target length comes from the approved draft ("video": { "target": [min, max] }).
+const target = JSON.parse(readFileSync('package.json', 'utf8')).video?.target;
+if (target && (total < target[0] || total > target[1]))
+  console.warn(`⚠ length ${total.toFixed(1)}s is outside the target ${target[0]}–${target[1]}s from package.json`);

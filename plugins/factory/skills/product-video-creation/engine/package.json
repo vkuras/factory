@@ -1,6 +1,7 @@
 {
   "name": "product-video",
   "private": true,
+  "video": { "target": [45, 90] },
   "type": "module",
   "scripts": {
     "tts": "node tts.mjs",
