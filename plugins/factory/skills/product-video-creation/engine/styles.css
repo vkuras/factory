@@ -1,0 +1,49 @@
+/* Base only: stage, pointer, window chrome, terminal. Everything product
+   specific (colours, type, layout of scenes 1, 2 and 4) is written per video
+   and taken from the product itself, not from this file. */
+:root {
+  --bg: #f5f5f4; --ink: #1c1c1e; --ink2: #5b5b60; --accent: #0a64d8;
+  --sys: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+  --mono: 'SF Mono', ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #000; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: var(--sys); color: var(--ink); background: var(--bg); }
+.scene { position: absolute; inset: 0; }
+.cam { position: absolute; inset: 0; transform-origin: 50% 50%; }
+
+/* pointer: the plain macOS arrow, no glow, no coloured ring */
+#pointer { position: absolute; left: 0; top: 0; z-index: 40; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+#pointer svg { transform-origin: 3px 2px; display: block; }
+#pointer svg path { fill: #000; stroke: #fff; }
+#pointer i { display: none; }
+
+/* lower third: plain text on the picture, no card, no accent bar */
+.cap { position: absolute; left: 72px; bottom: 64px; z-index: 30; max-width: 1100px; }
+.cap-in { font: 600 40px/1.2 var(--sys); letter-spacing: -.01em; color: #fff; text-shadow: 0 2px 16px rgba(0,0,0,.45); }
+.cap.dark .cap-in { color: var(--ink); text-shadow: none; }
+.cap.right { left: auto; right: 72px; text-align: right; }
+.cap.top { bottom: auto; top: 72px; }
+
+/* macOS window chrome (macWin in ui/windows.js) */
+.win .body { position: relative; height: calc(100% - 42px); overflow: hidden; }
+.win { position: absolute; border-radius: 12px; overflow: hidden; background: #fff;
+  box-shadow: 0 0 0 .5px rgba(0,0,0,.25), 0 22px 70px rgba(0,0,0,.28); }
+.bar { height: 42px; display: flex; align-items: center; gap: 12px; padding: 0 16px; position: relative; font: 600 16px/1 var(--sys);
+  background: #ebebeb; color: #4d4d4d; border-bottom: 1px solid #d1d1d1; }
+.bar .d { width: 14px; height: 14px; border-radius: 50%; }
+.bar .d:nth-child(1) { background: #ff5f57; } .bar .d:nth-child(2) { background: #febc2e; } .bar .d:nth-child(3) { background: #28c840; }
+.bar .ttl { position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; }
+
+/* Terminal.app, "Basic" profile (light) — add .dark for the "Pro"-like dark one */
+.term .body { padding: 14px 18px; font: 400 24px/1.4 var(--mono); color: #000; background: #fff; white-space: pre-wrap; height: calc(100% - 42px); overflow: hidden; }
+.term.dark .bar { background: #2b2b2b; color: #b5b5b5; border-bottom-color: #1a1a1a; }
+.term.dark .body { background: #1e1e1e; color: #e6e6e6; }
+.car { display: inline-block; width: .6em; height: 1.1em; background: currentColor; opacity: .75; vertical-align: -.18em; }
+.dim { opacity: .55; } .ok { color: #1a8d2b; } .term.dark .ok { color: #5fd068; } .err { color: #c4302b; }
+
+/* browser chrome (Safari-like, light) */
+.web .bar { background: #f3f3f3; }
+.web .url { position: absolute; left: 50%; transform: translateX(-50%); width: 46%; height: 28px; border-radius: 7px; background: #e3e3e3;
+  font: 400 15px/28px var(--sys); color: #333; text-align: center; }
+.shot { width: 100%; display: block; }

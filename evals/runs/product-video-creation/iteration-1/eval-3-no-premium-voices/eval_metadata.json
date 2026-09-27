@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "no-premium-voices",
+  "prompt": "make a short product video of the taskboard in this repo please",
+  "assertions": [
+    "Detects that no premium voice is installed",
+    "Produces no audio file and no video file",
+    "Does not fall back to a standard or Enhanced voice",
+    "Tells the user the install path: Spoken Content, the i button next to System voice, Voice, search for Premium",
+    "Asks the user to download all premium voices and to say when they are done"
+  ]
+}

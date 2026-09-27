@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --green: #2f6f4f;
+    --green-dark: #1d4632;
+    --paper: #f7f7f5;
+    --ink: #1c1c1a;
+    --muted: #b9d3c5;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background: radial-gradient(circle at 20% 10%, #3a8060 0%, var(--green) 35%, var(--green-dark) 100%);
+    font-family: -apple-system, "SF Pro Display", system-ui, sans-serif;
+    color: #fff;
+  }
+  .scene { position: absolute; inset: 0; opacity: 0; transition: opacity 600ms ease; pointer-events: none; }
+  .scene.on { opacity: 1; pointer-events: auto; }
+
+  /* Title cards */
+  .card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 200px; }
+  .logo { display: flex; align-items: center; gap: 32px; font-size: 120px; font-weight: 800; letter-spacing: -3px; }
+  .logo .box { width: 120px; height: 120px; border-radius: 26px; background: var(--paper); display: grid; place-items: center; }
+  .logo .box svg { width: 80px; height: 80px; }
+  .tagline { margin-top: 36px; font-size: 52px; font-weight: 500; color: #e6f1eb; }
+  .big { font-size: 76px; font-weight: 750; line-height: 1.15; letter-spacing: -1px; }
+  .sub { margin-top: 40px; font-size: 44px; color: var(--muted); line-height: 1.35; }
+  .pains { display: flex; gap: 48px; margin-top: 70px; }
+  .pain { width: 440px; padding: 40px 36px; border-radius: 24px; background: rgba(255,255,255,0.1); font-size: 38px; line-height: 1.3; text-align: left;
+          opacity: 0; transform: translateY(30px); transition: all 600ms ease; }
+  .pain.on { opacity: 1; transform: none; }
+  .pain b { display: block; font-size: 64px; margin-bottom: 16px; }
+  .nots { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; margin-top: 60px; max-width: 1400px; }
+  .nots span { font-size: 40px; padding: 16px 34px; border-radius: 999px; background: rgba(0,0,0,0.2); color: #d8e7df; text-decoration: line-through; text-decoration-thickness: 3px; }
+
+  /* Demo scene */
+  .caption { position: absolute; left: 110px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; }
+  .step { font-size: 30px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 22px; }
+  .caption h2 { margin: 0; font-size: 68px; line-height: 1.1; font-weight: 800; letter-spacing: -1px; }
+  .caption p { margin: 30px 0 0; font-size: 38px; line-height: 1.4; color: #e3eee8; }
+  .caption .fade { transition: opacity 350ms ease; }
+
+  .window { position: absolute; right: 110px; top: 130px; width: 1040px; height: 820px; border-radius: 18px; overflow: hidden;
+            background: var(--paper); box-shadow: 0 40px 100px rgba(0,0,0,0.45); }
+  .chrome { height: 56px; background: #e7e7e2; display: flex; align-items: center; gap: 10px; padding: 0 22px; }
+  .chrome i { width: 16px; height: 16px; border-radius: 50%; background: #d0d0c8; display: block; }
+  .chrome .url { margin-left: 24px; flex: 1; height: 34px; border-radius: 8px; background: #fff; color: #6b6b66; font-size: 20px; display: flex; align-items: center; padding: 0 16px; }
+  .window iframe { border: 0; width: 693px; height: 509px; transform: scale(1.5); transform-origin: 0 0; display: block; }
+
+  /* Two devices scene */
+  .devices .laptop { left: 600px; right: auto; top: 200px; width: 800px; height: 640px; }
+  .devices .laptop iframe { width: 667px; height: 487px; transform: scale(1.2); }
+  .phone { position: absolute; right: 80px; top: 110px; width: 400px; height: 860px; border-radius: 60px; background: #111; padding: 16px;
+           box-shadow: 0 40px 100px rgba(0,0,0,0.5); }
+  .phone iframe { border: 0; width: 368px; height: 828px; border-radius: 44px; background: var(--paper); display: block; }
+  .devices .caption { left: 90px; width: 460px; }
+  .devices .caption h2 { font-size: 58px; }
+  .devices .caption p { font-size: 34px; }
+
+  /* Fake cursor */
+  #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; z-index: 50; pointer-events: none; opacity: 0;
+            transition: transform 700ms cubic-bezier(.4,0,.2,1), opacity 300ms ease; }
+  #cursor.on { opacity: 1; }
+  #cursor .dot { position: absolute; left: -6px; top: -6px; width: 46px; height: 46px; border-radius: 50%; background: rgba(47,111,79,0.35); transform: scale(0); transition: transform 200ms ease; }
+  #cursor.click .dot { transform: scale(1); }
+</style>
+</head>
+<body>
+  <!-- 1 Title -->
+  <section class="scene card" id="s-title">
+    <div class="logo">
+      <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#2f6f4f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
+      Taskboard
+    </div>
+    <div class="tagline">The shared to-do list for our team</div>
+  </section>
+
+  <!-- 2 Problem -->
+  <section class="scene card" id="s-problem">
+    <div class="big">Things get shouted across the room.<br>Then they get lost.</div>
+    <div class="pains">
+      <div class="pain"><b>🧽</b>The whiteboard gets wiped.</div>
+      <div class="pain"><b>💬</b>Chat messages scroll away.</div>
+      <div class="pain"><b>🤷</b>Nobody knows what's already done.</div>
+    </div>
+  </section>
+
+  <!-- 3 Answer -->
+  <section class="scene card" id="s-answer">
+    <div class="big">Taskboard is one list<br>the whole room shares.</div>
+    <div class="sub">Write it down. Tick it off. That's it.</div>
+  </section>
+
+  <!-- 4 Demo -->
+  <section class="scene" id="s-demo">
+    <div class="caption">
+      <div class="fade" id="demo-text">
+        <div class="step" id="demo-step"></div>
+        <h2 id="demo-title"></h2>
+        <p id="demo-body"></p>
+      </div>
+    </div>
+    <div class="window">
+      <div class="chrome"><i></i><i></i><i></i><div class="url">taskboard · office</div></div>
+      <iframe id="app" title="Taskboard"></iframe>
+    </div>
+  </section>
+
+  <!-- 5 Devices -->
+  <section class="scene devices" id="s-devices">
+    <div class="caption">
+      <div class="step">One list for everyone</div>
+      <h2>Same list on every screen.</h2>
+      <p>Your phone while standing, your laptop while sitting. No account, no login &mdash; just open it.</p>
+    </div>
+    <div class="window laptop">
+      <div class="chrome"><i></i><i></i><i></i><div class="url">taskboard · office</div></div>
+      <iframe id="laptop" title="Taskboard on a laptop"></iframe>
+    </div>
+    <div class="phone"><iframe id="phone" title="Taskboard on a phone"></iframe></div>
+  </section>
+
+  <!-- 6 Not -->
+  <section class="scene card" id="s-not">
+    <div class="big">Deliberately simple.</div>
+    <div class="nots"><span>projects</span><span>sprints</span><span>accounts</span><span>roles</span><span>due dates</span><span>notifications</span></div>
+    <div class="sub">If it came up during the day and someone has to do it,<br>it goes on the Taskboard.</div>
+  </section>
+
+  <!-- 7 Outro -->
+  <section class="scene card" id="s-outro">
+    <div class="logo">
+      <div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#2f6f4f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
+      Taskboard
+    </div>
+    <div class="tagline">Write it down. Tick it off.</div>
+    <div class="sub" id="outro-url"></div>
+  </section>
+
+  <div id="cursor">
+    <div class="dot"></div>
+    <svg width="34" height="34" viewBox="0 0 24 24"><path d="M3 2l7.5 19 2.6-7.9L21 10.5z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  </div>
+
+<script>
+  window.show = (id) => {
+    document.querySelectorAll('.scene').forEach((s) => s.classList.toggle('on', s.id === id));
+  };
+  window.caption = async (step, title, body) => {
+    const box = document.getElementById('demo-text');
+    box.style.opacity = 0;
+    await new Promise((r) => setTimeout(r, 350));
+    document.getElementById('demo-step').textContent = step;
+    document.getElementById('demo-title').textContent = title;
+    document.getElementById('demo-body').textContent = body;
+    box.style.opacity = 1;
+  };
+  window.cursorTo = (x, y) => {
+    const c = document.getElementById('cursor');
+    c.classList.add('on');
+    c.style.transform = `translate(${x}px, ${y}px)`;
+  };
+  window.cursorClick = (on) => document.getElementById('cursor').classList.toggle('click', on);
+  window.cursorHide = () => document.getElementById('cursor').classList.remove('on');
+</script>
+</body>
+</html>

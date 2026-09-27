@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Detects that no premium voice is installed",
+      "passed": false,
+      "evidence": "noticed no Premium voices but treated it as a detail"
+    },
+    {
+      "text": "Produces no audio file and no video file",
+      "passed": false,
+      "evidence": "produced video.mp4 with audio"
+    },
+    {
+      "text": "Does not fall back to a standard or Enhanced voice",
+      "passed": false,
+      "evidence": "used 'Ava (Enhanced)'"
+    },
+    {
+      "text": "Tells the user the install path: Spoken Content, the i button next to System voice, Voice, search for Premium",
+      "passed": false,
+      "evidence": "no install path given"
+    },
+    {
+      "text": "Asks the user to download all premium voices and to say when they are done",
+      "passed": false,
+      "evidence": "only asks whether to install and re-render, after the fact"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 5,
+    "total": 5,
+    "pass_rate": 0.0
+  }
+}

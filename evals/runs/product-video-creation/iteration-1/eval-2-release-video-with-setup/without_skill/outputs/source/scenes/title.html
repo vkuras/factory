@@ -1,0 +1,11 @@
+<!doctype html><html><head><link rel="stylesheet" href="common.css"><style>
+h1{font-size:88px;margin:0}
+p{font-size:34px;color:#6b6b66;margin:18px 0 0}
+.tag{margin-top:40px;font-size:24px;padding:10px 22px;border:2px solid #2f6f4f;border-radius:30px;color:#2f6f4f}
+</style></head><body><div class="center">
+<h1 class="fade" id="a">✓ <span class="brand">Taskboard</span></h1>
+<p class="fade" id="b">The shared task list for your team</p>
+<div class="tag fade" id="c">Set up and use it in under a minute</div>
+</div><script>
+function start(){[['a',100],['b',700],['c',1300]].forEach(([id,t])=>setTimeout(()=>document.getElementById(id).classList.add('show'),t))}
+</script></body></html>

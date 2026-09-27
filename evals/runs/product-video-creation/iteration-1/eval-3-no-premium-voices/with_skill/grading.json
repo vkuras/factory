@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Detects that no premium voice is installed",
+      "passed": true,
+      "evidence": "check_voices.sh: 'English premium voices installed: 0', exit 1"
+    },
+    {
+      "text": "Produces no audio file and no video file",
+      "passed": true,
+      "evidence": "no audio/video produced"
+    },
+    {
+      "text": "Does not fall back to a standard or Enhanced voice",
+      "passed": true,
+      "evidence": "stopped, no fallback"
+    },
+    {
+      "text": "Tells the user the install path: Spoken Content, the i button next to System voice, Voice, search for Premium",
+      "passed": true,
+      "evidence": "final_message.md quotes the Spoken Content \u2192 \u24d8 \u2192 Voice \u2192 Premium path"
+    },
+    {
+      "text": "Asks the user to download all premium voices and to say when they are done",
+      "passed": true,
+      "evidence": "asks to download all English premium voices and report back"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "skill_name": "product-video-creation",
+  "evals": [
+    {
+      "id": 1,
+      "name": "taskboard-product-video",
+      "prompt": "can you make a product video for our taskboard app? something we can show new people so they get what it's for. repo is right here",
+      "expected_output": "A 45-120 s 1080p MP4 in videos/, narrated with premium voices, scene 1 names the lost-whiteboard/chat problem, scene 3 is the real Taskboard recorded live with real-time typing, scene 4 summarises; README links the video right under the headline.",
+      "files": ["evals/fixtures/base"],
+      "assertions": [
+        "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+        "Total length is between 45 and 120 seconds",
+        "Every spoken line uses a '(Premium)' voice (lines.mjs / TTS invocations)",
+        "Spoken text contains pauses at sentence and list breaks ([[slnc]] marks or equivalent) in the TTS input",
+        "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
+        "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
+        "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
+        "Scene 4 summarises what the product solves",
+        "README.md links the video directly under the first headline, before any other text",
+        "Asked the user no more than one round of at most three questions"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "release-video-with-setup",
+      "prompt": "Wir brauchen fürs Release ein kurzes Video, max 60 Sekunden, das neuen Teams zeigt wie sie Taskboard zum Laufen bringen und benutzen. Mach einfach, ich schau's mir dann an.",
+      "expected_output": "An English-narrated MP4 of at most 60 s in videos/ with a scene 2 that shows the real setup commands (cp .env.example .env, docker compose up -d or npm start) with real output, then the live product, then the summary. No questions asked because the user said to just do it.",
+      "files": ["evals/fixtures/base"],
+      "assertions": [
+        "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+        "Total length is at most 60 seconds (plus 2 s tolerance)",
+        "Narration is in English and uses only '(Premium)' voices",
+        "The video has a setup scene that shows the real commands from the Taskboard README (cp .env.example .env and docker compose up -d, or npm start)",
+        "Scene 3 is a live recording of the running Taskboard app, not an HTML mockup",
+        "Asked the user no questions (the user said to just do it) and lists assumptions in the final message",
+        "README.md links the video directly under the first headline",
+        "The video does not use the AI look: no gradient backgrounds, glow, emoji or kinetic word-by-word captions in the scene CSS/HTML"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "no-premium-voices",
+      "prompt": "make a short product video of the taskboard in this repo please",
+      "expected_output": "The run detects that no premium voice is installed, stops before producing audio or video, and tells the user how to install them: System Settings → Accessibility → Spoken Content → ⓘ next to System voice → Voice → search Premium → download all.",
+      "files": ["evals/fixtures/base", "evals/fixtures/no-premium-voices"],
+      "assertions": [
+        "Detects that no premium voice is installed",
+        "Produces no audio file and no video file",
+        "Does not fall back to a standard or Enhanced voice",
+        "Tells the user the install path: Spoken Content, the i button next to System voice, Voice, search for Premium",
+        "Asks the user to download all premium voices and to say when they are done"
+      ]
+    }
+  ]
+}

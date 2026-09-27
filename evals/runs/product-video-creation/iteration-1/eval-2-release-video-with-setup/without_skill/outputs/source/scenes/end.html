@@ -1,0 +1,12 @@
+<!doctype html><html><head><link rel="stylesheet" href="common.css"><style>
+h1{font-size:64px;margin:0 0 30px}
+.cmds{font:26px/1.7 ui-monospace,Menlo,monospace;background:#1e1f1c;color:#e8e8e3;padding:20px 36px;border-radius:12px;text-align:left}
+.p{color:#7fd19b}.h{color:#febc2e}
+p{font-size:24px;color:#6b6b66;margin-top:30px}
+</style></head><body><div class="center">
+<h1 class="fade" id="a">✓ That's <span class="brand">Taskboard</span></h1>
+<div class="cmds fade" id="b"><span class="p">$</span> cp .env.example .env<br><span class="p">$</span> docker compose up -d<br><span class="p">→</span> <span class="h">http://localhost:8080</span></div>
+<p class="fade" id="c">One list. No accounts. Everyone sees the same tasks.</p>
+</div><script>
+function start(){[['a',100],['b',600],['c',1100]].forEach(([id,t])=>setTimeout(()=>document.getElementById(id).classList.add('show'),t))}
+</script></body></html>

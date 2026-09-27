@@ -1,0 +1,60 @@
+{
+  "expectations": [
+    {
+      "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+      "passed": true,
+      "evidence": "repo/videos/taskboard.mp4 1920x1080 with AAC audio"
+    },
+    {
+      "text": "Total length is between 45 and 120 seconds",
+      "passed": true,
+      "evidence": "72.3 s"
+    },
+    {
+      "text": "Every spoken line uses a '(Premium)' voice (lines.mjs / TTS invocations)",
+      "passed": true,
+      "evidence": "lines.mjs: Ava, Lee, Serena, Zoe \u2014 all run through tts.mjs which requires '(Premium)'"
+    },
+    {
+      "text": "Spoken text contains pauses at sentence and list breaks ([[slnc]] marks or equivalent) in the TTS input",
+      "passed": true,
+      "evidence": "tts.mjs auto-inserts [[slnc]] at sentence/comma breaks; p5 has its own say"
+    },
+    {
+      "text": "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
+      "passed": true,
+      "evidence": "p1-p3 quotes: whiteboard wiped, chat scrolled away, nobody knows what's done"
+    },
+    {
+      "text": "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
+      "passed": true,
+      "evidence": "flows/product.mjs + phone.mjs recorded live via record.mjs against localhost:8101"
+    },
+    {
+      "text": "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
+      "passed": true,
+      "evidence": "typing via p.type in flows, no speed factor, no .fill"
+    },
+    {
+      "text": "Scene 4 summarises what the product solves",
+      "passed": true,
+      "evidence": "s4_loop repeats the three problems as solved"
+    },
+    {
+      "text": "README.md links the video directly under the first headline, before any other text",
+      "passed": true,
+      "evidence": "README line 3: poster link right under '# Taskboard'"
+    },
+    {
+      "text": "Asked the user no more than one round of at most three questions",
+      "passed": true,
+      "evidence": "questions.md: one draft + 1-2 questions, no interview"
+    }
+  ],
+  "summary": {
+    "passed": 10,
+    "failed": 0,
+    "total": 10,
+    "pass_rate": 1.0
+  }
+}

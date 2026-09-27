@@ -1,0 +1,17 @@
+{
+  "eval_id": 1,
+  "eval_name": "taskboard-product-video",
+  "prompt": "can you make a product video for our taskboard app? something we can show new people so they get what it's for. repo is right here",
+  "assertions": [
+    "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+    "Total length is between 45 and 120 seconds",
+    "Every spoken line uses a '(Premium)' voice (lines.mjs / TTS invocations)",
+    "Spoken text contains pauses at sentence and list breaks ([[slnc]] marks or equivalent) in the TTS input",
+    "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
+    "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
+    "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
+    "Scene 4 summarises what the product solves",
+    "README.md links the video directly under the first headline, before any other text",
+    "Asked the user no more than one round of at most three questions"
+  ]
+}
