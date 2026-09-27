@@ -1,0 +1,14 @@
+{
+  "name": "product-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tts": "node tts.mjs",
+    "preview": "node render.mjs --preview",
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "gsap": "^3.13.0",
+    "playwright": "^1.55.0"
+  }
+}

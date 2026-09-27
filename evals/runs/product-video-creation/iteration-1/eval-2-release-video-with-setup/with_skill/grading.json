@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+      "passed": true,
+      "evidence": "repo/videos/taskboard.mp4 1920x1080 with audio"
+    },
+    {
+      "text": "Total length is at most 60 seconds (plus 2 s tolerance)",
+      "passed": true,
+      "evidence": "53.4 s"
+    },
+    {
+      "text": "Narration is in English and uses only '(Premium)' voices",
+      "passed": true,
+      "evidence": "English narration; Ava, Lee, Zoe premium"
+    },
+    {
+      "text": "The video has a setup scene that shows the real commands from the Taskboard README (cp .env.example .env and docker compose up -d, or npm start)",
+      "passed": true,
+      "evidence": "scene 2 types 'cp .env.example .env' and 'docker compose up -d' with real compose output"
+    },
+    {
+      "text": "Scene 3 is a live recording of the running Taskboard app, not an HTML mockup",
+      "passed": true,
+      "evidence": "flows/product.mjs live recording on :8103"
+    },
+    {
+      "text": "Asked the user no questions (the user said to just do it) and lists assumptions in the final message",
+      "passed": true,
+      "evidence": "questions.md written but run proceeded; final message lists assumptions"
+    },
+    {
+      "text": "README.md links the video directly under the first headline",
+      "passed": true,
+      "evidence": "README poster link under headline"
+    },
+    {
+      "text": "The video does not use the AI look: no gradient backgrounds, glow, emoji or kinetic word-by-word captions in the scene CSS/HTML",
+      "passed": true,
+      "evidence": "styles: neutral bg, system font, no gradients/emoji; only text-shadow on unused caption class"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,5 @@
+html,body{margin:0;height:100%;background:#f7f7f5;color:#1c1c1a;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.center{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.brand{color:#2f6f4f}
+.fade{opacity:0;transition:opacity .6s}
+.show{opacity:1}

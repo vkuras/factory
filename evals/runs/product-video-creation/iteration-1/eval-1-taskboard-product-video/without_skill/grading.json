@@ -1,0 +1,60 @@
+{
+  "expectations": [
+    {
+      "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+      "passed": false,
+      "evidence": "video.mp4 only in outputs/, nothing under repo/videos/"
+    },
+    {
+      "text": "Total length is between 45 and 120 seconds",
+      "passed": true,
+      "evidence": "75.0 s"
+    },
+    {
+      "text": "Every spoken line uses a '(Premium)' voice (lines.mjs / TTS invocations)",
+      "passed": false,
+      "evidence": "no voiceover at all (audio track silent, -91 dB)"
+    },
+    {
+      "text": "Spoken text contains pauses at sentence and list breaks ([[slnc]] marks or equivalent) in the TTS input",
+      "passed": false,
+      "evidence": "no speech"
+    },
+    {
+      "text": "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
+      "passed": true,
+      "evidence": "'Things get shouted across the room. Then they get lost.' card before product"
+    },
+    {
+      "text": "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
+      "passed": true,
+      "evidence": "real app recorded with Playwright on port 8102"
+    },
+    {
+      "text": "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
+      "passed": false,
+      "evidence": "notes: clicks triggered on elements directly; typing not verified as human real-time"
+    },
+    {
+      "text": "Scene 4 summarises what the product solves",
+      "passed": true,
+      "evidence": "'Deliberately simple' end card"
+    },
+    {
+      "text": "README.md links the video directly under the first headline, before any other text",
+      "passed": false,
+      "evidence": "README unchanged"
+    },
+    {
+      "text": "Asked the user no more than one round of at most three questions",
+      "passed": true,
+      "evidence": "questions logged, defaults used"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 5,
+    "total": 10,
+    "pass_rate": 0.5
+  }
+}

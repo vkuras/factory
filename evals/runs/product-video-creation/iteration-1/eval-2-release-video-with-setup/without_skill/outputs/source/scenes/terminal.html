@@ -1,0 +1,47 @@
+<!doctype html><html><head><link rel="stylesheet" href="common.css"><style>
+body{display:flex;align-items:center;justify-content:center;gap:36px;padding:0 44px;box-sizing:border-box}
+.side{width:330px}
+.side h2{font-size:40px;margin:0 0 20px}
+.step{font-size:24px;margin:16px 0;opacity:.3;transition:opacity .4s;line-height:1.3}
+.step.on{opacity:1}
+.step b{display:inline-block;width:36px;height:36px;line-height:36px;text-align:center;border-radius:50%;background:#2f6f4f;color:#fff;margin-right:10px;font-size:20px}
+.note{font-size:19px;color:#6b6b66;margin-top:26px;line-height:1.4}
+.term{flex:1;height:520px;background:#1e1f1c;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.25);overflow:hidden}
+.bar{height:34px;background:#34352f;display:flex;align-items:center;padding-left:14px;gap:8px}
+.bar i{width:12px;height:12px;border-radius:50%;background:#ff5f57}.bar i:nth-child(2){background:#febc2e}.bar i:nth-child(3){background:#28c840}
+.bar span{color:#aaa;font-size:15px;margin-left:12px}
+pre{margin:0;padding:18px 22px;color:#e8e8e3;font:20px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap}
+.p{color:#7fd19b}.c{color:#fff}.o{color:#b9b9b0}.ok{color:#7fd19b}.h{color:#febc2e}
+</style></head><body>
+<div class="side"><h2>1 · Set it up</h2>
+<div class="step" id="s1"><b>1</b>Copy the config</div>
+<div class="step" id="s2"><b>2</b>Start it with one command</div>
+<div class="step" id="s3"><b>3</b>Check it is healthy</div>
+<div class="note">Needs only Docker.<br>Change the port with <code>PORT</code> in <code>.env</code> (default 8080).</div>
+</div>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>~/taskboard</span></div><pre id="out"></pre></div>
+<script>
+const out=document.getElementById('out');
+const script=[
+ ['step','s1'],['cmd','cp .env.example .env'],['wait',700],
+ ['step','s2'],['cmd','docker compose up -d'],['wait',400],
+ ['line','<span class="o"> Image taskboard-app  Built</span>',350],
+ ['line','<span class="o"> Network taskboard_default  Created</span>',250],
+ ['line','<span class="o"> Volume taskboard_taskdata  Created</span>',250],
+ ['line','<span class="o"> Container taskboard-app-1  </span><span class="ok">Started</span>',900],
+ ['step','s3'],['cmd','docker compose ps'],['wait',300],
+ ['line','<span class="o">NAME             STATUS            PORTS</span>',100],
+ ['line','taskboard-app-1  Up <span class="ok">(healthy)</span>      <span class="h">8080</span>->8080',900],
+ ['line','',0],
+ ['line','<span class="o"># now open </span><span class="h">http://localhost:8080</span>',0],
+];
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+async function start(){
+ for(const s of script){
+  if(s[0]==='step'){document.querySelectorAll('.step').forEach(e=>e.classList.remove('on'));document.getElementById(s[1]).classList.add('on')}
+  else if(s[0]==='wait'){await sleep(s[1])}
+  else if(s[0]==='cmd'){out.innerHTML+='<span class="p">$ </span>';for(const ch of s[1]){out.innerHTML+=ch;await sleep(45)}await sleep(250);out.innerHTML+='\n'}
+  else if(s[0]==='line'){out.innerHTML+=s[1]+'\n';await sleep(s[2])}
+ }
+}
+</script></body></html>

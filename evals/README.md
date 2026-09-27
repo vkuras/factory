@@ -17,7 +17,7 @@ evals/
 ```
 
 `<skill>` is the skill's directory name under `plugins/factory/skills/`: `groom`, `architect`,
-`implementer`, `validator`, `coordinate`.
+`implementer`, `validator`, `coordinate`, `product-video-creation`.
 
 ## Running an eval
 

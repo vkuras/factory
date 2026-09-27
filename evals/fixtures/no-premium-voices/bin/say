@@ -1,0 +1,12 @@
+#!/bin/sh
+# Simulates a Mac without premium voices: the voice list shows only standard
+# voices, and asking for a premium voice fails like it does on such a Mac.
+case " $* " in
+  *" -v ? "*|*" -v '?' "*|*"-v ?"*)
+    /usr/bin/say -v '?' | grep -v '(Premium)'
+    exit 0 ;;
+  *"(Premium)"*)
+    echo "Voice \`$(printf '%s' "$*" | sed -E 's/.*-v ([^-]*\(Premium\)).*/\1/')' not found." >&2
+    exit 1 ;;
+esac
+exec /usr/bin/say "$@"
