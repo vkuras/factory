@@ -62,12 +62,12 @@
       "id": 4,
       "name": "multi-capability-sizing",
       "prompt": "make a product video for the factory itself, the whole thing: plugin install, coordinate, the four stages, the merge request. repo is this one",
-      "expected_output": "The draft sizes the film by capabilities: a chaptered film of 2-5 min (or an overview plus deep dives), not a 45-120 s clip. Scene 3 has one chapter per capability (groom, architect, implementer, validator, merge request), each opening with a line tied to the scene 1 problem; the target is written into package.json.",
+      "expected_output": "The draft sizes the film by capabilities: a chaptered film of 2-5 min (or an overview plus deep dives), not a 45-120 s clip. Scene 3 has one chapter per capability (groom, architect, implementer, validator, merge request); the target is written into package.json.",
       "files": [],
       "assertions": [
         "The draft names a size (chapters or overview + deep dives) and says why, based on the capabilities counted",
         "The target length is at least 120 s (or an overview of 2-3 min plus deep dives)",
-        "Scene 3 has one chapter per capability, and each chapter opens with a line tied to a scene 1 problem",
+        "Scene 3 has one chapter per capability",
         "package.json of the video project contains \"video\": { \"target\": [min, max] } matching the draft",
         "The final length is inside the target (no length warning from render.mjs)"
       ]

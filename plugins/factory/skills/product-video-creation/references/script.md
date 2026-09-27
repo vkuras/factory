@@ -39,7 +39,7 @@ The length follows from what the viewer has to see to understand the product, no
 | More than about 5 min of material | an overview film plus a short deep dive per capability | overview 2–3 min, each deep dive 1–2 min |
 
 - **Count capabilities, not features.** A capability is something the viewer would describe as a separate job ("it grooms requirements", "it validates the build"). Buttons and settings are not capabilities.
-- **Chapters:** open each chapter with one line that ties it to the problem from scene 1, then show it. A small, plain chapter title on screen (the capability's name in the product's own words) helps viewers who skip around. The scene 1 problems are resolved one by one across the chapters, and scene 4 collects them.
+- **Chapters:** a small, plain chapter title on screen (the capability's name in the product's own words) helps viewers who skip around. The scene 1 problems are resolved one by one across the chapters, and scene 4 collects them.
 - **Overview plus deep dives:** the overview is a complete four-scene film that shows each capability briefly (15–30 s each). Each deep dive is a complete short film of its own (problem, product, summary), and it names the overview in its summary.
 - **The user decides:** a length the user names ("max 60 seconds") always wins. Cut capabilities rather than rush them, and say in the draft which ones you left out.
 - Write the target into the project's `package.json` as `"video": { "target": [min, max] }` in seconds. `render.mjs` warns when the film falls outside it.
@@ -65,7 +65,7 @@ Why this size: <capabilities counted>
    …
 3 · Product (~35 s), recorded live at <url>
    <step>: <what happens>              Zoe: "…"
-   (chapters: 3a <capability> (~40 s) … 3b … each with its opening line)
+   (chapters: 3a <capability> (~40 s) … 3b …)
 4 · Summary (~10 s)
    …
 
