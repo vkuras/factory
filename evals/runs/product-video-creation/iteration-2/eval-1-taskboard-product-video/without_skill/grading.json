@@ -1,0 +1,65 @@
+{
+ "expectations": [
+  {
+   "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+   "passed": false,
+   "evidence": "video.mp4 only in outputs/; repo git status clean, no videos/"
+  },
+  {
+   "text": "Total length is between 45 and 120 seconds",
+   "passed": true,
+   "evidence": "78.6 s"
+  },
+  {
+   "text": "Every spoken line is rendered with Kokoro, using a voice from the cast list in voices.mjs (no macOS say voices)",
+   "passed": false,
+   "evidence": "macOS say with 'Ava (Premium)' at rate 172 (tools/script.json, narrate.mjs); no Kokoro"
+  },
+  {
+   "text": "No pauses are cut into the middle of sentences: lines carry at most a few deliberate [[slnc]] beats",
+   "passed": true,
+   "evidence": "each say call is one whole sentence; pauses of 0.25-0.7 s only between sentences"
+  },
+  {
+   "text": "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
+   "passed": true,
+   "evidence": "hook: 'Things we shout across the room get lost.' 'The whiteboard gets wiped, and the chat scrolls away.'"
+  },
+  {
+   "text": "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
+   "passed": true,
+   "evidence": "the real app from the repo on port 8112 in Chromium (laptop and phone iframes), actions scripted in its DOM and captured frame by frame"
+  },
+  {
+   "text": "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
+   "passed": true,
+   "evidence": "typeInto() sets one character every 62-68 ms (about 190 wpm: fast, but character by character); no page.fill"
+  },
+  {
+   "text": "Scene 4 summarises what the product solves",
+   "passed": true,
+   "evidence": "'Taskboard is simple on purpose. No due dates, no assignees, no notifications. Just the list.' then 'So, write it down, and tick it off.' (same standard as iteration 1)"
+  },
+  {
+   "text": "README.md links the video directly under the first headline, before any other text",
+   "passed": false,
+   "evidence": "README unchanged (git status clean)"
+  },
+  {
+   "text": "Asked the user no more than one round of at most three questions",
+   "passed": false,
+   "evidence": "questions.md: one round of 7 questions (0-6), each with a default"
+  },
+  {
+   "text": "Speakers who follow each other in scene 1 differ in gender or locale, and none of them uses the narrator's voice",
+   "passed": false,
+   "evidence": "scene 1 is spoken by the narrator voice (Ava) alone; no separate speakers"
+  }
+ ],
+ "summary": {
+  "passed": 6,
+  "failed": 5,
+  "total": 11,
+  "pass_rate": 0.545
+ }
+}

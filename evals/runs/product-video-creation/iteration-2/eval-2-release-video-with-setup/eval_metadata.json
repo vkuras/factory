@@ -1,0 +1,15 @@
+{
+  "eval_id": 2,
+  "eval_name": "release-video-with-setup",
+  "prompt": "Wir brauchen fürs Release ein kurzes Video, max 60 Sekunden, das neuen Teams zeigt wie sie Taskboard zum Laufen bringen und benutzen. Mach einfach, ich schau's mir dann an.",
+  "assertions": [
+    "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+    "Total length is at most 60 seconds (plus 2 s tolerance)",
+    "Narration is in English and uses only Kokoro voices from the cast list",
+    "The video has a setup scene that shows the real commands from the Taskboard README (cp .env.example .env and docker compose up -d, or npm start)",
+    "Scene 3 is a live recording of the running Taskboard app, not an HTML mockup",
+    "Asked the user no questions (the user said to just do it) and lists assumptions in the final message",
+    "README.md links the video directly under the first headline",
+    "The video does not use the AI look: no gradient backgrounds, glow, emoji or kinetic word-by-word captions in the scene CSS/HTML"
+  ]
+}

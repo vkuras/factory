@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Taskboard video stage</title>
+<style>
+  :root {
+    --green: #2f6f4f;
+    --green-soft: #e3efe7;
+    --ink: #1c1c1a;
+    --muted: #55554f;
+    --danger: #a12a2a;
+    --amber: #c98a12;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #e9efea; }
+  body {
+    font-family: -apple-system, system-ui, "Helvetica Neue", sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  #bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(1100px 760px at 72% 46%, rgba(255,255,255,.75) 0%, rgba(255,255,255,0) 70%),
+      linear-gradient(155deg, #eff4f0 0%, #dce7df 100%);
+  }
+  .abs { position: absolute; left: 0; top: 0; }
+
+  /* ---------- text panel ---------- */
+  .group { position: absolute; left: 96px; top: 540px; width: 548px; transform: translateY(-50%); }
+  .group.center { left: 0; width: 1920px; text-align: center; }
+  .it { opacity: 0; will-change: opacity; }
+  .accent { width: 64px; height: 8px; border-radius: 4px; background: var(--green); margin-bottom: 30px; }
+  .headline { font-size: 72px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.03; margin: 0; }
+  .sub { font-size: 34px; line-height: 1.3; color: var(--muted); margin: 26px 0 0; }
+  .sub strong { color: var(--ink); font-weight: 650; }
+  .sub.warn { color: var(--danger); font-weight: 650; }
+  .chips { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 22px 12px 16px; border-radius: 999px;
+    background: #fff; color: var(--green); font-size: 27px; font-weight: 650;
+    box-shadow: 0 6px 18px -8px rgba(20,50,35,.35), 0 0 0 1px rgba(47,111,79,.14);
+  }
+  .chip svg { width: 26px; height: 26px; }
+  .wordmark { display: flex; align-items: center; gap: 22px; }
+  .wordmark .name { font-size: 92px; font-weight: 780; letter-spacing: -0.03em; }
+  .logo { width: 84px; height: 84px; flex: none; }
+
+  /* ---------- hook: whiteboard + chat ---------- */
+  #board { width: 610px; height: 430px; }
+  .board-frame {
+    position: absolute; inset: 0; border-radius: 10px; background: #fdfdfb;
+    border: 12px solid #c7cbd1;
+    box-shadow: 0 30px 60px -24px rgba(20,40,30,.4), inset 0 0 40px rgba(0,0,0,.04);
+  }
+  .board-tray { position: absolute; left: 60px; right: 60px; bottom: -22px; height: 16px; border-radius: 4px; background: #aeb3ba; }
+  .scribbles { position: absolute; inset: 12px; overflow: hidden; }
+  .scribbles .s { position: absolute; font-family: "Marker Felt", "Chalkboard SE", cursive; font-size: 46px; white-space: nowrap; }
+  .eraser { position: absolute; top: 0; left: 0; width: 150px; height: 70px; border-radius: 10px; background: linear-gradient(#2d2f33 0 55%, #e8e3d6 55% 100%); box-shadow: 0 8px 16px -6px rgba(0,0,0,.45); }
+  .smudge { position: absolute; inset: 12px; background: linear-gradient(90deg, rgba(160,165,175,.10), rgba(160,165,175,.04)); }
+  #chat { width: 420px; height: 580px; border-radius: 22px; background: #fff; overflow: hidden;
+          box-shadow: 0 30px 60px -24px rgba(20,40,30,.4), 0 0 0 1px rgba(0,0,0,.06); }
+  .chat-head { height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 22px; border-bottom: 1px solid #ecece8; font-size: 24px; font-weight: 700; color: #33332f; }
+  .chat-head .hash { color: #9a9a93; font-weight: 500; }
+  .chat-body { position: absolute; top: 64px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+  .chat-col { position: absolute; left: 0; right: 0; top: 0; padding: 0 20px; }
+  .msg { display: flex; gap: 12px; padding: 12px 0; }
+  .avatar { width: 40px; height: 40px; border-radius: 10px; flex: none; color: #fff; font-weight: 700; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .msg .who { font-size: 18px; font-weight: 700; color: #33332f; }
+  .msg .txt { font-size: 22px; color: #33332f; line-height: 1.3; margin-top: 2px; }
+
+  /* ---------- devices ---------- */
+  .device { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .window {
+    width: 1100px; border-radius: 14px; overflow: hidden; background: #f7f7f5;
+    box-shadow: 0 50px 90px -30px rgba(15,40,28,.45), 0 16px 34px -14px rgba(15,40,28,.3), 0 0 0 1px rgba(0,0,0,.09);
+  }
+  .chrome { position: relative; height: 52px; background: linear-gradient(#f3f3f1, #e9e9e6); border-bottom: 1px solid #d8d8d2; }
+  .lights { position: absolute; left: 18px; top: 19px; display: flex; gap: 8px; }
+  .lights i { width: 13px; height: 13px; border-radius: 50%; display: block; }
+  .lights i:nth-child(1) { background: #ff5f57; } .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+  .navbtns { position: absolute; left: 100px; top: 13px; display: flex; gap: 14px; color: #8b8b85; }
+  .navbtns svg { width: 24px; height: 24px; }
+  .address {
+    position: absolute; left: 320px; width: 460px; top: 10px; height: 32px; border-radius: 8px;
+    background: #fff; border: 1px solid #deded8; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: #45453f; gap: 8px;
+  }
+  .address .fav { width: 16px; height: 16px; }
+  #reload { position: absolute; right: 8px; top: 5px; width: 20px; height: 20px; color: #6d6d67; }
+  #laptopFrame { display: block; border: 0; width: 1100px; height: 760px; background: #f7f7f5; }
+
+  .phone-body {
+    width: 430px; height: 890px; border-radius: 66px; background: #1b1c1e; padding: 20px;
+    box-shadow: 0 50px 90px -30px rgba(15,40,28,.5), 0 16px 34px -14px rgba(15,40,28,.35), inset 0 0 0 2px #3a3b3e;
+  }
+  .phone-screen { position: relative; width: 390px; height: 850px; border-radius: 48px; overflow: hidden; background: #f7f7f5; }
+  .statusbar { position: relative; height: 53px; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0 44px; font-size: 17px; font-weight: 650; color: #111; }
+  .island { position: absolute; left: 50%; top: 11px; width: 124px; height: 36px; margin-left: -62px; background: #000; border-radius: 20px; }
+  .sb-icons { display: flex; gap: 6px; align-items: center; }
+  .sb-icons svg { height: 13px; }
+  #phoneFrame { display: block; border: 0; width: 390px; height: 797px; background: #f7f7f5; }
+
+  /* ---------- simple on purpose ---------- */
+  #nots { width: 620px; padding: 18px 40px; border-radius: 26px; background: #fff;
+          box-shadow: 0 40px 80px -30px rgba(15,40,28,.4), 0 0 0 1px rgba(0,0,0,.05); }
+  .not { position: relative; display: flex; align-items: center; gap: 26px; height: 112px; font-size: 44px; font-weight: 600; color: #3a3a35; }
+  .not + .not { border-top: 1px solid #ecece7; }
+  .not svg { width: 46px; height: 46px; color: #8a8a83; flex: none; }
+  .not .strike { position: absolute; left: 70px; top: 58px; height: 5px; border-radius: 3px; background: var(--danger); width: 0; }
+  #justlist { display: flex; align-items: center; gap: 20px; font-size: 56px; font-weight: 750; color: var(--green); letter-spacing: -0.02em; }
+  #justlist svg { width: 60px; height: 60px; }
+
+  /* ---------- overlays ---------- */
+  .hl { position: absolute; left: 0; top: 0; border-radius: 10px; opacity: 0; pointer-events: none; }
+  .ripple { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: 0; pointer-events: none; }
+  #caret { position: absolute; left: 0; top: 0; width: 2px; background: #1c1c1a; opacity: 0; }
+  #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 44px; opacity: 0; pointer-events: none; transform-origin: 0 0; filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+  #touch { position: absolute; left: 0; top: 0; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%;
+           background: rgba(40,40,40,.28); border: 3px solid rgba(255,255,255,.95); box-shadow: 0 4px 14px rgba(0,0,0,.3); opacity: 0; pointer-events: none; }
+  #fade { position: absolute; inset: 0; background: #e9efea; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"></div>
+
+  <!-- ===== hook illustration ===== -->
+  <div id="board" class="abs">
+    <div class="board-frame"></div>
+    <div class="smudge" id="smudge"></div>
+    <div class="scribbles" id="scribbles">
+      <div class="s" style="left:40px;top:40px;color:#b3261e;transform:rotate(-3deg)">call back customer!!</div>
+      <div class="s" style="left:70px;top:130px;color:#1f4fa0;transform:rotate(2deg)">printer paper</div>
+      <div class="s" style="left:300px;top:205px;color:#2b7a3d;transform:rotate(-2deg)">coffee beans</div>
+      <div class="s" style="left:40px;top:285px;color:#26262a;transform:rotate(1deg)">wifi back corner??</div>
+    </div>
+    <div class="eraser" id="eraser"></div>
+    <div class="board-tray"></div>
+  </div>
+  <div id="chat" class="abs">
+    <div class="chat-head"><span class="hash">#</span>team</div>
+    <div class="chat-body"><div class="chat-col" id="chatcol">
+      <div class="msg"><div class="avatar" style="background:#7a5bb5">M</div><div><div class="who">Mia</div><div class="txt">Can someone call the customer back about the late order?</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#c0673a">J</div><div><div class="who">Jonas</div><div class="txt">Printer is out of paper again</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#3a7fc0">S</div><div><div class="who">Sam</div><div class="txt">We need coffee beans!!</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#c0673a">J</div><div><div class="who">Jonas</div><div class="txt">lunch at 12?</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#3a9c6a">L</div><div><div class="who">Lea</div><div class="txt">yes please</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#7a5bb5">M</div><div><div class="who">Mia</div><div class="txt">has anyone seen my charger?</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#3a7fc0">S</div><div><div class="who">Sam</div><div class="txt">stand-up moved to 10:30</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#3a9c6a">L</div><div><div class="who">Lea</div><div class="txt">ok!</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#c0673a">J</div><div><div class="who">Jonas</div><div class="txt">new invoice template is in the shared drive</div></div></div>
+      <div class="msg"><div class="avatar" style="background:#7a5bb5">M</div><div><div class="who">Mia</div><div class="txt">thanks</div></div></div>
+    </div></div>
+  </div>
+
+  <!-- ===== devices (the real app runs in both iframes) ===== -->
+  <div id="laptop" class="device">
+    <div class="window">
+      <div class="chrome">
+        <div class="lights"><i></i><i></i><i></i></div>
+        <div class="navbtns">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".45"><path d="M9 5l7 7-7 7"/></svg>
+        </div>
+        <div class="address">
+          <span>Taskboard</span>
+          <svg id="reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>
+        </div>
+      </div>
+      <iframe id="laptopFrame" src="/"></iframe>
+    </div>
+  </div>
+
+  <div id="phone" class="device">
+    <div class="phone-body">
+      <div class="phone-screen">
+        <div class="statusbar">
+          <span>9:41</span><span class="island"></span>
+          <span class="sb-icons">
+            <svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+            <svg viewBox="0 0 16 12"><path d="M8 11.5l2.3-2.6a3.3 3.3 0 0 0-4.6 0z M8 3.2a8.6 8.6 0 0 1 6.2 2.6l1.3-1.5A10.6 10.6 0 0 0 8 1.2 10.6 10.6 0 0 0 .5 4.3l1.3 1.5A8.6 8.6 0 0 1 8 3.2z M8 6.6a5.2 5.2 0 0 1 3.7 1.6l1.3-1.5A7.2 7.2 0 0 0 8 4.6a7.2 7.2 0 0 0-5 2.1l1.3 1.5A5.2 5.2 0 0 1 8 6.6z"/></svg>
+            <svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="1.8"/><rect x="24" y="4" width="2" height="4" rx="1" opacity=".4"/></svg>
+          </span>
+        </div>
+        <iframe id="phoneFrame" src="/"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== "simple on purpose" card ===== -->
+  <div id="nots" class="abs">
+    <div class="not" id="not1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span>Due dates</span><i class="strike"></i></div>
+    <div class="not" id="not2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span>Assignees</span><i class="strike"></i></div>
+    <div class="not" id="not3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 21a2.2 2.2 0 0 0 4 0"/></svg><span>Notifications</span><i class="strike"></i></div>
+  </div>
+  <div id="justlist" class="abs">
+    <svg viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="#2f6f4f"/><path d="M6.5 12.5l3.6 3.6 7.4-8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Just the list.</span>
+  </div>
+
+  <!-- ===== text panel ===== -->
+  <div class="group" id="g-hook">
+    <div class="it accent"></div>
+    <h2 class="it headline">Things get lost.</h2>
+    <p class="it sub">The whiteboard gets wiped.<br>The chat scrolls away.</p>
+  </div>
+
+  <div class="group" id="g-intro">
+    <div class="it wordmark">
+      <svg class="logo" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="#2f6f4f"/><path d="M6.5 12.5l3.6 3.6 7.4-8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="name">Taskboard</span>
+    </div>
+    <p class="it sub">Our team's shared to-do list.</p>
+    <div class="chips">
+      <span class="it chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>One list for everyone</span>
+      <span class="it chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Nothing gets wiped</span>
+    </div>
+  </div>
+
+  <div class="group" id="g-open">
+    <div class="it accent"></div>
+    <h2 class="it headline">Laptop or phone</h2>
+    <p class="it sub">Just open it in your browser.</p>
+    <div class="chips">
+      <span class="it chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>No account</span>
+      <span class="it chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>No login</span>
+    </div>
+    <p class="it sub">Everyone can do everything.</p>
+  </div>
+
+  <div class="group" id="g-add">
+    <div class="it accent"></div>
+    <h2 class="it headline">Write it down</h2>
+    <p class="it sub">One field, one button.</p>
+    <p class="it sub"><strong>New tasks land at the top.</strong></p>
+  </div>
+
+  <div class="group" id="g-done">
+    <div class="it accent"></div>
+    <h2 class="it headline">Tick it off</h2>
+    <p class="it sub">It's struck through and moves below the open tasks.</p>
+    <p class="it sub"><strong>Everyone can see it's done.</strong></p>
+  </div>
+
+  <div class="group" id="g-shared">
+    <div class="it accent"></div>
+    <h2 class="it headline">One list for everyone</h2>
+    <p class="it sub">Teammates add from their own phones and laptops.</p>
+    <p class="it sub"><strong>The page doesn't update by itself. Reload to see the latest.</strong></p>
+  </div>
+
+  <div class="group" id="g-delete">
+    <div class="it accent" style="background: var(--danger)"></div>
+    <h2 class="it headline">Delete mistakes</h2>
+    <p class="it sub">Like a task that got added twice.</p>
+    <p class="it sub warn">Gone for everyone, right away. There's no undo.</p>
+  </div>
+
+  <div class="group" id="g-simple">
+    <div class="it accent"></div>
+    <h2 class="it headline">Simple on purpose</h2>
+  </div>
+
+  <div class="group center" id="g-outro">
+    <h2 class="it headline" style="font-size:104px">Write it down.</h2>
+    <h2 class="it headline" style="font-size:104px;color:var(--green);margin-top:6px">Tick it off.</h2>
+    <div class="it wordmark" style="justify-content:center;margin-top:70px">
+      <svg class="logo" viewBox="0 0 24 24" style="width:64px;height:64px"><rect x="1" y="1" width="22" height="22" rx="6" fill="#2f6f4f"/><path d="M6.5 12.5l3.6 3.6 7.4-8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="name" style="font-size:64px">Taskboard</span>
+    </div>
+  </div>
+
+  <!-- ===== overlays ===== -->
+  <div id="overlay"></div>
+  <div id="caret"></div>
+  <div id="touch"></div>
+  <svg id="cursor" viewBox="0 0 34 44"><path d="M2 2 L2 33 L9.6 26 L14.6 37.4 L19.4 35.3 L14.5 24.2 L25 24.2 Z" fill="#111" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>
+  <div id="fade"></div>
+</div>
+<script src="stage.js"></script>
+</body>
+</html>

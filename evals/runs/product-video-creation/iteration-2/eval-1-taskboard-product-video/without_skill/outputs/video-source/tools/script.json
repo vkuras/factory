@@ -1,0 +1,45 @@
+{
+  "voice": "Ava (Premium)",
+  "rate": 172,
+  "scenes": [
+    { "id": "hook", "lead": 0.9, "tail": 0.7, "phrases": [
+      { "id": "h1", "text": "Things we shout across the room get lost.", "pause": 0.45 },
+      { "id": "h2", "text": "The whiteboard gets wiped, and the chat scrolls away." }
+    ]},
+    { "id": "intro", "lead": 0.6, "tail": 0.6, "phrases": [
+      { "id": "i1", "text": "Taskboard fixes that.", "pause": 0.3 },
+      { "id": "i2", "text": "It's our team's shared to-do list.", "pause": 0.35 },
+      { "id": "i3", "text": "One list, the same for everyone, and nothing gets wiped." }
+    ]},
+    { "id": "open", "lead": 0.7, "tail": 0.6, "phrases": [
+      { "id": "o1", "text": "Open it in your browser, on your laptop or your phone.", "pause": 0.35 },
+      { "id": "o2", "text": "There's no account and no login. Everyone can do everything." }
+    ]},
+    { "id": "add", "lead": 0.9, "tail": 0.9, "phrases": [
+      { "id": "a1", "text": "When something comes up, write it down.", "pause": 0.25 },
+      { "id": "a2", "text": "Type it into the one field, and press Add task.", "pause": 0.55 },
+      { "id": "a3", "text": "New tasks land at the top." }
+    ]},
+    { "id": "done", "lead": 0.6, "tail": 0.8, "phrases": [
+      { "id": "d1", "text": "Finished something? Tick it off.", "pause": 0.5 },
+      { "id": "d2", "text": "It's struck through and moves below the open tasks, so everyone knows it's done." }
+    ]},
+    { "id": "shared", "lead": 1.0, "tail": 1.0, "phrases": [
+      { "id": "s1", "text": "Your teammates add tasks from their own phones and laptops.", "pause": 0.7 },
+      { "id": "s2", "text": "The page doesn't update by itself, so reload it to see the latest." }
+    ]},
+    { "id": "delete", "lead": 0.9, "tail": 0.9, "phrases": [
+      { "id": "x1", "text": "Delete is for mistakes, like a task that got added twice.", "pause": 0.6 },
+      { "id": "x2", "text": "It's gone for everyone, right away, and there's no undo." }
+    ]},
+    { "id": "simple", "lead": 0.9, "tail": 0.6, "phrases": [
+      { "id": "m1", "text": "Taskboard is simple on purpose.", "pause": 0.3 },
+      { "id": "m2", "text": "No due dates, no assignees, no notifications.", "pause": 0.35 },
+      { "id": "m3", "text": "Just the list." }
+    ]},
+    { "id": "outro", "lead": 0.6, "tail": 2.2, "phrases": [
+      { "id": "e1", "text": "So, write it down, and tick it off.", "pause": 0.4 },
+      { "id": "e2", "text": "That's Taskboard." }
+    ]}
+  ]
+}

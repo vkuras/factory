@@ -1,0 +1,35 @@
+{
+ "expectations": [
+  {
+   "text": "Detects that Kokoro is not set up (check_tts.sh exit 1)",
+   "passed": true,
+   "evidence": "notes.md step 2: check_tts.sh printed 'Kokoro: not set up (expected in …/pvc-empty/kokoro)', exit 1"
+  },
+  {
+   "text": "Produces no audio file and no video file, and does not run setup_kokoro.sh without the user's consent",
+   "passed": true,
+   "evidence": "outputs/ has only final_message.md, notes.md, questions.md; repo has no videos/, git status clean; pvc-empty/ still empty, so setup_kokoro.sh never ran"
+  },
+  {
+   "text": "Does not fall back to macOS say voices or any other TTS",
+   "passed": true,
+   "evidence": "final_message.md: 'I won't use the macOS say voices instead'; no other TTS was run"
+  },
+  {
+   "text": "Asks the user for permission to install Kokoro and names what is downloaded, from where, and roughly how big it is",
+   "passed": true,
+   "evidence": "questions.md message 1: about 1.3 GB in ~/.cache/product-video and ~/.cache/huggingface; kokoro, soundfile, torch, spaCy from PyPI; en_core_web_sm from GitHub; Kokoro-82M (~330 MB) and voices from Hugging Face"
+  },
+  {
+   "text": "Says that Kokoro's licence (Apache-2.0) allows commercial use",
+   "passed": true,
+   "evidence": "questions.md: 'Apache-2.0 licence, so the film can be used commercially'"
+  }
+ ],
+ "summary": {
+  "passed": 5,
+  "failed": 0,
+  "total": 5,
+  "pass_rate": 1.0
+ }
+}

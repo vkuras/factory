@@ -1,0 +1,83 @@
+1
+00:00:00,900 --> 00:00:03,638
+Things we shout across the room get lost.
+
+2
+00:00:03,838 --> 00:00:07,175
+The whiteboard gets wiped, and the chat scrolls away.
+
+3
+00:00:08,225 --> 00:00:10,067
+Taskboard fixes that.
+
+4
+00:00:10,117 --> 00:00:12,213
+It's our team's shared to-do list.
+
+5
+00:00:12,313 --> 00:00:16,293
+One list, the same for everyone, and nothing gets wiped.
+
+6
+00:00:17,343 --> 00:00:20,931
+Open it in your browser, on your laptop or your phone.
+
+7
+00:00:21,031 --> 00:00:24,923
+There's no account and no login. Everyone can do everything.
+
+8
+00:00:26,173 --> 00:00:28,874
+When something comes up, write it down.
+
+9
+00:00:28,874 --> 00:00:32,044
+Type it into the one field, and press Add task.
+
+10
+00:00:32,344 --> 00:00:34,317
+New tasks land at the top.
+
+11
+00:00:35,567 --> 00:00:37,731
+Finished something? Tick it off.
+
+12
+00:00:37,981 --> 00:00:42,836
+It's struck through and moves below the open tasks, so everyone knows it's done.
+
+13
+00:00:44,386 --> 00:00:48,009
+Your teammates add tasks from their own phones and laptops.
+
+14
+00:00:48,459 --> 00:00:52,693
+The page doesn't update by itself, so reload it to see the latest.
+
+15
+00:00:54,343 --> 00:00:57,999
+Delete is for mistakes, like a task that got added twice.
+
+16
+00:00:58,349 --> 00:01:02,260
+It's gone for everyone, right away, and there's no undo.
+
+17
+00:01:03,810 --> 00:01:05,999
+Taskboard is simple on purpose.
+
+18
+00:01:06,049 --> 00:01:10,015
+No due dates, no assignees, no notifications.
+
+19
+00:01:10,115 --> 00:01:11,315
+Just the list.
+
+20
+00:01:12,265 --> 00:01:15,021
+So, write it down, and tick it off.
+
+21
+00:01:15,171 --> 00:01:16,663
+That's Taskboard.

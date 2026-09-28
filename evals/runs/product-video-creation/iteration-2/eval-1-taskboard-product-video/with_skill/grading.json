@@ -1,0 +1,65 @@
+{
+ "expectations": [
+  {
+   "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+   "passed": true,
+   "evidence": "repo/videos/taskboard.mp4 (identical to outputs/video.mp4): 1920x1080 with AAC audio"
+  },
+  {
+   "text": "Total length is between 45 and 120 seconds",
+   "passed": true,
+   "evidence": "56.2 s (target 50-80 s in package.json)"
+  },
+  {
+   "text": "Every spoken line is rendered with Kokoro, using a voice from the cast list in voices.mjs (no macOS say voices)",
+   "passed": true,
+   "evidence": "lines.mjs: af_heart, am_michael, bf_emma, bm_george, all in the cast list; audio rendered by tts.mjs (Kokoro)"
+  },
+  {
+   "text": "No pauses are cut into the middle of sentences: lines carry at most a few deliberate [[slnc]] beats",
+   "passed": true,
+   "evidence": "0 [[slnc]] marks in 13 lines"
+  },
+  {
+   "text": "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
+   "passed": true,
+   "evidence": "p1-p3: whiteboard wiped, chat scrolled away, nobody knows what's done; the product appears only after n1"
+  },
+  {
+   "text": "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
+   "passed": true,
+   "evidence": "flows/product.mjs recorded live with record.mjs against http://localhost:8111 (recordings/product.json)"
+  },
+  {
+   "text": "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
+   "passed": true,
+   "evidence": "'Order printer toner' typed through the flow's type(); no speed factor above 1, no page.fill"
+  },
+  {
+   "text": "Scene 4 summarises what the product solves",
+   "passed": true,
+   "evidence": "s4_solved: 'Nothing gets wiped. Nothing scrolls away. And everyone knows what's done.' (over a static list for ~14 s)"
+  },
+  {
+   "text": "README.md links the video directly under the first headline, before any other text",
+   "passed": true,
+   "evidence": "README line after '# Taskboard': [![Taskboard in 56 seconds: watch the product video](videos/taskboard.jpg)](videos/taskboard.mp4)"
+  },
+  {
+   "text": "Asked the user no more than one round of at most three questions",
+   "passed": true,
+   "evidence": "questions.md: one message with the draft and 3 questions, each with a default"
+  },
+  {
+   "text": "Speakers who follow each other in scene 1 differ in gender or locale, and none of them uses the narrator's voice",
+   "passed": true,
+   "evidence": "am_michael (US m) -> bf_emma (UK f) -> bm_george (UK m); narrator af_heart is not used by any of them"
+  }
+ ],
+ "summary": {
+  "passed": 11,
+  "failed": 0,
+  "total": 11,
+  "pass_rate": 1.0
+ }
+}
