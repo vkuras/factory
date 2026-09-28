@@ -5,21 +5,22 @@
       "id": 1,
       "name": "taskboard-product-video",
       "prompt": "can you make a product video for our taskboard app? something we can show new people so they get what it's for. repo is right here",
-      "expected_output": "A 45-120 s 1080p MP4 in videos/, narrated with premium voices, scene 1 names the lost-whiteboard/chat problem, scene 3 is the real Taskboard recorded live with real-time typing, scene 4 summarises; README links the video right under the headline.",
+      "expected_output": "A 45-120 s 1080p MP4 in videos/, narrated with Kokoro voices, scene 1 names the lost-whiteboard/chat problem, scene 3 is the real Taskboard recorded live with real-time typing, scene 4 summarises; README links the video right under the headline.",
       "files": [
         "evals/fixtures/base"
       ],
       "assertions": [
         "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
         "Total length is between 45 and 120 seconds",
-        "Every spoken line uses a '(Premium)' voice (lines.mjs / TTS invocations)",
-        "Spoken text contains pauses at sentence and list breaks ([[slnc]] marks or equivalent) in the TTS input",
+        "Every spoken line is rendered with Kokoro, using a voice from the cast list in voices.mjs (no macOS say voices)",
+        "No pauses are cut into the middle of sentences: lines carry at most a few deliberate [[slnc]] beats",
         "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
         "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
         "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
         "Scene 4 summarises what the product solves",
         "README.md links the video directly under the first headline, before any other text",
-        "Asked the user no more than one round of at most three questions"
+        "Asked the user no more than one round of at most three questions",
+        "Speakers who follow each other in scene 1 differ in gender or locale, and none of them uses the narrator's voice"
       ]
     },
     {
@@ -33,7 +34,7 @@
       "assertions": [
         "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
         "Total length is at most 60 seconds (plus 2 s tolerance)",
-        "Narration is in English and uses only '(Premium)' voices",
+        "Narration is in English and uses only Kokoro voices from the cast list",
         "The video has a setup scene that shows the real commands from the Taskboard README (cp .env.example .env and docker compose up -d, or npm start)",
         "Scene 3 is a live recording of the running Taskboard app, not an HTML mockup",
         "Asked the user no questions (the user said to just do it) and lists assumptions in the final message",
@@ -43,19 +44,19 @@
     },
     {
       "id": 3,
-      "name": "no-premium-voices",
+      "name": "kokoro-not-installed",
       "prompt": "make a short product video of the taskboard in this repo please",
-      "expected_output": "The run detects that no premium voice is installed, stops before producing audio or video, and tells the user how to install them: System Settings → Accessibility → Spoken Content → ⓘ next to System voice → Voice → search Premium → download all.",
+      "expected_output": "check_tts.sh reports that Kokoro is not set up. The run stops before producing audio or video and asks the user once for permission to install Kokoro, naming what gets downloaded (PyPI packages incl. torch, spaCy model, Kokoro-82M from Hugging Face), about how big it is (~1.3 GB) and where it goes, and that it is free for commercial use. It does not fall back to macOS say voices.",
       "files": [
-        "evals/fixtures/base",
-        "evals/fixtures/no-premium-voices"
+        "evals/fixtures/base"
       ],
+      "setup": "Run with PVC_HOME pointing to an empty directory, so that Kokoro looks not installed.",
       "assertions": [
-        "Detects that no premium voice is installed",
-        "Produces no audio file and no video file",
-        "Does not fall back to a standard or Enhanced voice",
-        "Tells the user the install path: Spoken Content, the i button next to System voice, Voice, search for Premium",
-        "Asks the user to download all premium voices and to say when they are done"
+        "Detects that Kokoro is not set up (check_tts.sh exit 1)",
+        "Produces no audio file and no video file, and does not run setup_kokoro.sh without the user's consent",
+        "Does not fall back to macOS say voices or any other TTS",
+        "Asks the user for permission to install Kokoro and names what is downloaded, from where, and roughly how big it is",
+        "Says that Kokoro's licence (Apache-2.0) allows commercial use"
       ]
     },
     {

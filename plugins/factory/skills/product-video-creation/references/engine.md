@@ -5,7 +5,8 @@
 | File | What it does |
 |---|---|
 | `lines.mjs` | every spoken line: `{ id, voice, text, say? }` plus `PRONOUNCE` |
-| `tts.mjs` | premium TTS → `audio/<id>.wav`, `durations.js/json`, prints each line with its pauses |
+| `tts.mjs` | Kokoro TTS (through `kokoro_tts.py`) → `audio/<id>.wav`, `durations.js/json`; prints each line with its voice and warns about miscasting. Re-renders only lines that changed |
+| `voices.mjs` | the cast list: the Kokoro voices worth using, with gender, locale and grade, plus the default narrator and casting order |
 | `flows/<name>.mjs` | a live, real-time session with the real product |
 | `record.mjs <name>` | runs the flow in Chromium → `recordings/<name>.mp4` + cues and sounds |
 | `scenes/s1…s4-*.js` | the scenes as functions of time (`sceneProblem`, `sceneAccess`, `sceneProduct`, `sceneSummary`) |
