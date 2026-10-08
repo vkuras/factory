@@ -1,0 +1,216 @@
+{
+  "fps": 30,
+  "duration": 78.613,
+  "scenes": [
+    {
+      "id": "hook",
+      "start": 0,
+      "phrases": [
+        {
+          "id": "h1",
+          "text": "Things we shout across the room get lost.",
+          "start": 0.9,
+          "end": 3.388,
+          "file": "h1.wav"
+        },
+        {
+          "id": "h2",
+          "text": "The whiteboard gets wiped, and the chat scrolls away.",
+          "start": 3.838,
+          "end": 6.925,
+          "file": "h2.wav"
+        }
+      ],
+      "end": 7.625
+    },
+    {
+      "id": "intro",
+      "start": 7.624751000000001,
+      "phrases": [
+        {
+          "id": "i1",
+          "text": "Taskboard fixes that.",
+          "start": 8.225,
+          "end": 9.817,
+          "file": "i1.wav"
+        },
+        {
+          "id": "i2",
+          "text": "It's our team's shared to-do list.",
+          "start": 10.117,
+          "end": 11.963,
+          "file": "i2.wav"
+        },
+        {
+          "id": "i3",
+          "text": "One list, the same for everyone, and nothing gets wiped.",
+          "start": 12.313,
+          "end": 16.043,
+          "file": "i3.wav"
+        }
+      ],
+      "end": 16.643
+    },
+    {
+      "id": "open",
+      "start": 16.643230000000003,
+      "phrases": [
+        {
+          "id": "o1",
+          "text": "Open it in your browser, on your laptop or your phone.",
+          "start": 17.343,
+          "end": 20.681,
+          "file": "o1.wav"
+        },
+        {
+          "id": "o2",
+          "text": "There's no account and no login. Everyone can do everything.",
+          "start": 21.031,
+          "end": 24.673,
+          "file": "o2.wav"
+        }
+      ],
+      "end": 25.273
+    },
+    {
+      "id": "add",
+      "start": 25.273022,
+      "phrases": [
+        {
+          "id": "a1",
+          "text": "When something comes up, write it down.",
+          "start": 26.173,
+          "end": 28.624,
+          "file": "a1.wav"
+        },
+        {
+          "id": "a2",
+          "text": "Type it into the one field, and press Add task.",
+          "start": 28.874,
+          "end": 31.794,
+          "file": "a2.wav"
+        },
+        {
+          "id": "a3",
+          "text": "New tasks land at the top.",
+          "start": 32.344,
+          "end": 34.067,
+          "file": "a3.wav"
+        }
+      ],
+      "end": 34.967
+    },
+    {
+      "id": "done",
+      "start": 34.966834000000006,
+      "phrases": [
+        {
+          "id": "d1",
+          "text": "Finished something? Tick it off.",
+          "start": 35.567,
+          "end": 37.481,
+          "file": "d1.wav"
+        },
+        {
+          "id": "d2",
+          "text": "It's struck through and moves below the open tasks, so everyone knows it's done.",
+          "start": 37.981,
+          "end": 42.586,
+          "file": "d2.wav"
+        }
+      ],
+      "end": 43.386
+    },
+    {
+      "id": "shared",
+      "start": 43.385585,
+      "phrases": [
+        {
+          "id": "s1",
+          "text": "Your teammates add tasks from their own phones and laptops.",
+          "start": 44.386,
+          "end": 47.759,
+          "file": "s1.wav"
+        },
+        {
+          "id": "s2",
+          "text": "The page doesn't update by itself, so reload it to see the latest.",
+          "start": 48.459,
+          "end": 52.443,
+          "file": "s2.wav"
+        }
+      ],
+      "end": 53.443
+    },
+    {
+      "id": "delete",
+      "start": 53.443231,
+      "phrases": [
+        {
+          "id": "x1",
+          "text": "Delete is for mistakes, like a task that got added twice.",
+          "start": 54.343,
+          "end": 57.749,
+          "file": "x1.wav"
+        },
+        {
+          "id": "x2",
+          "text": "It's gone for everyone, right away, and there's no undo.",
+          "start": 58.349,
+          "end": 62.01,
+          "file": "x2.wav"
+        }
+      ],
+      "end": 62.91
+    },
+    {
+      "id": "simple",
+      "start": 62.909876999999994,
+      "phrases": [
+        {
+          "id": "m1",
+          "text": "Taskboard is simple on purpose.",
+          "start": 63.81,
+          "end": 65.749,
+          "file": "m1.wav"
+        },
+        {
+          "id": "m2",
+          "text": "No due dates, no assignees, no notifications.",
+          "start": 66.049,
+          "end": 69.765,
+          "file": "m2.wav"
+        },
+        {
+          "id": "m3",
+          "text": "Just the list.",
+          "start": 70.115,
+          "end": 71.065,
+          "file": "m3.wav"
+        }
+      ],
+      "end": 71.665
+    },
+    {
+      "id": "outro",
+      "start": 71.66498099999998,
+      "phrases": [
+        {
+          "id": "e1",
+          "text": "So, write it down, and tick it off.",
+          "start": 72.265,
+          "end": 74.771,
+          "file": "e1.wav"
+        },
+        {
+          "id": "e2",
+          "text": "That's Taskboard.",
+          "start": 75.171,
+          "end": 76.413,
+          "file": "e2.wav"
+        }
+      ],
+      "end": 78.613
+    }
+  ]
+}

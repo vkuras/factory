@@ -1,0 +1,12 @@
+{
+  "eval_id": 4,
+  "eval_name": "multi-capability-sizing",
+  "prompt": "make a product video for the factory itself, the whole thing: plugin install, coordinate, the four stages, the merge request. repo is this one",
+  "assertions": [
+    "The draft names a size (chapters or overview + deep dives) and says why, based on the capabilities counted",
+    "The target length is at least 120 s (or an overview of 2-3 min plus deep dives)",
+    "Scene 3 has one chapter per capability",
+    "package.json of the video project contains \"video\": { \"target\": [min, max] } matching the draft",
+    "The final length is inside the target (no length warning from render.mjs)"
+  ]
+}

@@ -1,34 +1,31 @@
 ---
 name: product-video-creation
-description: Makes a narrated product video (1080p MP4) for a real product, from its repo and the running app. It checks the macOS premium voices, drafts a four-scene script (the problem, how to get access, the real product in use, what it solves), records the live product in real time and renders everything with natural premium voiceover. Use this whenever the user wants a product video, demo video, explainer, promo clip, walkthrough, launch video, screencast with voiceover or "a video that shows what X does", even if they only say "mach ein Video von der App", "zeig das Produkt in einem Video", "record a demo" or "wir brauchen ein Video für das Release". Do not use it for editing footage the user already has, for slide decks, or for GIFs of a single UI bug.
+description: Makes a narrated product video (1080p MP4) for a real product, from its repo and the running app. It drafts a four-scene script (the problem, how to get access, the real product in use, what it solves), records the live product in real time and renders everything with natural voiceover from Kokoro, a local neural voice model. Use this whenever the user wants a product video, demo video, explainer, promo clip, walkthrough, launch video, screencast with voiceover or "a video that shows what X does", even if they only say "mach ein Video von der App", "zeig das Produkt in einem Video", "record a demo" or "wir brauchen ein Video für das Release". Do not use it for editing footage the user already has, for slide decks, or for GIFs of a single UI bug.
 ---
 
 # Product video creation
 
-You make a short film that shows a real product solving a real problem. It is narrated by macOS premium voices, and scene 3 is the real product, recorded while it runs.
+You make a short film that shows a real product solving a real problem. It is narrated by Kokoro voices, which run locally and sound like people talking, and scene 3 is the real product, recorded while it runs.
 
 The film fails in three ways, and each one is easy to fall into:
 
 1. **It looks made by an AI.** Dark navy gradients, neon accent bars, glassy cards, pill badges, emoji, a logo that bursts in with a whoosh, big kinetic captions over everything. Viewers have seen that look a thousand times, and it tells them nobody real made this. The film should look like a person recorded their screen well: the product's own colours, real windows, plain type, restraint.
 2. **It shows a fake product.** An HTML mockup of the app, invented numbers, a made-up tool. The moment a viewer spots a fake, they stop believing the rest. Show the actual product and the actual tools around it: the real app recorded live, real terminal output, real names of the tools involved.
-3. **It sounds like a machine.** Premium voices sound human only when the script is written for speaking and has room to breathe: short sentences, pauses at sentence and list breaks, no acronyms spelled into mush, and typing that happens at the speed a person types.
+3. **It sounds like a machine.** A voice sounds human when it is allowed to phrase whole sentences the way it wants, and when the script is written for speaking: short sentences, plain words, no acronyms spelled into mush. Pauses cut into the middle of a sentence make it sound read out. When several people speak, each has to sound like a different person. And typing happens at the speed a person types.
 
 ## Workflow
 
-### 1. Check the voices and tools
+### 1. Check the voice engine and tools
 
 ```bash
-<skill-dir>/scripts/check_voices.sh
+<skill-dir>/scripts/check_tts.sh
 ```
 
-The script lists the English premium voices and checks for `node` and `ffmpeg`.
+The script checks for `node` and `ffmpeg`, and for Kokoro in `~/.cache/product-video/kokoro` (override with `PVC_HOME`).
 
-- **Exit 1, no premium voice installed:** stop and ask the user to install them, and do nothing else until they confirm. Standard and "Enhanced" voices are what make a video sound like a machine, so never fall back to them. Give them the steps as written here:
-  > System Settings → Accessibility → Spoken Content → click **ⓘ** next to *System voice* → **Voice** → search for **Premium** → download all of the English premium voices. Tell me when the downloads have finished.
-
-  Then run the check again.
-- **Exit 2, a tool is missing:** tell the user which tool it is (`brew install ffmpeg`, or Node 20+), and continue once it is installed.
-- **Exit 0:** note which voices are there. The narrator is usually Zoe or Ava. Other voices can speak for the people in scene 1.
+- **Exit 0:** ready.
+- **Exit 1, Kokoro not set up:** installing it is a download, so ask the user once before you start. Tell them what it is and what it costs: Kokoro is a local neural voice model under the Apache-2.0 licence, so it is free for commercial videos. It needs about 1.3 GB in `~/.cache/product-video` and `~/.cache/huggingface`: Python packages from PyPI (including torch), spaCy's English model and the Kokoro-82M model and voices from Hugging Face. After they agree, run `<skill-dir>/scripts/setup_kokoro.sh`, which takes one or two minutes, and check again. Don't fall back to macOS `say` voices in the meantime: they sound read out, and Apple licenses them for personal, non-commercial use only.
+- **Exit 2, a tool is missing:** tell the user which one it is (`brew install ffmpeg`, Node 20+, or `brew install python@3.12`, because Kokoro needs Python 3.10–3.12), and continue once it is installed.
 
 ### 2. Understand the product without an interview
 
@@ -38,7 +35,7 @@ The user wants a good film, not a questionnaire. Find the answers yourself befor
 - **Getting access:** read the install instructions, `docker-compose.yml`, `package.json` scripts, the plugin or marketplace manifests and the sign-in setup.
 - **The flows worth showing:** start the product (use its own run command, for example `docker compose up -d` or `npm start`) and open it with Playwright. Click through it and take screenshots. For each capability worth showing, find the path that takes a viewer from the problem to the result, using realistic data. If the product cannot run locally, look for a staging URL in the docs.
 - **The size of the film:** count the capabilities a viewer has to see to understand the product, and pick the size from the table in `references/script.md`. That gives one continuous story (45–90 s), a chaptered film (2–5 min), or an overview plus deep dives. A length the user names always wins.
-- **Names to pronounce:** product names, tools and acronyms. Test anything unusual with `say -v "Zoe (Premium)" "…"`.
+- **Names to pronounce:** product names, tools and acronyms. Listen to anything unusual early: put it in a line and run `node tts.mjs`.
 
 Ask the user only what you cannot find out, and ask it together with the script in step 3.
 
@@ -64,7 +61,7 @@ Show the user the whole draft in one message: the size you chose and why, the ta
 Read `references/engine.md` for the engine API and the look rules. In short:
 
 1. Copy `<skill-dir>/engine/` to `videos/<product-slug>/` in the product's repo, and set `"name"` in its `package.json` to the slug and `"video": { "target": [min, max] }` to the target length from the approved draft. Run `npm install` and `npx playwright install chromium`. All product videos live under `videos/`, so a team finds every one of them in one place.
-2. Write `lines.mjs`, then run `node tts.mjs` and read its output. Every line is printed with the pauses it will get and its duration.
+2. Write `lines.mjs`, then run `node tts.mjs` and read its output. Every line is printed with its voice, gender and locale and its duration, and it warns when two speakers next to each other would sound alike.
 3. Write `flows/product.mjs` and run `node record.mjs product`, then do the same for any other live recording. The product has to be running.
 4. Write the scene files in `scenes/`. Scene 3 is mostly `clip('product', t)`.
 5. Check the stills (`node stills.mjs …`) and the preview (`node render.mjs --preview`), then run the final `node render.mjs`.
@@ -77,7 +74,7 @@ Watch your own output before the user does. Extract stills at every scene and at
 - [ ] Everything product-shaped on screen is the real product or real output. There are no mockups and no invented tools.
 - [ ] Nothing on screen has the AI look described above.
 - [ ] Typing runs at human speed: no `speed` above 1, and no text that appears all at once where someone is supposed to type it.
-- [ ] No voice overlaps another. Every line has its pauses (check the `tts.mjs` printout), and no premium voice is missing.
+- [ ] No voice overlaps another, and `tts.mjs` printed no warnings. Every line uses a voice from the cast list in `engine/voices.mjs`, people who speak one after another differ in gender or locale, and nobody else speaks with the narrator's voice.
 - [ ] Scene 4 repeats the problem from scene 1 as solved, and says where to get the product.
 - [ ] The length is inside the target from the draft (`render.mjs` warns when it is not). The target is set as `"video": { "target": [min, max] }` in `package.json`.
 - [ ] Scene 3 and any terminal are sized so that their text is readable (look at a full-size still).

@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "kokoro-not-installed",
+  "prompt": "make a short product video of the taskboard in this repo please",
+  "assertions": [
+    "Detects that Kokoro is not set up (check_tts.sh exit 1)",
+    "Produces no audio file and no video file, and does not run setup_kokoro.sh without the user's consent",
+    "Does not fall back to macOS say voices or any other TTS",
+    "Asks the user for permission to install Kokoro and names what is downloaded, from where, and roughly how big it is",
+    "Says that Kokoro's licence (Apache-2.0) allows commercial use"
+  ]
+}

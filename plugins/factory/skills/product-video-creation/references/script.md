@@ -3,7 +3,7 @@
 ## Scenes
 
 **1 · Problem.** This scene decides whether anyone keeps watching. Open on the situation, not on the product: the moment when the problem hurts. Two good patterns:
-- *Voices*: two to six people say their version of the problem in one sentence each, each with a different premium voice. Use real roles (product owner, on-call engineer, team lead), not cartoon characters.
+- *Voices*: two to six people say their version of the problem in one sentence each, each with their own voice (see *Casting*). Use real roles (product owner, on-call engineer, team lead), not cartoon characters.
 - *Status quo*: show the problem where it lives today, in the real tools people use now (the endless spreadsheet, the wiped whiteboard, the 40-step wiki page), with the narrator naming the pain.
 
 End the scene with a single line that introduces the product as the answer, for example "Taskboard fixes exactly that." Don't use a logo explosion.
@@ -16,17 +16,28 @@ End the scene with a single line that introduces the product as the answer, for 
 
 ## Writing for the voice
 
-Premium voices are good at conversational English and bad at text written to be read.
+Kokoro sounds like a person talking when the text is something a person would say. It sounds read out when the text was written to be read.
 
-- **Short sentences**, 6–16 words each. One idea per sentence.
-- **Contractions and plain words:** "you don't need", not "it is not necessary to".
+- **Short sentences**, 6–16 words each, with one idea per sentence. Fragments are fine: "Wiped." "For everyone."
+- **Contractions and plain words:** "you don't need", not "it is not necessary to". Questions and small asides ("Honestly?") give the voice its natural rise and fall.
 - **Numbers the way people say them:** "twenty minutes", "version two".
-- **Acronyms:** write them the way they should sound. For example `PRONOUNCE: { SQL: 'sequel', 'CLI': 'C L I' }`, or respell a name (`Pegel: 'Paygel'`). Test the unclear ones with `say -v "Zoe (Premium)" "…"`.
-- **No symbols in spoken text**: no `/`, `→`, `&`, `e.g.` or URLs with paths. For "slash coordinate", write it that way in `say`.
-- **Lists** of three or four items, separated by commas. `tts.mjs` pauses at every comma, so a list sounds like a list.
-- **Pauses** come automatically from `tts.mjs`: 320 ms after a sentence, 220 ms after `:` and `;`, 200 ms at a dash and 140 ms at a comma. If a line needs something different, give it its own `say` with `[[slnc N]]` marks (a line that has any marks gets no automatic ones). Add a longer pause (400–600 ms) before a punchline.
-- **One narrator** for the whole film. Other voices only speak as the people in scene 1, or as a character inside the product.
+- **Acronyms and names:** write them the way they should sound, for example `PRONOUNCE: { SQL: 'sequel', CLI: 'C L I', Pegel: 'Paygel' }`. For exact control, Kokoro also takes phonemes inline: `[Kokoro](/kˈOkəɹO/)`. Listen to unusual words early by running `node tts.mjs`.
+- **No symbols in spoken text:** no `/`, `→`, `&`, `e.g.`, and no URLs with paths. For "slash coordinate", write it that way in `say`.
+- **Lists** of three or four items, separated by commas.
+- **Pauses:** Kokoro pauses at sentence and list breaks by itself, the way a speaker does. Don't cut pauses into the middle of a sentence, because that makes every fragment sound like its own sentence. For a deliberate beat, such as before a punchline or after a question the viewer should think about, give the line its own `say` with `[[slnc 400]]` to `[[slnc 600]]` at that point.
+- **Speed:** leave it at 1. Use `speed: 0.9` only for a line that has to land slowly.
 - Read every line out loud once, in your head. If it sounds like a slide, rewrite it.
+
+## Casting
+
+The narrator carries the film. The other voices speak only as the people in scene 1, or as a character inside the product. Each person has to sound like somebody else, so viewers hear several people and not one voice in costumes. Kokoro speaks two English locales, US and UK, and has female and male voices, which gives four clearly different kinds of voice. Use all four before you repeat one.
+
+- **Narrator:** `af_heart`, Kokoro's best voice. If the user wants a male or British narrator, use `am_michael` or `bf_emma`.
+- **People:** cast them in the order of `CAST` in `engine/voices.mjs`: `am_michael` (US m), `bf_emma` (UK f), `bm_george` (UK m), `af_bella` (US f), `am_fenrir` (US m), `bf_isabella` (UK f), `bm_fable` (UK m), `am_puck` (US m), `af_sarah` (US f). Each voice differs from the one before it in gender or locale.
+- Two people who speak one after another never share both gender and locale. `tts.mjs` warns when they do.
+- Nobody but the narrator speaks with the narrator's voice.
+- Only use voices from `engine/voices.mjs`. Kokoro's other voices are graded below C by its authors and sound synthetic.
+- Match the voice to the role only where it matters to the viewer. Otherwise, variety beats typecasting.
 
 ## Sizing the film
 
@@ -46,25 +57,25 @@ The length follows from what the viewer has to see to understand the product, no
 
 ## Timing
 
-- Spoken English at premium voice speed runs about 2.6 words per second. Estimate every scene from its words plus its on-screen action.
+- Kokoro speaks about 3 words per second, including its natural pauses. Estimate every scene from its words plus its on-screen action.
 - Let the picture lead: a visual change lands on the word that names it (`cue(id, at, 'phrase')` in the engine), or 0.2–0.4 s before it.
 - Typing is real time. A person types 5–9 characters per second, so a 60-character prompt takes about 9 s on screen. Keep typed text short and meaningful rather than speeding it up. While someone is typing, the narrator can say why, or stay quiet.
 
 ## Draft format to show the user
 
 ```
-Product video: <Product> · size: <one story | chapters | overview + deep dives> · target <min>–<max> s · narrator Zoe (Premium)
+Product video: <Product> · size: <one story | chapters | overview + deep dives> · target <min>–<max> s · narrator af_heart (US female)
 Why this size: <capabilities counted>
 
 1 · Problem (~15 s)
    On screen: <what is seen>
-   Ava:  "…"
-   Lee:  "…"
-   Zoe:  "…"
+   Team lead (am_michael, US m):  "…"
+   Designer (bf_emma, UK f):      "…"
+   Narrator (af_heart):           "…"
 2 · Access (~12 s)            ← or: skipped, <why>
    …
 3 · Product (~35 s), recorded live at <url>
-   <step>: <what happens>              Zoe: "…"
+   <step>: <what happens>              Narrator: "…"
    (chapters: 3a <capability> (~40 s) … 3b …)
 4 · Summary (~10 s)
    …

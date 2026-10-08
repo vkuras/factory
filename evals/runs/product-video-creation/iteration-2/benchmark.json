@@ -1,0 +1,324 @@
+{
+  "metadata": {
+    "skill_name": "product-video-creation",
+    "skill_path": "plugins/factory/skills/product-video-creation",
+    "executor_model": "claude-opus-5-5",
+    "analyzer_model": "claude-opus-5-5",
+    "timestamp": "2026-09-28T19:08:14Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "taskboard-product-video",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 11,
+        "failed": 0,
+        "total": 11,
+        "time_seconds": 1350.0,
+        "tokens": 219823,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+          "passed": true,
+          "evidence": "repo/videos/taskboard.mp4 (identical to outputs/video.mp4): 1920x1080 with AAC audio"
+        },
+        {
+          "text": "Total length is between 45 and 120 seconds",
+          "passed": true,
+          "evidence": "56.2 s (target 50-80 s in package.json)"
+        },
+        {
+          "text": "Every spoken line is rendered with Kokoro, using a voice from the cast list in voices.mjs (no macOS say voices)",
+          "passed": true,
+          "evidence": "lines.mjs: af_heart, am_michael, bf_emma, bm_george, all in the cast list; audio rendered by tts.mjs (Kokoro)"
+        },
+        {
+          "text": "No pauses are cut into the middle of sentences: lines carry at most a few deliberate [[slnc]] beats",
+          "passed": true,
+          "evidence": "0 [[slnc]] marks in 13 lines"
+        },
+        {
+          "text": "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
+          "passed": true,
+          "evidence": "p1-p3: whiteboard wiped, chat scrolled away, nobody knows what's done; the product appears only after n1"
+        },
+        {
+          "text": "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
+          "passed": true,
+          "evidence": "flows/product.mjs recorded live with record.mjs against http://localhost:8111 (recordings/product.json)"
+        },
+        {
+          "text": "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
+          "passed": true,
+          "evidence": "'Order printer toner' typed through the flow's type(); no speed factor above 1, no page.fill"
+        },
+        {
+          "text": "Scene 4 summarises what the product solves",
+          "passed": true,
+          "evidence": "s4_solved: 'Nothing gets wiped. Nothing scrolls away. And everyone knows what's done.' (over a static list for ~14 s)"
+        },
+        {
+          "text": "README.md links the video directly under the first headline, before any other text",
+          "passed": true,
+          "evidence": "README line after '# Taskboard': [![Taskboard in 56 seconds: watch the product video](videos/taskboard.jpg)](videos/taskboard.mp4)"
+        },
+        {
+          "text": "Asked the user no more than one round of at most three questions",
+          "passed": true,
+          "evidence": "questions.md: one message with the draft and 3 questions, each with a default"
+        },
+        {
+          "text": "Speakers who follow each other in scene 1 differ in gender or locale, and none of them uses the narrator's voice",
+          "passed": true,
+          "evidence": "am_michael (US m) -> bf_emma (UK f) -> bm_george (UK m); narrator af_heart is not used by any of them"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "taskboard-product-video",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.545,
+        "passed": 6,
+        "failed": 5,
+        "total": 11,
+        "time_seconds": 2163.6,
+        "tokens": 279026,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+          "passed": false,
+          "evidence": "video.mp4 only in outputs/; repo git status clean, no videos/"
+        },
+        {
+          "text": "Total length is between 45 and 120 seconds",
+          "passed": true,
+          "evidence": "78.6 s"
+        },
+        {
+          "text": "Every spoken line is rendered with Kokoro, using a voice from the cast list in voices.mjs (no macOS say voices)",
+          "passed": false,
+          "evidence": "macOS say with 'Ava (Premium)' at rate 172 (tools/script.json, narrate.mjs); no Kokoro"
+        },
+        {
+          "text": "No pauses are cut into the middle of sentences: lines carry at most a few deliberate [[slnc]] beats",
+          "passed": true,
+          "evidence": "each say call is one whole sentence; pauses of 0.25-0.7 s only between sentences"
+        },
+        {
+          "text": "Scene 1 narration names the problem (lost tasks / whiteboard / chat) before the product is shown",
+          "passed": true,
+          "evidence": "hook: 'Things we shout across the room get lost.' 'The whiteboard gets wiped, and the chat scrolls away.'"
+        },
+        {
+          "text": "Scene 3 is a live recording of the running Taskboard app (a Playwright/browser recording of localhost), not an HTML mockup of it",
+          "passed": true,
+          "evidence": "the real app from the repo on port 8112 in Chromium (laptop and phone iframes), actions scripted in its DOM and captured frame by frame"
+        },
+        {
+          "text": "Typing in the video happens character by character at human speed (no typing speed factor above 1, no page.fill for shown text)",
+          "passed": true,
+          "evidence": "typeInto() sets one character every 62-68 ms (about 190 wpm: fast, but character by character); no page.fill"
+        },
+        {
+          "text": "Scene 4 summarises what the product solves",
+          "passed": true,
+          "evidence": "'Taskboard is simple on purpose. No due dates, no assignees, no notifications. Just the list.' then 'So, write it down, and tick it off.' (same standard as iteration 1)"
+        },
+        {
+          "text": "README.md links the video directly under the first headline, before any other text",
+          "passed": false,
+          "evidence": "README unchanged (git status clean)"
+        },
+        {
+          "text": "Asked the user no more than one round of at most three questions",
+          "passed": false,
+          "evidence": "questions.md: one round of 7 questions (0-6), each with a default"
+        },
+        {
+          "text": "Speakers who follow each other in scene 1 differ in gender or locale, and none of them uses the narrator's voice",
+          "passed": false,
+          "evidence": "scene 1 is spoken by the narrator voice (Ava) alone; no separate speakers"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "release-video-with-setup",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 1604.3,
+        "tokens": 280166,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+          "passed": true,
+          "evidence": "repo/videos/taskboard.mp4: 1920x1080 with AAC audio"
+        },
+        {
+          "text": "Total length is at most 60 seconds (plus 2 s tolerance)",
+          "passed": true,
+          "evidence": "50.2 s (target 45-60 s in package.json)"
+        },
+        {
+          "text": "Narration is in English and uses only Kokoro voices from the cast list",
+          "passed": true,
+          "evidence": "English lines; voices af_heart, am_michael, bf_emma, all in the cast list; rendered by tts.mjs (Kokoro)"
+        },
+        {
+          "text": "The video has a setup scene that shows the real commands from the Taskboard README (cp .env.example .env and docker compose up -d, or npm start)",
+          "passed": true,
+          "evidence": "s2-access.js types 'cp .env.example .env' and 'docker compose up -d' in Terminal with the output of a real run (CACHED build steps, container started)"
+        },
+        {
+          "text": "Scene 3 is a live recording of the running Taskboard app, not an HTML mockup",
+          "passed": true,
+          "evidence": "flows/product.mjs recorded live with record.mjs against the running stack on port 8113 (recordings/product.json)"
+        },
+        {
+          "text": "Asked the user no questions (the user said to just do it) and lists assumptions in the final message",
+          "passed": true,
+          "evidence": "questions.md: none sent because the user said 'Mach einfach'; final_message.md lists 5 assumptions (language, no download link, terminal names, start time, phones)"
+        },
+        {
+          "text": "README.md links the video directly under the first headline",
+          "passed": true,
+          "evidence": "README line after '# Taskboard': [![Taskboard in 50 seconds: watch the product video](videos/taskboard.jpg)](videos/taskboard.mp4)"
+        },
+        {
+          "text": "The video does not use the AI look: no gradient backgrounds, glow, emoji or kinetic word-by-word captions in the scene CSS/HTML",
+          "passed": true,
+          "evidence": "No gradient backgrounds, glow, emoji or word-by-word captions; the only linear-gradient is the mask of the whiteboard wipe, captions are plain role labels"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "kokoro-not-installed",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 383.6,
+        "tokens": 114690,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Detects that Kokoro is not set up (check_tts.sh exit 1)",
+          "passed": true,
+          "evidence": "notes.md step 2: check_tts.sh printed 'Kokoro: not set up (expected in …/pvc-empty/kokoro)', exit 1"
+        },
+        {
+          "text": "Produces no audio file and no video file, and does not run setup_kokoro.sh without the user's consent",
+          "passed": true,
+          "evidence": "outputs/ has only final_message.md, notes.md, questions.md; repo has no videos/, git status clean; pvc-empty/ still empty, so setup_kokoro.sh never ran"
+        },
+        {
+          "text": "Does not fall back to macOS say voices or any other TTS",
+          "passed": true,
+          "evidence": "final_message.md: 'I won't use the macOS say voices instead'; no other TTS was run"
+        },
+        {
+          "text": "Asks the user for permission to install Kokoro and names what is downloaded, from where, and roughly how big it is",
+          "passed": true,
+          "evidence": "questions.md message 1: about 1.3 GB in ~/.cache/product-video and ~/.cache/huggingface; kokoro, soundfile, torch, spaCy from PyPI; en_core_web_sm from GitHub; Kokoro-82M (~330 MB) and voices from Hugging Face"
+        },
+        {
+          "text": "Says that Kokoro's licence (Apache-2.0) allows commercial use",
+          "passed": true,
+          "evidence": "questions.md: 'Apache-2.0 licence, so the film can be used commercially'"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 1112.633,
+        "stddev": 525.854,
+        "min": 383.6,
+        "max": 1604.3
+      },
+      "tokens": {
+        "mean": 204893,
+        "stddev": 68375.216,
+        "min": 114690,
+        "max": 280166
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.545,
+        "stddev": 0.0,
+        "min": 0.545,
+        "max": 0.545
+      },
+      "time_seconds": {
+        "mean": 2163.6,
+        "stddev": 0.0,
+        "min": 2163.6,
+        "max": 2163.6
+      },
+      "tokens": {
+        "mean": 279026,
+        "stddev": 0.0,
+        "min": 279026,
+        "max": 279026
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.45",
+      "time_seconds": "-1050.97",
+      "tokens": "-74133.00"
+    }
+  },
+  "notes": [
+    "4 of 8 runs completed. After reviewing them the user stopped the round: the eval-2, eval-3 and eval-4 baselines were not run, and eval 4 with the skill was paused after its draft to stay under the Pro plan's 5-hour limit (two earlier attempts of this round were killed by it).",
+    "Eval 4 with skill, not graded: its draft (outputs/questions.md) sized the factory film as chapters, 220-300 s, one chapter per stage, and said why; so the sizing table works for a large product.",
+    "With skill 100% (24/24) vs 55% (6/11) for the one baseline. Eval 1 tokens: 219,823 with the skill vs 279,026 without (-21%); in iteration 1 the skill cost +66% on this eval.",
+    "Against iteration 1 the with-skill runs cost more: eval 1 +54% tokens, eval 2 +112%, eval 3 +128% (it now studies the product and drafts the script while it waits for install consent; iteration 1 stopped after 30 s).",
+    "Times are inflated: the runs shared the CPU (Kokoro, Chromium, ffmpeg) with 2-6 parallel runs, and eval 1 with skill was resumed once after a rate-limit stop (its time is active time without the pause).",
+    "Baseline eval 1 used macOS 'Ava (Premium)' and the AI look the skill forbids: mint gradient, headline cards with eyebrow bars, pills, a fake team-chat UI in scene 1, a slogan end card; it asked 7 questions and did not touch the README.",
+    "Found by the with-skill runs, for the next iteration: the recorded flow resets the product's data at its default URL (localhost:8080), which on a user's machine can be the team's real instance; stills.mjs cannot show typing in the middle of a recording; render.mjs --preview wrote 1920x1080 instead of 960x540."
+  ]
+}

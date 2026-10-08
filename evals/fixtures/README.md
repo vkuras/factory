@@ -42,10 +42,3 @@ git -C evals/fixtures/seeds/val-defects bundle create ../../bundles/val-defects.
 
 The grading keys for these seeds live in `../runs/validator/keys/`, next to
 the runs they grade.
-
-## `no-premium-voices/`
-
-`bin/say` stands in for macOS `say` on a Mac that has no premium voices installed: `say -v '?'`
-lists only the standard voices, and asking for a `(Premium)` voice fails. Put it first on `PATH`
-to test what a skill does when the premium voices are missing. Used by the
-`product-video-creation` evals.

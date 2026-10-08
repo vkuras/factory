@@ -1,0 +1,50 @@
+{
+ "expectations": [
+  {
+   "text": "An MP4 exists under videos/ in the product repo, 1920x1080, with an audio stream",
+   "passed": true,
+   "evidence": "repo/videos/taskboard.mp4: 1920x1080 with AAC audio"
+  },
+  {
+   "text": "Total length is at most 60 seconds (plus 2 s tolerance)",
+   "passed": true,
+   "evidence": "50.2 s (target 45-60 s in package.json)"
+  },
+  {
+   "text": "Narration is in English and uses only Kokoro voices from the cast list",
+   "passed": true,
+   "evidence": "English lines; voices af_heart, am_michael, bf_emma, all in the cast list; rendered by tts.mjs (Kokoro)"
+  },
+  {
+   "text": "The video has a setup scene that shows the real commands from the Taskboard README (cp .env.example .env and docker compose up -d, or npm start)",
+   "passed": true,
+   "evidence": "s2-access.js types 'cp .env.example .env' and 'docker compose up -d' in Terminal with the output of a real run (CACHED build steps, container started)"
+  },
+  {
+   "text": "Scene 3 is a live recording of the running Taskboard app, not an HTML mockup",
+   "passed": true,
+   "evidence": "flows/product.mjs recorded live with record.mjs against the running stack on port 8113 (recordings/product.json)"
+  },
+  {
+   "text": "Asked the user no questions (the user said to just do it) and lists assumptions in the final message",
+   "passed": true,
+   "evidence": "questions.md: none sent because the user said 'Mach einfach'; final_message.md lists 5 assumptions (language, no download link, terminal names, start time, phones)"
+  },
+  {
+   "text": "README.md links the video directly under the first headline",
+   "passed": true,
+   "evidence": "README line after '# Taskboard': [![Taskboard in 50 seconds: watch the product video](videos/taskboard.jpg)](videos/taskboard.mp4)"
+  },
+  {
+   "text": "The video does not use the AI look: no gradient backgrounds, glow, emoji or kinetic word-by-word captions in the scene CSS/HTML",
+   "passed": true,
+   "evidence": "No gradient backgrounds, glow, emoji or word-by-word captions; the only linear-gradient is the mask of the whiteboard wipe, captions are plain role labels"
+  }
+ ],
+ "summary": {
+  "passed": 8,
+  "failed": 0,
+  "total": 8,
+  "pass_rate": 1.0
+ }
+}
